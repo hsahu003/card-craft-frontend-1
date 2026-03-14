@@ -18,6 +18,7 @@ export interface Profile {
 
 interface UserContextValue {
   profile: Profile | null
+  isReady: boolean
   updateProfile: (profile: Profile) => void
   logout: () => void
 }
@@ -53,9 +54,11 @@ function saveToStorage(profile: Profile | null) {
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     setProfile(loadFromStorage())
+    setIsReady(true)
   }, [])
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const value: UserContextValue = {
     profile,
+    isReady,
     updateProfile,
     logout,
   }

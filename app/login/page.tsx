@@ -7,14 +7,11 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useUser } from "@/contexts/user-context"
-
-const DUMMY_EMAIL = "demo@example.com"
-const DUMMY_PASSWORD = "password123"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { updateProfile } = useUser()
+  const { login, signup } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -25,15 +22,15 @@ export default function LoginPage() {
     e.preventDefault()
     setError("")
 
-    const validCredentials = email === DUMMY_EMAIL && password === DUMMY_PASSWORD
-    if (!validCredentials) {
-      setError("Invalid email or password. Use demo@example.com / password123")
+    const result = isLogin
+      ? login(email, password)
+      : signup(name, email, password)
+
+    if (result.success) {
+      router.push("/account")
       return
     }
-
-    const fullName = isLogin ? "Demo User" : (name.trim() || "Demo User")
-    updateProfile({ fullName, email })
-    router.push("/account")
+    setError(result.error)
   }
 
   return (

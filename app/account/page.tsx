@@ -14,10 +14,16 @@ import { Package, User, CheckCircle, LogOut } from "lucide-react"
 export default function AccountPage() {
   const router = useRouter()
   const { orders } = useOrders()
-  const { profile, updateProfile, logout } = useUser()
+  const { profile, isReady, updateProfile, logout } = useUser()
   const [fullName, setFullName] = useState(profile?.fullName ?? "")
   const [email, setEmail] = useState(profile?.email ?? "")
   const [profileSaved, setProfileSaved] = useState(false)
+
+  useEffect(() => {
+    if (isReady && !profile) {
+      router.replace("/login")
+    }
+  }, [isReady, profile, router])
 
   useEffect(() => {
     setFullName(profile?.fullName ?? "")
@@ -34,6 +40,17 @@ export default function AccountPage() {
   const handleLogout = () => {
     logout()
     router.push("/login")
+  }
+
+  if (!isReady || !profile) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <Navbar />
+        <p className="text-muted-foreground">
+          {!isReady ? "Loading..." : "Redirecting to login..."}
+        </p>
+      </div>
+    )
   }
 
   return (

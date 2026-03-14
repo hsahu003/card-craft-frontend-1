@@ -5,9 +5,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
+import { useUser } from "@/contexts/user-context"
+import { getStorageKey } from "@/lib/user-storage-key"
 
 const WISHLIST_STORAGE_KEY = "cardcraft-wishlist"
 
@@ -29,10 +32,10 @@ interface WishlistContextValue {
 
 const WishlistContext = createContext<WishlistContextValue | null>(null)
 
-function loadFromStorage(): WishlistItem[] {
+function loadFromStorage(key: string): WishlistItem[] {
   if (typeof window === "undefined") return []
   try {
-    const raw = localStorage.getItem(WISHLIST_STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) return []
     const parsed = JSON.parse(raw) as WishlistItem[]
     return Array.isArray(parsed) ? parsed : []
@@ -41,25 +44,63 @@ function loadFromStorage(): WishlistItem[] {
   }
 }
 
-function saveToStorage(items: WishlistItem[]) {
+function saveToStorage(items: WishlistItem[], key: string) {
   if (typeof window === "undefined") return
   try {
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items))
+    localStorage.setItem(key, JSON.stringify(items))
   } catch {
     // ignore
   }
 }
 
+function mergeWishlistItems(
+  userItems: WishlistItem[],
+  guestItems: WishlistItem[]
+): WishlistItem[] {
+  const byId = new Map<string, WishlistItem>()
+  for (const item of userItems) byId.set(item.id, item)
+  for (const item of guestItems) {
+    if (!byId.has(item.id)) byId.set(item.id, item)
+  }
+  return Array.from(byId.values())
+}
+
 export function WishlistProvider({ children }: { children: ReactNode }) {
+  const { profile, isReady } = useUser()
   const [items, setItems] = useState<WishlistItem[]>([])
+  const prevKeyRef = useRef<string | null>(null)
+
+  const currentKey = getStorageKey(WISHLIST_STORAGE_KEY, profile)
 
   useEffect(() => {
-    setItems(loadFromStorage())
-  }, [])
+    if (!isReady) return
+
+    const prevKey = prevKeyRef.current
+
+    if (prevKey !== null && prevKey !== currentKey) {
+      const isGuestToUser = !prevKey.includes(":")
+      if (isGuestToUser) {
+        const userItems = loadFromStorage(currentKey)
+        const guestItems = items
+        const merged = mergeWishlistItems(userItems, guestItems)
+        saveToStorage(merged, currentKey)
+        setItems(merged)
+        saveToStorage([], prevKey)
+      } else {
+        saveToStorage(items, prevKey)
+        setItems(loadFromStorage(currentKey))
+      }
+    } else if (prevKey === null) {
+      setItems(loadFromStorage(currentKey))
+    }
+
+    prevKeyRef.current = currentKey
+  }, [isReady, currentKey])
 
   useEffect(() => {
-    saveToStorage(items)
-  }, [items])
+    if (!isReady) return
+    saveToStorage(items, currentKey)
+  }, [isReady, currentKey, items])
 
   const add = useCallback((item: WishlistItem) => {
     setItems((prev) => {

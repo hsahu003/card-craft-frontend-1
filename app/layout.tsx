@@ -41,16 +41,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <WishlistProvider>
-          <CartProvider>
-            <OrdersProvider>
-              <UserProvider>
+        <UserProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <OrdersProvider>
                 {children}
                 <Analytics />
-              </UserProvider>
-            </OrdersProvider>
-          </CartProvider>
-        </WishlistProvider>
+              </OrdersProvider>
+            </CartProvider>
+          </WishlistProvider>
+        </UserProvider>
       </body>
     </html>
   )

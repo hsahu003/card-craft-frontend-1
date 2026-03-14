@@ -254,9 +254,11 @@ function saveToStorage(profile) {
 function UserProvider({ children }) {
     _s();
     const [profile, setProfile] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [isReady, setIsReady] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "UserProvider.useEffect": ()=>{
             setProfile(loadFromStorage());
+            setIsReady(true);
         }
     }["UserProvider.useEffect"], []);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
@@ -278,6 +280,7 @@ function UserProvider({ children }) {
     }["UserProvider.useCallback[logout]"], []);
     const value = {
         profile,
+        isReady,
         updateProfile,
         logout
     };
@@ -286,11 +289,11 @@ function UserProvider({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/contexts/user-context.tsx",
-        lineNumber: 80,
+        lineNumber: 84,
         columnNumber: 5
     }, this);
 }
-_s(UserProvider, "SFKsHk3tf/pd9urD5bcQdeIXVA0=");
+_s(UserProvider, "2v+e07Owrib5OB8+/ciK7aOWH/o=");
 _c = UserProvider;
 function useUser() {
     _s1();
