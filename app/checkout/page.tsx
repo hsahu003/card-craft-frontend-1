@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCart } from "@/contexts/cart-context"
+import { useOrders } from "@/contexts/orders-context"
 import { Shield, Download, CheckCircle, Tag } from "lucide-react"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items: cartItems } = useCart()
+  const { items: cartItems, clearCart } = useCart()
+  const { addOrder } = useOrders()
   const [promoCode, setPromoCode] = useState("")
   const [promoApplied, setPromoApplied] = useState(false)
   const [fullName, setFullName] = useState("")
@@ -39,6 +41,8 @@ export default function CheckoutPage() {
     setIsProcessing(true)
     // Simulate payment processing
     await new Promise((resolve) => setTimeout(resolve, 1500))
+    addOrder(cartItems, total)
+    clearCart()
     router.push("/confirmation")
   }
 

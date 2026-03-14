@@ -2,22 +2,38 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useUser } from "@/contexts/user-context"
+
+const DUMMY_EMAIL = "demo@example.com"
+const DUMMY_PASSWORD = "password123"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const { updateProfile } = useUser()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle authentication
-    console.log("[v0] Auth submitted:", { email, password, name, isLogin })
+    setError("")
+
+    const validCredentials = email === DUMMY_EMAIL && password === DUMMY_PASSWORD
+    if (!validCredentials) {
+      setError("Invalid email or password. Use demo@example.com / password123")
+      return
+    }
+
+    const fullName = isLogin ? "Demo User" : (name.trim() || "Demo User")
+    updateProfile({ fullName, email })
+    router.push("/account")
   }
 
   return (
@@ -38,6 +54,11 @@ export default function LoginPage() {
 
             {/* Form */}
             <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+              {error && (
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
               {isLogin ? (
                 <>
                   <div className="space-y-2">

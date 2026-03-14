@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/contexts/cart-context'
+import { OrdersProvider } from '@/contexts/orders-context'
+import { UserProvider } from '@/contexts/user-context'
 import { WishlistProvider } from '@/contexts/wishlist-context'
 import './globals.css'
 
@@ -41,8 +43,12 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <WishlistProvider>
           <CartProvider>
-            {children}
-            <Analytics />
+            <OrdersProvider>
+              <UserProvider>
+                {children}
+                <Analytics />
+              </UserProvider>
+            </OrdersProvider>
           </CartProvider>
         </WishlistProvider>
       </body>

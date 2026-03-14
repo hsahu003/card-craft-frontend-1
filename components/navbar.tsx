@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
+import { useUser } from "@/contexts/user-context"
 import { useWishlist } from "@/contexts/wishlist-context"
 import { Menu, X, ShoppingCart, Heart, User, Search, Gift, HandHeart, Gem, HeartHandshake, PartyPopper, Flame, TreePine } from "lucide-react"
 
@@ -21,8 +22,10 @@ const categories = [
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const { profile } = useUser()
   const { items: wishlistItems } = useWishlist()
   const { items: cartItems } = useCart()
+  const accountHref = profile ? "/account" : "/login"
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
@@ -90,7 +93,7 @@ export function Navbar() {
             )}
           </Link>
 
-          <Link href="/login" className="p-2 text-muted-foreground transition-colors hover:text-foreground" aria-label="Account">
+          <Link href={accountHref} className="p-2 text-muted-foreground transition-colors hover:text-foreground" aria-label={profile ? "Account" : "Login"}>
             <User className="h-5 w-5" />
           </Link>
         </div>
@@ -178,12 +181,12 @@ export function Navbar() {
               )}
             </Link>
             <Link
-              href="/login"
+              href={accountHref}
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => setIsMenuOpen(false)}
             >
               <User className="h-4 w-4" />
-              Login
+              {profile ? "Account" : "Login"}
             </Link>
             <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
               <Link href="/templates">Sample Button</Link>

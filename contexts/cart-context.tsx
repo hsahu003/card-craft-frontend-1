@@ -25,6 +25,7 @@ interface CartContextValue {
   items: CartItem[]
   add: (item: CartItem) => void
   remove: (id: string) => void
+  clearCart: () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -69,10 +70,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.id !== id))
   }, [])
 
+  const clearCart = useCallback(() => {
+    setItems([])
+  }, [])
+
   const value: CartContextValue = {
     items,
     add,
     remove,
+    clearCart,
   }
 
   return (
