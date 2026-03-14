@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, use } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
+import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -47,6 +49,8 @@ const fonts = [
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
+  const router = useRouter()
+  const { add: addToCart } = useCart()
   const template = templates[resolvedParams.id] || templates["1"]
 
   const [message, setMessage] = useState("Your Message Here")
@@ -322,7 +326,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   <Eye className="mr-2 h-4 w-4" />
                   Preview Card
                 </Button>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button
+                  className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() => {
+                    addToCart({
+                      id: `${resolvedParams.id}-${Date.now()}`,
+                      name: template.name,
+                      category: template.category,
+                      price: template.price,
+                      colors: template.colors,
+                      emoji: template.emoji,
+                      customMessage: message,
+                    })
+                    router.push("/cart")
+                  }}
+                >
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Add to Cart - ₹{template.price}
                 </Button>

@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useCart } from "@/contexts/cart-context"
 import { useWishlist } from "@/contexts/wishlist-context"
 import { Menu, X, ShoppingCart, Heart, User, Search, Gift, HandHeart, Gem, HeartHandshake, PartyPopper, Flame, TreePine } from "lucide-react"
 
@@ -21,6 +22,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const { items: wishlistItems } = useWishlist()
+  const { items: cartItems } = useCart()
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
@@ -75,8 +77,17 @@ export function Navbar() {
             )}
           </Link>
 
-          <Link href="/cart" className="p-2 text-muted-foreground transition-colors hover:text-foreground" aria-label="Cart">
+          <Link
+            href="/cart"
+            className="relative p-2 text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Cart"
+          >
             <ShoppingCart className="h-5 w-5" />
+            {cartItems.length > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
+                {cartItems.length}
+              </span>
+            )}
           </Link>
 
           <Link href="/login" className="p-2 text-muted-foreground transition-colors hover:text-foreground" aria-label="Account">
@@ -160,6 +171,11 @@ export function Navbar() {
             >
               <ShoppingCart className="h-4 w-4" />
               Cart
+              {cartItems.length > 0 && (
+                <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
+                  {cartItems.length}
+                </span>
+              )}
             </Link>
             <Link
               href="/login"

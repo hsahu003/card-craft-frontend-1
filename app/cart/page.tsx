@@ -1,40 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
+import { useCart } from "@/contexts/cart-context"
 import { Trash2, ArrowRight, ShoppingBag } from "lucide-react"
 
-interface CartItem {
-  id: string
-  name: string
-  category: string
-  price: number
-  colors: [string, string]
-  emoji: string
-  customMessage: string
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: "1",
-    name: "Birthday Celebration",
-    category: "Birthday",
-    price: 99,
-    colors: ["#FDE68A", "#F59E0B"],
-    emoji: "🎂",
-    customMessage: "Happy Birthday, John!",
-  },
-]
-
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems)
-
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
-  }
+  const { items: cartItems, remove: removeItem } = useCart()
 
   const total = cartItems.reduce((sum, item) => sum + item.price, 0)
 

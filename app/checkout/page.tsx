@@ -1,35 +1,31 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useCart } from "@/contexts/cart-context"
 import { Shield, Download, CheckCircle, Tag } from "lucide-react"
-
-// Mock cart item
-const cartItem = {
-  id: "1",
-  name: "Birthday Celebration",
-  category: "Birthday",
-  price: 99,
-  colors: ["#FDE68A", "#F59E0B"],
-  emoji: "🎂",
-  customMessage: "Happy Birthday, John!",
-}
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const { items: cartItems } = useCart()
   const [promoCode, setPromoCode] = useState("")
   const [promoApplied, setPromoApplied] = useState(false)
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const subtotal = cartItem.price
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      router.replace("/cart")
+    }
+  }, [cartItems.length, router])
+
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0)
   const discount = promoApplied ? Math.round(subtotal * 0.1) : 0
   const total = subtotal - discount
 
@@ -59,24 +55,28 @@ export default function CheckoutPage() {
               <div className="rounded-xl border border-border bg-card p-6">
                 <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
-                {/* Cart Item */}
-                <div className="mt-4 flex gap-4">
-                  <div
-                    className="flex h-24 w-20 flex-shrink-0 items-center justify-center rounded-lg"
-                    style={{
-                      background: `linear-gradient(135deg, ${cartItem.colors[0]} 0%, ${cartItem.colors[1]} 100%)`,
-                    }}
-                  >
-                    <span className="text-3xl">{cartItem.emoji}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">{cartItem.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{cartItem.category}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      "{cartItem.customMessage}"
-                    </p>
-                  </div>
-                  <p className="text-lg font-semibold text-foreground">₹{cartItem.price}</p>
+                {/* Cart Items */}
+                <div className="mt-4 space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex gap-4">
+                      <div
+                        className="flex h-24 w-20 flex-shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                          background: `linear-gradient(135deg, ${item.colors[0]} 0%, ${item.colors[1]} 100%)`,
+                        }}
+                      >
+                        <span className="text-3xl">{item.emoji}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground">{item.name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{item.category}</p>
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          &quot;{item.customMessage}&quot;
+                        </p>
+                      </div>
+                      <p className="text-lg font-semibold text-foreground shrink-0">₹{item.price}</p>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Promo Code */}
