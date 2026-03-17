@@ -1,54 +1,12 @@
 import { TemplateCard } from "@/components/template-card"
 
 const popularTemplates = [
-  {
-    id: "1",
-    name: "Birthday Celebration",
-    category: "Birthday",
-    price: 99,
-    colors: ["#FDE68A", "#F59E0B"],
-    emoji: "🎂",
-  },
-  {
-    id: "2",
-    name: "Wedding Elegance",
-    category: "Wedding",
-    price: 149,
-    colors: ["#FDF2F8", "#EC4899"],
-    emoji: "💒",
-  },
-  {
-    id: "3",
-    name: "Thank You Blooms",
-    category: "Thank You",
-    price: 79,
-    colors: ["#DCFCE7", "#22C55E"],
-    emoji: "💐",
-  },
-  {
-    id: "4",
-    name: "Holiday Cheer",
-    category: "Holiday",
-    price: 99,
-    colors: ["#FEE2E2", "#EF4444"],
-    emoji: "🎄",
-  },
-  {
-    id: "5",
-    name: "Corporate Thanks",
-    category: "Corporate",
-    price: 129,
-    colors: ["#DBEAFE", "#3B82F6"],
-    emoji: "🤝",
-  },
-  {
-    id: "6",
-    name: "Baby Shower",
-    category: "Birthday",
-    price: 89,
-    colors: ["#E0E7FF", "#6366F1"],
-    emoji: "👶",
-  },
+  { id: "1", name: "Birthday Celebration", category: "Birthday", price: 99, colors: ["#FDE68A", "#F59E0B"], emoji: "🎂", svg: "/assets/greeting-card.svg" },
+  { id: "2", name: "Wedding Elegance", category: "Wedding", price: 149, colors: ["#FDF2F8", "#EC4899"], emoji: "💒", svg: "/assets/greeting-card.svg" },
+  { id: "3", name: "Thank You Blooms", category: "Thank You", price: 79, colors: ["#DCFCE7", "#22C55E"], emoji: "💐", svg: "/assets/greeting-card.svg" },
+  { id: "4", name: "Holiday Cheer", category: "Holiday", price: 99, colors: ["#FEE2E2", "#EF4444"], emoji: "🎄", svg: "/assets/greeting-card.svg" },
+  { id: "5", name: "Corporate Thanks", category: "Corporate", price: 129, colors: ["#DBEAFE", "#3B82F6"], emoji: "🤝", svg: "/assets/greeting-card.svg" },
+  { id: "6", name: "Baby Shower", category: "Birthday", price: 89, colors: ["#E0E7FF", "#6366F1"], emoji: "👶", svg: "/assets/greeting-card.svg" },
 ]
 
 export function PopularTemplates() {

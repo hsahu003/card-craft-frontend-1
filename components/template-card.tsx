@@ -12,6 +12,7 @@ interface Template {
   price: number
   colors: [string, string]
   emoji: string
+  svg?: string
 }
 
 interface TemplateCardProps {
@@ -39,31 +40,34 @@ export function TemplateCard({ template }: TemplateCardProps) {
         
         {/* Main card */}
         <div
-          className="relative z-10 flex h-[280px] w-[220px] -rotate-3 transform items-center justify-center rounded-lg shadow-lg transition-transform hover:-rotate-1"
+          className="relative z-10 flex h-[280px] w-[220px] -rotate-3 transform items-center justify-center overflow-hidden rounded-lg shadow-lg transition-transform hover:-rotate-1"
           style={{
-            background: `linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%)`,
+            background: template.colors
+              ? `linear-gradient(135deg, ${template.colors[0]} 0%, ${template.colors[1]} 100%)`
+              : "linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%)",
           }}
         >
-          {/* Decorative geometric shapes */}
-          <div className="absolute inset-0 overflow-hidden rounded-lg">
-            <div className="absolute -bottom-4 -left-4 h-16 w-16 rotate-45 bg-[#8B4513] opacity-80" />
-            <div className="absolute -right-4 -top-4 h-20 w-20 rotate-12 bg-[#b8860b] opacity-70" />
-            <div className="absolute -bottom-2 right-4 h-12 w-12 rotate-45 bg-[#c41e3a] opacity-70" />
-            <div className="absolute left-4 top-8 h-8 w-8 rotate-45 bg-[#228b22] opacity-60" />
-          </div>
-          
-          {/* Card content */}
-          <div className="relative z-10 text-center">
-            <p className="font-serif text-3xl font-bold leading-tight text-white">
-              thank
-            </p>
-            <p className="font-serif text-4xl font-bold leading-tight text-white">
-              you!
-            </p>
-            <p className="mt-1 font-serif text-sm italic text-[#E8733A]">
-              so much
-            </p>
-          </div>
+          {template.svg ? (
+            <img
+              src={template.svg}
+              alt={template.name}
+              className="h-full w-full object-contain p-4"
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 overflow-hidden rounded-lg">
+                <div className="absolute -bottom-4 -left-4 h-16 w-16 rotate-45 bg-[#8B4513] opacity-80" />
+                <div className="absolute -right-4 -top-4 h-20 w-20 rotate-12 bg-[#b8860b] opacity-70" />
+                <div className="absolute -bottom-2 right-4 h-12 w-12 rotate-45 bg-[#c41e3a] opacity-70" />
+                <div className="absolute left-4 top-8 h-8 w-8 rotate-45 bg-[#228b22] opacity-60" />
+              </div>
+              <div className="relative z-10 text-center">
+                <p className="font-serif text-3xl font-bold leading-tight text-white">thank</p>
+                <p className="font-serif text-4xl font-bold leading-tight text-white">you!</p>
+                <p className="mt-1 font-serif text-sm italic text-[#E8733A]">so much</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Price badge */}

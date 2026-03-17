@@ -522,7 +522,8 @@ const popularTemplates = [
             "#FDE68A",
             "#F59E0B"
         ],
-        emoji: "🎂"
+        emoji: "🎂",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "2",
@@ -533,7 +534,8 @@ const popularTemplates = [
             "#FDF2F8",
             "#EC4899"
         ],
-        emoji: "💒"
+        emoji: "💒",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "3",
@@ -544,7 +546,8 @@ const popularTemplates = [
             "#DCFCE7",
             "#22C55E"
         ],
-        emoji: "💐"
+        emoji: "💐",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "4",
@@ -555,7 +558,8 @@ const popularTemplates = [
             "#FEE2E2",
             "#EF4444"
         ],
-        emoji: "🎄"
+        emoji: "🎄",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "5",
@@ -566,7 +570,8 @@ const popularTemplates = [
             "#DBEAFE",
             "#3B82F6"
         ],
-        emoji: "🤝"
+        emoji: "🤝",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "6",
@@ -577,7 +582,8 @@ const popularTemplates = [
             "#E0E7FF",
             "#6366F1"
         ],
-        emoji: "👶"
+        emoji: "👶",
+        svg: "/assets/greeting-card.svg"
     }
 ];
 function PopularTemplates() {
@@ -591,22 +597,22 @@ function PopularTemplates() {
                         template: template
                     }, template.id, false, {
                         fileName: "[project]/components/home/popular-templates.tsx",
-                        lineNumber: 60,
+                        lineNumber: 18,
                         columnNumber: 13
                     }, this))
             }, void 0, false, {
                 fileName: "[project]/components/home/popular-templates.tsx",
-                lineNumber: 58,
+                lineNumber: 16,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/components/home/popular-templates.tsx",
-            lineNumber: 57,
+            lineNumber: 15,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/home/popular-templates.tsx",
-        lineNumber: 56,
+        lineNumber: 14,
         columnNumber: 5
     }, this);
 }

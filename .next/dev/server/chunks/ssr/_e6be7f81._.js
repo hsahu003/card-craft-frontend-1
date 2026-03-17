@@ -600,89 +600,99 @@ function TemplateCard({ template }) {
                         className: "absolute -right-3 top-3 h-[280px] w-[220px] rounded-lg bg-[#c9c9c9] shadow-md"
                     }, void 0, false, {
                         fileName: "[project]/components/template-card.tsx",
-                        lineNumber: 38,
+                        lineNumber: 39,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "relative z-10 flex h-[280px] w-[220px] -rotate-3 transform items-center justify-center rounded-lg shadow-lg transition-transform hover:-rotate-1",
+                        className: "relative z-10 flex h-[280px] w-[220px] -rotate-3 transform items-center justify-center overflow-hidden rounded-lg shadow-lg transition-transform hover:-rotate-1",
                         style: {
-                            background: `linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%)`
+                            background: template.colors ? `linear-gradient(135deg, ${template.colors[0]} 0%, ${template.colors[1]} 100%)` : "linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%)"
                         },
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "absolute inset-0 overflow-hidden rounded-lg",
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "absolute -bottom-4 -left-4 h-16 w-16 rotate-45 bg-[#8B4513] opacity-80"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 49,
-                                        columnNumber: 13
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "absolute -right-4 -top-4 h-20 w-20 rotate-12 bg-[#b8860b] opacity-70"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 50,
-                                        columnNumber: 13
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "absolute -bottom-2 right-4 h-12 w-12 rotate-45 bg-[#c41e3a] opacity-70"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 51,
-                                        columnNumber: 13
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        className: "absolute left-4 top-8 h-8 w-8 rotate-45 bg-[#228b22] opacity-60"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 52,
-                                        columnNumber: 13
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/template-card.tsx",
-                                lineNumber: 48,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "relative z-10 text-center",
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "font-serif text-3xl font-bold leading-tight text-white",
-                                        children: "thank"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 57,
-                                        columnNumber: 13
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "font-serif text-4xl font-bold leading-tight text-white",
-                                        children: "you!"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 60,
-                                        columnNumber: 13
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "mt-1 font-serif text-sm italic text-[#E8733A]",
-                                        children: "so much"
-                                    }, void 0, false, {
-                                        fileName: "[project]/components/template-card.tsx",
-                                        lineNumber: 63,
-                                        columnNumber: 13
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/components/template-card.tsx",
-                                lineNumber: 56,
-                                columnNumber: 11
-                            }, this)
-                        ]
-                    }, void 0, true, {
+                        children: template.svg ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                            src: template.svg,
+                            alt: template.name,
+                            className: "h-full w-full object-contain p-4"
+                        }, void 0, false, {
+                            fileName: "[project]/components/template-card.tsx",
+                            lineNumber: 51,
+                            columnNumber: 13
+                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "absolute inset-0 overflow-hidden rounded-lg",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "absolute -bottom-4 -left-4 h-16 w-16 rotate-45 bg-[#8B4513] opacity-80"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 59,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "absolute -right-4 -top-4 h-20 w-20 rotate-12 bg-[#b8860b] opacity-70"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 60,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "absolute -bottom-2 right-4 h-12 w-12 rotate-45 bg-[#c41e3a] opacity-70"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 61,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "absolute left-4 top-8 h-8 w-8 rotate-45 bg-[#228b22] opacity-60"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 62,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/components/template-card.tsx",
+                                    lineNumber: 58,
+                                    columnNumber: 15
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "relative z-10 text-center",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "font-serif text-3xl font-bold leading-tight text-white",
+                                            children: "thank"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 65,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "font-serif text-4xl font-bold leading-tight text-white",
+                                            children: "you!"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 66,
+                                            columnNumber: 17
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "mt-1 font-serif text-sm italic text-[#E8733A]",
+                                            children: "so much"
+                                        }, void 0, false, {
+                                            fileName: "[project]/components/template-card.tsx",
+                                            lineNumber: 67,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/components/template-card.tsx",
+                                    lineNumber: 64,
+                                    columnNumber: 15
+                                }, this)
+                            ]
+                        }, void 0, true)
+                    }, void 0, false, {
                         fileName: "[project]/components/template-card.tsx",
-                        lineNumber: 41,
+                        lineNumber: 42,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -693,13 +703,13 @@ function TemplateCard({ template }) {
                         ]
                     }, void 0, true, {
                         fileName: "[project]/components/template-card.tsx",
-                        lineNumber: 70,
+                        lineNumber: 74,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/template-card.tsx",
-                lineNumber: 36,
+                lineNumber: 37,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -713,12 +723,12 @@ function TemplateCard({ template }) {
                             children: "Buy"
                         }, void 0, false, {
                             fileName: "[project]/components/template-card.tsx",
-                            lineNumber: 81,
+                            lineNumber: 85,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/template-card.tsx",
-                        lineNumber: 77,
+                        lineNumber: 81,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -730,24 +740,24 @@ function TemplateCard({ template }) {
                             className: `h-5 w-5 ${isFavorite ? 'fill-current' : ''}`
                         }, void 0, false, {
                             fileName: "[project]/components/template-card.tsx",
-                            lineNumber: 89,
+                            lineNumber: 93,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/components/template-card.tsx",
-                        lineNumber: 83,
+                        lineNumber: 87,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/template-card.tsx",
-                lineNumber: 76,
+                lineNumber: 80,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/template-card.tsx",
-        lineNumber: 34,
+        lineNumber: 35,
         columnNumber: 5
     }, this);
 }
@@ -788,7 +798,8 @@ const allTemplates = [
             "#FDE68A",
             "#F59E0B"
         ],
-        emoji: "🎂"
+        emoji: "🎂",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "2",
@@ -799,7 +810,8 @@ const allTemplates = [
             "#FDF2F8",
             "#EC4899"
         ],
-        emoji: "💒"
+        emoji: "💒",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "3",
@@ -810,7 +822,8 @@ const allTemplates = [
             "#DCFCE7",
             "#22C55E"
         ],
-        emoji: "💐"
+        emoji: "💐",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "4",
@@ -821,7 +834,8 @@ const allTemplates = [
             "#FEE2E2",
             "#EF4444"
         ],
-        emoji: "🎄"
+        emoji: "🎄",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "5",
@@ -832,7 +846,8 @@ const allTemplates = [
             "#DBEAFE",
             "#3B82F6"
         ],
-        emoji: "🤝"
+        emoji: "🤝",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "6",
@@ -843,7 +858,8 @@ const allTemplates = [
             "#E0E7FF",
             "#6366F1"
         ],
-        emoji: "👶"
+        emoji: "👶",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "7",
@@ -854,7 +870,8 @@ const allTemplates = [
             "#FECDD3",
             "#F43F5E"
         ],
-        emoji: "💕"
+        emoji: "💕",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "8",
@@ -865,7 +882,8 @@ const allTemplates = [
             "#FEF3C7",
             "#D97706"
         ],
-        emoji: "🎓"
+        emoji: "🎓",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "9",
@@ -876,7 +894,8 @@ const allTemplates = [
             "#E0F2FE",
             "#0284C7"
         ],
-        emoji: "🎉"
+        emoji: "🎉",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "10",
@@ -887,7 +906,8 @@ const allTemplates = [
             "#F1F5F9",
             "#475569"
         ],
-        emoji: "📝"
+        emoji: "📝",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "11",
@@ -898,7 +918,8 @@ const allTemplates = [
             "#FCE7F3",
             "#DB2777"
         ],
-        emoji: "🌸"
+        emoji: "🌸",
+        svg: "/assets/greeting-card.svg"
     },
     {
         id: "12",
@@ -909,7 +930,8 @@ const allTemplates = [
             "#F0F9FF",
             "#38BDF8"
         ],
-        emoji: "❄️"
+        emoji: "❄️",
+        svg: "/assets/greeting-card.svg"
     }
 ];
 function TemplatesPage() {
