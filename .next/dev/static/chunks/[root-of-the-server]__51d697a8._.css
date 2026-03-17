@@ -561,10 +561,6 @@
     visibility: hidden;
   }
 
-  .visible {
-    visibility: visible;
-  }
-
   .sr-only {
     clip-path: inset(50%);
     white-space: nowrap;
@@ -3949,6 +3945,10 @@
 
   .disabled\:opacity-50:disabled {
     opacity: .5;
+  }
+
+  .disabled\:opacity-60:disabled {
+    opacity: .6;
   }
 
   :where([data-side="left"]) .in-data-\[side\=left\]\:cursor-w-resize {

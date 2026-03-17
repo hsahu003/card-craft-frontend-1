@@ -1,1830 +1,330 @@
-[00:00:01.193] Server  LOG     ✓ Ready in 851ms
-[00:00:02.087] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:02.306] Browser WARN    Image with src "http://localhost:3000/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
-[00:00:02.306] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
-[00:00:02.306] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
-[00:00:02.306] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773725047265} /_vercel/insights/view
-[00:00:12.398] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:12.608] Browser WARN    Image with src "http://localhost:3000/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
-[00:00:12.608] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
-[00:00:12.608] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
-[00:00:12.608] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773725057567} /_vercel/insights/view
-[00:00:15.450] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/editor/2 color: rgb(120, 120, 120) color: inherit {"dp":"/editor/[id]","o":"http://localhost:3000/editor/2","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773725060408} /_vercel/insights/view
-[00:00:19.038] Browser LOG     cx 73.596568966288 diffRight 48.72009859047469 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 73.596568966288 cx + txtW 124.96323385276261 frameW 148
-[00:00:19.038] Browser LOG     guides ["cx"]
-[00:00:19.038] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:19.038] Browser LOG     guides ["cx"]
-[00:00:19.038] Browser LOG     cx 75.9778333530675 diffRight 46.3388342036952 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 75.9778333530675 cx + txtW 127.3444982395421 frameW 148
-[00:00:19.038] Browser LOG     guides ["cx"]
-[00:00:19.038] Browser LOG     cx 76.50700321679626 diffRight 45.80966433996643 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 76.50700321679626 cx + txtW 127.87366810327087 frameW 148
-[00:00:19.038] Browser LOG     guides ["cx"]
-[00:00:19.038] Browser LOG     cx 76.77158814866065 diffRight 45.54507940810204 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 76.77158814866065 cx + txtW 128.13825303513528 frameW 148
-[00:00:19.038] Browser LOG     guides ["cx"]
-[00:00:19.038] Browser LOG     cx 77.03617308052503 diffRight 45.28049447623766 rightTarget 122.3166675567627
-[00:00:19.038] Browser LOG     cx 77.03617308052503 cx + txtW 128.40283796699964 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 77.56534294425381 diffRight 44.75132461250888 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 77.56534294425381 cx + txtW 128.93200783072842 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 77.8299278761182 diffRight 44.48673968064449 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 77.8299278761182 cx + txtW 129.19659276259281 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.039] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:19.039] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:19.039] Browser LOG     guides ["cx"]
-[00:00:19.493] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:19.493] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 79.41743746730452 diffRight 42.89923008945817 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 79.41743746730452 cx + txtW 130.78410235377913 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 79.41743746730452 diffRight 42.89923008945817 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 79.41743746730452 cx + txtW 130.78410235377913 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 79.68202239916891 diffRight 42.63464515759378 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 79.68202239916891 cx + txtW 131.04868728564352 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 79.9466073310333 diffRight 42.37006022572939 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 79.9466073310333 cx + txtW 131.31327221750792 frameW 148
-[00:00:19.494] Browser LOG     guides ["cx"]
-[00:00:19.494] Browser LOG     cx 80.21119226289768 diffRight 42.10547529386501 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 80.21119226289768 cx + txtW 131.57785714937228 frameW 148
-[00:00:19.494] Browser LOG     guides []
-[00:00:19.494] Browser LOG     cx 80.47577719476207 diffRight 41.84089036200062 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 80.47577719476207 cx + txtW 131.8424420812367 frameW 148
-[00:00:19.494] Browser LOG     guides []
-[00:00:19.494] Browser LOG     cx 80.47577719476207 diffRight 41.84089036200062 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 80.47577719476207 cx + txtW 131.8424420812367 frameW 148
-[00:00:19.494] Browser LOG     guides []
-[00:00:19.494] Browser LOG     cx 80.47577719476207 diffRight 41.84089036200062 rightTarget 122.3166675567627
-[00:00:19.494] Browser LOG     cx 80.47577719476207 cx + txtW 131.8424420812367 frameW 148
-[00:00:19.494] Browser LOG     guides []
-[00:00:19.859] Browser LOG     cx 80.47577719476207 diffRight 41.84089036200062 rightTarget 122.3166675567627
-[00:00:19.860] Browser LOG     cx 80.47577719476207 cx + txtW 131.8424420812367 frameW 148
-[00:00:19.860] Browser LOG     guides []
-[00:00:19.860] Browser LOG     cx 80.21119226289768 diffRight 42.10547529386501 rightTarget 122.3166675567627
-[00:00:19.860] Browser LOG     cx 80.21119226289768 cx + txtW 131.57785714937228 frameW 148
-[00:00:19.860] Browser LOG     guides []
-[00:00:19.860] Browser LOG     cx 79.41743746730452 diffRight 42.89923008945817 rightTarget 122.3166675567627
-[00:00:19.860] Browser LOG     cx 79.41743746730452 cx + txtW 130.78410235377913 frameW 148
-[00:00:19.860] Browser LOG     guides ["cx"]
-[00:00:19.860] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:19.860] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:19.860] Browser LOG     guides ["cx"]
-[00:00:20.309] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:20.309] Browser LOG     guides ["cx"]
-[00:00:20.309] Browser LOG     cx 77.56534294425381 diffRight 44.75132461250888 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 77.56534294425381 cx + txtW 128.93200783072842 frameW 148
-[00:00:20.309] Browser LOG     guides ["cx"]
-[00:00:20.309] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:20.309] Browser LOG     guides ["cx"]
-[00:00:20.309] Browser LOG     cx 68.30487032900027 diffRight 54.01179722776243 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 68.30487032900027 cx + txtW 119.67153521547488 frameW 148
-[00:00:20.309] Browser LOG     guides ["cx"]
-[00:00:20.309] Browser LOG     cx 58.51522785001795 diffRight 63.801439706744745 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 58.51522785001795 cx + txtW 109.88189273649256 frameW 148
-[00:00:20.309] Browser LOG     guides []
-[00:00:20.309] Browser LOG     cx 43.169301801883506 diffRight 79.14736575487919 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 43.169301801883506 cx + txtW 94.53596668835812 frameW 148
-[00:00:20.309] Browser LOG     guides []
-[00:00:20.309] Browser LOG     cx 32.58590452730803 diffRight 89.73076302945466 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 32.58590452730803 cx + txtW 83.95256941378264 frameW 148
-[00:00:20.309] Browser LOG     guides []
-[00:00:20.309] Browser LOG     cx 30.73381000425732 diffRight 91.58285755250537 rightTarget 122.3166675567627
-[00:00:20.309] Browser LOG     cx 30.73381000425732 cx + txtW 82.10047489073193 frameW 148
-[00:00:20.309] Browser LOG     guides ["left"]
-[00:00:21.032] Browser LOG     cx 31.792149731714865 diffRight 90.52451782504784 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 31.792149731714865 cx + txtW 83.15881461818947 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 33.644244254765574 diffRight 88.67242330199713 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 33.644244254765574 cx + txtW 85.01090914124018 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 38.93594289205332 diffRight 83.38072466470938 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 38.93594289205332 cx + txtW 90.30260777852793 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 60.102737441204276 diffRight 62.21393011555842 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 60.102737441204276 cx + txtW 111.46940232767889 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 83.38621144527033 diffRight 38.93045611149236 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 83.38621144527033 cx + txtW 134.75287633174494 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 90.79458953747317 diffRight 31.522078019289523 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 90.79458953747317 cx + txtW 142.16125442394778 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 103.49466626696373 diffRight 18.822001289798962 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 103.49466626696373 cx + txtW 154.86133115343836 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 112.4905539503529 diffRight 9.826113606409791 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 112.4905539503529 cx + txtW 163.8572188368275 frameW 148
-[00:00:21.032] Browser LOG     guides []
-[00:00:21.032] Browser LOG     cx 118.57600738323379 diffRight 3.7406601735289087 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 118.57600738323379 cx + txtW 169.9426722697084 frameW 148
-[00:00:21.032] Browser LOG     guides ["right"]
-[00:00:21.032] Browser LOG     cx 122.5447813611996 diffRight 0.22811380443690155 rightTarget 122.3166675567627
-[00:00:21.032] Browser LOG     cx 122.5447813611996 cx + txtW 173.9114462476742 frameW 148
-[00:00:21.032] Browser LOG     guides ["right"]
-[00:00:21.033] Browser LOG     cx 123.60312108865715 diffRight 1.2864535318944519 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 123.60312108865715 cx + txtW 174.96978597513174 frameW 148
-[00:00:21.033] Browser LOG     guides ["right"]
-[00:00:21.033] Browser LOG     cx 124.92604574797909 diffRight 2.6093781912163934 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 124.92604574797909 cx + txtW 176.2927106344537 frameW 148
-[00:00:21.033] Browser LOG     guides ["right"]
-[00:00:21.033] Browser LOG     cx 127.04272520289419 diffRight 4.726057646131494 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 127.04272520289419 cx + txtW 178.4093900893688 frameW 148
-[00:00:21.033] Browser LOG     guides ["right"]
-[00:00:21.033] Browser LOG     cx 127.83647999848733 diffRight 5.519812441724639 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 127.83647999848733 cx + txtW 179.20314488496194 frameW 148
-[00:00:21.033] Browser LOG     guides ["right"]
-[00:00:21.033] Browser LOG     cx 128.6302347940805 diffRight 6.313567237317812 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 128.6302347940805 cx + txtW 179.99689968055512 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.033] Browser LOG     cx 129.68857452153804 diffRight 7.371906964775349 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 129.68857452153804 cx + txtW 181.05523940801265 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.033] Browser LOG     cx 129.95315945340244 diffRight 7.63649189663974 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 129.95315945340244 cx + txtW 181.31982433987704 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.033] Browser LOG     cx 131.01149918085997 diffRight 8.694831624097276 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 131.01149918085997 cx + txtW 182.37816406733458 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.033] Browser LOG     cx 131.80525397645314 diffRight 9.48858641969045 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 131.80525397645314 cx + txtW 183.17191886292775 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.033] Browser LOG     cx 132.86359370391068 diffRight 10.546926147147985 rightTarget 122.3166675567627
-[00:00:21.033] Browser LOG     cx 132.86359370391068 cx + txtW 184.2302585903853 frameW 148
-[00:00:21.033] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 132.59900877204632 diffRight 10.282341215283623 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 132.59900877204632 cx + txtW 183.96567365852093 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 131.27608411272436 diffRight 8.959416555961667 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 131.27608411272436 cx + txtW 182.64274899919897 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 115.13640326899676 diffRight 7.180264287765937 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 115.13640326899676 cx + txtW 166.50306815547137 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 106.66968544933638 diffRight 15.646982107426311 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 106.66968544933638 cx + txtW 158.036350335811 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 99.26130735713355 diffRight 23.05536019962915 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 99.26130735713355 cx + txtW 150.62797224360816 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.364] Browser LOG     cx 98.99672242526916 diffRight 23.31994513149354 rightTarget 122.3166675567627
-[00:00:21.364] Browser LOG     cx 98.99672242526916 cx + txtW 150.36338731174376 frameW 148
-[00:00:21.364] Browser LOG     guides []
-[00:00:21.643] Browser LOG     cx 98.73213749340476 diffRight 23.58453006335793 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 98.73213749340476 cx + txtW 150.09880237987937 frameW 148
-[00:00:21.643] Browser LOG     guides []
-[00:00:21.643] Browser LOG     cx 98.99672242526916 diffRight 23.31994513149354 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 98.99672242526916 cx + txtW 150.36338731174376 frameW 148
-[00:00:21.643] Browser LOG     guides []
-[00:00:21.643] Browser LOG     cx 104.55300599442128 diffRight 17.76366156234141 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 104.55300599442128 cx + txtW 155.9196708808959 frameW 148
-[00:00:21.643] Browser LOG     guides []
-[00:00:21.643] Browser LOG     cx 114.07806354153922 diffRight 8.238604015223473 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 114.07806354153922 cx + txtW 165.44472842801383 frameW 148
-[00:00:21.643] Browser LOG     guides []
-[00:00:21.643] Browser LOG     cx 122.80936629306399 diffRight 0.4926987363012927 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 122.80936629306399 cx + txtW 174.1760311795386 frameW 148
-[00:00:21.643] Browser LOG     guides ["right"]
-[00:00:21.643] Browser LOG     cx 125.71980054357223 diffRight 3.4031329868095384 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 125.71980054357223 cx + txtW 177.08646543004684 frameW 148
-[00:00:21.643] Browser LOG     guides ["right"]
-[00:00:21.643] Browser LOG     cx 127.30731013475857 diffRight 4.990642577995871 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 127.30731013475857 cx + txtW 178.67397502123316 frameW 148
-[00:00:21.643] Browser LOG     guides ["right"]
-[00:00:21.643] Browser LOG     cx 127.83647999848733 diffRight 5.519812441724639 rightTarget 122.3166675567627
-[00:00:21.643] Browser LOG     cx 127.83647999848733 cx + txtW 179.20314488496194 frameW 148
-[00:00:21.643] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 127.83647999848733 diffRight 5.519812441724639 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 127.83647999848733 cx + txtW 179.20314488496194 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 127.83647999848733 diffRight 5.519812441724639 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 127.83647999848733 cx + txtW 179.20314488496194 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 127.04272520289419 diffRight 4.726057646131494 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 127.04272520289419 cx + txtW 178.4093900893688 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 126.5135553391654 diffRight 4.196887782402712 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 126.5135553391654 cx + txtW 177.88022022564002 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 124.92604574797909 diffRight 2.6093781912163934 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 124.92604574797909 cx + txtW 176.2927106344537 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 123.86770602052154 diffRight 1.551038463758843 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 123.86770602052154 cx + txtW 175.23437090699616 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 123.33853615679277 diffRight 1.021868600030075 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 123.33853615679277 cx + txtW 174.70520104326738 frameW 148
-[00:00:22.285] Browser LOG     guides ["right"]
-[00:00:22.285] Browser LOG     cx 122.80936629306399 diffRight 0.4926987363012927 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 122.80936629306399 cx + txtW 174.1760311795386 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 122.01561149747083 diffRight 0.3010560592918665 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 122.01561149747083 cx + txtW 173.38227638394545 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 121.22185670187767 diffRight 1.0948108548850257 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 121.22185670187767 cx + txtW 172.58852158835228 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.69268683814889 diffRight 1.623980718613808 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.69268683814889 cx + txtW 172.0593517246235 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.69268683814889 diffRight 1.623980718613808 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.69268683814889 cx + txtW 172.0593517246235 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.16351697442012 diffRight 2.153150582342576 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.16351697442012 cx + txtW 171.53018186089474 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.16351697442012 diffRight 2.153150582342576 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.16351697442012 cx + txtW 171.53018186089474 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.16351697442012 diffRight 2.153150582342576 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.16351697442012 cx + txtW 171.53018186089474 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.16351697442012 diffRight 2.153150582342576 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.16351697442012 cx + txtW 171.53018186089474 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:22.285] Browser LOG     cx 120.16351697442012 diffRight 2.153150582342576 rightTarget 122.3166675567627
-[00:00:22.285] Browser LOG     cx 120.16351697442012 cx + txtW 171.53018186089474 frameW 148
-[00:00:22.285] Browser LOG     guides ["right","bottom"]
-[00:00:23.254] Browser LOG     cx 119.89893204255573 diffRight 2.417735514206967 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 119.89893204255573 cx + txtW 171.26559692903032 frameW 148
-[00:00:23.254] Browser LOG     guides ["right","bottom"]
-[00:00:23.254] Browser LOG     cx 119.36976217882696 diffRight 2.9469053779357353 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 119.36976217882696 cx + txtW 170.73642706530157 frameW 148
-[00:00:23.254] Browser LOG     guides ["right","bottom"]
-[00:00:23.254] Browser LOG     cx 118.57600738323379 diffRight 3.7406601735289087 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 118.57600738323379 cx + txtW 169.9426722697084 frameW 148
-[00:00:23.254] Browser LOG     guides ["right","bottom"]
-[00:00:23.254] Browser LOG     cx 115.93015806458993 diffRight 6.386509492172763 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 115.93015806458993 cx + txtW 167.29682295106454 frameW 148
-[00:00:23.254] Browser LOG     guides ["bottom"]
-[00:00:23.254] Browser LOG     cx 107.72802517679392 diffRight 14.588642379968775 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 107.72802517679392 cx + txtW 159.09469006326853 frameW 148
-[00:00:23.254] Browser LOG     guides ["bottom"]
-[00:00:23.254] Browser LOG     cx 80.47577719476207 diffRight 41.84089036200062 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 80.47577719476207 cx + txtW 131.8424420812367 frameW 148
-[00:00:23.254] Browser LOG     guides []
-[00:00:23.254] Browser LOG     cx 70.15696485205098 diffRight 52.15970270471172 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 70.15696485205098 cx + txtW 121.52362973852559 frameW 148
-[00:00:23.254] Browser LOG     guides ["cx"]
-[00:00:23.254] Browser LOG     cx 66.18819087408517 diffRight 56.12847668267753 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 66.18819087408517 cx + txtW 117.55485576055978 frameW 148
-[00:00:23.254] Browser LOG     guides []
-[00:00:23.254] Browser LOG     cx 65.6590210103564 diffRight 56.6576465464063 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 65.6590210103564 cx + txtW 117.025685896831 frameW 148
-[00:00:23.254] Browser LOG     guides []
-[00:00:23.254] Browser LOG     cx 65.6590210103564 diffRight 56.6576465464063 rightTarget 122.3166675567627
-[00:00:23.254] Browser LOG     cx 65.6590210103564 cx + txtW 117.025685896831 frameW 148
-[00:00:23.254] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 66.18819087408517 diffRight 56.12847668267753 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 66.18819087408517 cx + txtW 117.55485576055978 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 69.36321005645782 diffRight 52.95345750030488 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 69.36321005645782 cx + txtW 120.72987494293243 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 71.47988951137292 diffRight 50.83677804538978 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 71.47988951137292 cx + txtW 122.84655439784753 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx","cy"]
-[00:00:23.255] Browser LOG     cx 73.06739910255924 diffRight 49.24926845420346 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 73.06739910255924 cx + txtW 124.43406398903385 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.12573883001679 diffRight 48.19092872674591 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.12573883001679 cx + txtW 125.4924037164914 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.12573883001679 diffRight 48.19092872674591 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.12573883001679 cx + txtW 125.4924037164914 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 74.39032376188118 diffRight 47.92634379488152 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 74.39032376188118 cx + txtW 125.75698864835579 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 73.8611538981524 diffRight 48.4555136586103 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 73.8611538981524 cx + txtW 125.227818784627 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 72.27364430696608 diffRight 50.04302324979662 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 72.27364430696608 cx + txtW 123.64030919344069 frameW 148
-[00:00:23.255] Browser LOG     guides ["cx"]
-[00:00:23.255] Browser LOG     cx 65.92360594222079 diffRight 56.39306161454191 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 65.92360594222079 cx + txtW 117.2902708286954 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 62.21941689611937 diffRight 60.097250660643326 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 62.21941689611937 cx + txtW 113.58608178259398 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 59.044397713746726 diffRight 63.27226984301597 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 59.044397713746726 cx + txtW 110.41106260022133 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.255] Browser LOG     guides []
-[00:00:23.255] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.255] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides ["bottom"]
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides ["bottom"]
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.256] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.256] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.256] Browser LOG     guides []
-[00:00:23.843] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.843] Browser LOG     guides []
-[00:00:23.843] Browser LOG     cx 57.98605798628918 diffRight 64.33060957047351 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.98605798628918 cx + txtW 109.35272287276379 frameW 148
-[00:00:23.843] Browser LOG     guides []
-[00:00:23.843] Browser LOG     cx 57.72147305442479 diffRight 64.5951945023379 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.72147305442479 cx + txtW 109.0881379408994 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.72147305442479 diffRight 64.5951945023379 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.72147305442479 cx + txtW 109.0881379408994 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.72147305442479 diffRight 64.5951945023379 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.72147305442479 cx + txtW 109.0881379408994 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.45688812256041 diffRight 64.8597794342023 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.45688812256041 cx + txtW 108.82355300903501 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.45688812256041 diffRight 64.8597794342023 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.45688812256041 cx + txtW 108.82355300903501 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.843] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.843] Browser LOG     guides ["bottom"]
-[00:00:23.843] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.844] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.844] Browser LOG     guides ["bottom"]
-[00:00:23.844] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.844] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.844] Browser LOG     guides ["bottom"]
-[00:00:23.844] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.844] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.844] Browser LOG     guides ["bottom"]
-[00:00:23.844] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:23.844] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:23.844] Browser LOG     guides ["bottom"]
-[00:00:25.207] Browser LOG     cx 56.39854839510286 diffRight 65.91811916165983 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 56.39854839510286 cx + txtW 107.76521328157747 frameW 148
-[00:00:25.207] Browser LOG     guides ["bottom"]
-[00:00:25.207] Browser LOG     cx 54.81103880391653 diffRight 67.50562875284616 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 54.81103880391653 cx + txtW 106.17770369039114 frameW 148
-[00:00:25.207] Browser LOG     guides ["bottom"]
-[00:00:25.207] Browser LOG     cx 45.55056618866299 diffRight 76.7661013680997 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 45.55056618866299 cx + txtW 96.91723107513761 frameW 148
-[00:00:25.207] Browser LOG     guides ["bottom"]
-[00:00:25.207] Browser LOG     cx 44.49222646120545 diffRight 77.82444109555725 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 44.49222646120545 cx + txtW 95.85889134768006 frameW 148
-[00:00:25.207] Browser LOG     guides ["bottom"]
-[00:00:25.207] Browser LOG     cx 45.28598125679861 diffRight 77.03068629996409 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 45.28598125679861 cx + txtW 96.65264614327322 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 47.138075779849316 diffRight 75.17859177691338 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 47.138075779849316 cx + txtW 98.50474066632393 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 51.3714346896795 diffRight 70.94523286708319 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 51.3714346896795 cx + txtW 102.73809957615411 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 53.488114144594604 diffRight 68.82855341216809 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 53.488114144594604 cx + txtW 104.85477903106921 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 53.488114144594604 diffRight 68.82855341216809 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 53.488114144594604 cx + txtW 104.85477903106921 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 53.488114144594604 diffRight 68.82855341216809 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 53.488114144594604 cx + txtW 104.85477903106921 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 53.488114144594604 diffRight 68.82855341216809 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 53.488114144594604 cx + txtW 104.85477903106921 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 55.07562373578092 diffRight 67.24104382098177 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 55.07562373578092 cx + txtW 106.44228862225553 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 56.39854839510286 diffRight 65.91811916165983 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 56.39854839510286 cx + txtW 107.76521328157747 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 57.192303190696016 diffRight 65.12436436606669 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 57.192303190696016 cx + txtW 108.55896807717062 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 58.25064291815357 diffRight 64.06602463860912 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 58.25064291815357 cx + txtW 109.61730780462818 frameW 148
-[00:00:25.207] Browser LOG     guides []
-[00:00:25.207] Browser LOG     cx 59.044397713746726 diffRight 63.27226984301597 rightTarget 122.3166675567627
-[00:00:25.207] Browser LOG     cx 59.044397713746726 cx + txtW 110.41106260022133 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 60.36732237306866 diffRight 61.949345183694035 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 60.36732237306866 cx + txtW 111.73398725954327 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 61.690247032390594 diffRight 60.6264205243721 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 61.690247032390594 cx + txtW 113.05691191886521 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 63.01317169171253 diffRight 59.30349586505017 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 63.01317169171253 cx + txtW 114.37983657818714 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 63.806926487305695 diffRight 58.509741069457 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 63.806926487305695 cx + txtW 115.17359137378031 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 65.39443607849202 diffRight 56.922231478270675 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 65.39443607849202 cx + txtW 116.76110096496663 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 66.98194566967834 diffRight 55.334721887084356 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 66.98194566967834 cx + txtW 118.34861055615295 frameW 148
-[00:00:25.208] Browser LOG     guides []
-[00:00:25.208] Browser LOG     cx 68.04028539713588 diffRight 54.27638215962682 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 68.04028539713588 cx + txtW 119.40695028361048 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 68.30487032900027 diffRight 54.01179722776243 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 68.30487032900027 cx + txtW 119.67153521547488 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 68.83404019272905 diffRight 53.48262736403365 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 68.83404019272905 cx + txtW 120.20070507920366 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 70.42154978391537 diffRight 51.89511777284733 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 70.42154978391537 cx + txtW 121.78821467038998 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 70.95071964764415 diffRight 51.365947909118546 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 70.95071964764415 cx + txtW 122.31738453411876 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 72.00905937510169 diffRight 50.30760818166101 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 72.00905937510169 cx + txtW 123.3757242615763 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 72.53822923883047 diffRight 49.77843831793223 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 72.53822923883047 cx + txtW 123.90489412530508 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 73.596568966288 diffRight 48.72009859047469 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 73.596568966288 cx + txtW 124.96323385276261 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 74.91949362560995 diffRight 47.39717393115275 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 74.91949362560995 cx + txtW 126.28615851208455 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 75.7132484212031 diffRight 46.60341913555959 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 75.7132484212031 cx + txtW 127.07991330767771 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 76.77158814866065 diffRight 45.54507940810204 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 76.77158814866065 cx + txtW 128.13825303513528 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 77.8299278761182 diffRight 44.48673968064449 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 77.8299278761182 cx + txtW 129.19659276259281 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 78.0945128079826 diffRight 44.2221547487801 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 78.0945128079826 cx + txtW 129.4611776944572 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:25.208] Browser LOG     guides ["cx"]
-[00:00:25.208] Browser LOG     cx 78.62368267171136 diffRight 43.69298488505133 rightTarget 122.3166675567627
-[00:00:25.208] Browser LOG     cx 78.62368267171136 cx + txtW 129.990347558186 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.209] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.209] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.209] Browser LOG     guides ["cx"]
-[00:00:25.436] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.437] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.437] Browser LOG     guides ["cx"]
-[00:00:25.437] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.437] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.437] Browser LOG     guides ["cx"]
-[00:00:25.893] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:25.893] Browser LOG     cx 78.88826760357574 diffRight 43.428399953186954 rightTarget 122.3166675567627
-[00:00:25.893] Browser LOG     cx 78.88826760357574 cx + txtW 130.25493249005035 frameW 148
-[00:00:25.893] Browser LOG     guides ["cx","top"]
-[00:00:27.069] Browser LOG     cx 78.62368267171136 diffRight 43.69298488505133 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 78.62368267171136 cx + txtW 129.990347558186 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx","top"]
-[00:00:27.069] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx","top"]
-[00:00:27.069] Browser LOG     cx 78.35909773984697 diffRight 43.95756981691572 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 78.35909773984697 cx + txtW 129.72576262632157 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx","top"]
-[00:00:27.069] Browser LOG     cx 77.8299278761182 diffRight 44.48673968064449 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.8299278761182 cx + txtW 129.19659276259281 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 77.8299278761182 diffRight 44.48673968064449 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.8299278761182 cx + txtW 129.19659276259281 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 77.56534294425381 diffRight 44.75132461250888 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.56534294425381 cx + txtW 128.93200783072842 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 77.56534294425381 diffRight 44.75132461250888 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.56534294425381 cx + txtW 128.93200783072842 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 77.03617308052503 diffRight 45.28049447623766 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 77.03617308052503 cx + txtW 128.40283796699964 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 76.50700321679626 diffRight 45.80966433996643 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 76.50700321679626 cx + txtW 127.87366810327087 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 76.24241828493189 diffRight 46.07424927183081 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 76.24241828493189 cx + txtW 127.6090831714065 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 75.9778333530675 diffRight 46.3388342036952 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 75.9778333530675 cx + txtW 127.3444982395421 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 75.9778333530675 diffRight 46.3388342036952 rightTarget 122.3166675567627
-[00:00:27.069] Browser LOG     cx 75.9778333530675 cx + txtW 127.3444982395421 frameW 148
-[00:00:27.069] Browser LOG     guides ["cx"]
-[00:00:27.069] Browser LOG     cx 75.7132484212031 diffRight 46.60341913555959 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.7132484212031 cx + txtW 127.07991330767771 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.7132484212031 diffRight 46.60341913555959 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.7132484212031 cx + txtW 127.07991330767771 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.18407855747432 diffRight 47.13258899928837 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.18407855747432 cx + txtW 126.55074344394893 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.18407855747432 diffRight 47.13258899928837 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.18407855747432 cx + txtW 126.55074344394893 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.18407855747432 diffRight 47.13258899928837 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.18407855747432 cx + txtW 126.55074344394893 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.91949362560995 diffRight 47.39717393115275 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.91949362560995 cx + txtW 126.28615851208455 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.91949362560995 diffRight 47.39717393115275 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.91949362560995 cx + txtW 126.28615851208455 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.91949362560995 diffRight 47.39717393115275 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.91949362560995 cx + txtW 126.28615851208455 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 74.65490869374557 diffRight 47.66175886301713 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 74.65490869374557 cx + txtW 126.02157358022018 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.070] Browser LOG     guides ["cx"]
-[00:00:27.070] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.070] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 75.44866348933871 diffRight 46.86800406742398 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 75.44866348933871 cx + txtW 126.81532837581332 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 75.9778333530675 diffRight 46.3388342036952 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 75.9778333530675 cx + txtW 127.3444982395421 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx","cy"]
-[00:00:27.071] Browser LOG     cx 75.9778333530675 diffRight 46.3388342036952 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 75.9778333530675 cx + txtW 127.3444982395421 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx","cy"]
-[00:00:27.071] Browser LOG     cx 76.50700321679626 diffRight 45.80966433996643 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 76.50700321679626 cx + txtW 127.87366810327087 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx","cy"]
-[00:00:27.071] Browser LOG     cx 77.03617308052503 diffRight 45.28049447623766 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.03617308052503 cx + txtW 128.40283796699964 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 77.03617308052503 diffRight 45.28049447623766 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.03617308052503 cx + txtW 128.40283796699964 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.071] Browser LOG     cx 77.30075801238942 diffRight 45.01590954437327 rightTarget 122.3166675567627
-[00:00:27.071] Browser LOG     cx 77.30075801238942 cx + txtW 128.66742289886403 frameW 148
-[00:00:27.071] Browser LOG     guides ["cx"]
-[00:00:27.345] Browser LOG     cx 77.56534294425381 diffRight 44.75132461250888 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 77.56534294425381 cx + txtW 128.93200783072842 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx"]
-[00:00:27.345] Browser LOG     cx 77.8299278761182 diffRight 44.48673968064449 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 77.8299278761182 cx + txtW 129.19659276259281 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx"]
-[00:00:27.345] Browser LOG     cx 79.15285253544013 diffRight 43.16381502132256 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 79.15285253544013 cx + txtW 130.51951742191474 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx","cy"]
-[00:00:27.345] Browser LOG     cx 79.41743746730452 diffRight 42.89923008945817 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 79.41743746730452 cx + txtW 130.78410235377913 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx","cy"]
-[00:00:27.345] Browser LOG     cx 79.9466073310333 diffRight 42.37006022572939 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 79.9466073310333 cx + txtW 131.31327221750792 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx","cy"]
-[00:00:27.345] Browser LOG     cx 79.9466073310333 diffRight 42.37006022572939 rightTarget 122.3166675567627
-[00:00:27.345] Browser LOG     cx 79.9466073310333 cx + txtW 131.31327221750792 frameW 148
-[00:00:27.345] Browser LOG     guides ["cx","cy"]
-[00:00:29.922] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:29.922] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:29.922] Browser LOG     guides ["cx","cy"]
-[00:00:29.922] Browser LOG     cx 76.64584931864387 diffRight 45.67081823811883 rightTarget 122.3166675567627
-[00:00:29.922] Browser LOG     cx 76.64584931864387 cx + txtW 128.01251420511846 frameW 148
-[00:00:29.922] Browser LOG     guides ["cx","cy"]
-[00:00:29.922] Browser LOG     cx 79.55628356915213 diffRight 42.76038398761057 rightTarget 122.3166675567627
-[00:00:29.922] Browser LOG     cx 79.55628356915213 cx + txtW 130.92294845562674 frameW 148
-[00:00:29.922] Browser LOG     guides ["cx","cy"]
-[00:00:29.922] Browser LOG     cx 80.0854534328809 diffRight 42.2312141238818 rightTarget 122.3166675567627
-[00:00:29.922] Browser LOG     cx 80.0854534328809 cx + txtW 131.45211831935552 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 80.61462329660966 diffRight 41.70204426015303 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 80.61462329660966 cx + txtW 131.98128818308427 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.14379316033845 diffRight 41.17287439642425 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.14379316033845 cx + txtW 132.51045804681306 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.14379316033845 diffRight 41.17287439642425 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.14379316033845 cx + txtW 132.51045804681306 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.14379316033845 diffRight 41.17287439642425 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.14379316033845 cx + txtW 132.51045804681306 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:29.923] Browser LOG     guides ["cy"]
-[00:00:29.923] Browser LOG     cx 81.67296302406723 diffRight 40.643704532695466 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.67296302406723 cx + txtW 133.03962791054184 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.9375479559316 diffRight 40.37911960083109 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.9375479559316 cx + txtW 133.30421284240623 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.9375479559316 diffRight 40.37911960083109 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.9375479559316 cx + txtW 133.30421284240623 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.9375479559316 diffRight 40.37911960083109 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.9375479559316 cx + txtW 133.30421284240623 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.9375479559316 diffRight 40.37911960083109 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.9375479559316 cx + txtW 133.30421284240623 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.9375479559316 diffRight 40.37911960083109 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.9375479559316 cx + txtW 133.30421284240623 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.67296302406723 diffRight 40.643704532695466 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.67296302406723 cx + txtW 133.03962791054184 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 80.87920822847406 diffRight 41.43745932828864 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 80.87920822847406 cx + txtW 132.24587311494867 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 80.35003836474529 diffRight 41.96662919201741 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 80.35003836474529 cx + txtW 131.71670325121988 frameW 148
-[00:00:29.923] Browser LOG     guides []
-[00:00:29.923] Browser LOG     cx 79.55628356915213 diffRight 42.76038398761057 rightTarget 122.3166675567627
-[00:00:29.923] Browser LOG     cx 79.55628356915213 cx + txtW 130.92294845562674 frameW 148
-[00:00:29.923] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 79.29169863728774 diffRight 43.02496891947496 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 79.29169863728774 cx + txtW 130.65836352376235 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 78.2333589098302 diffRight 44.083308646932494 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 78.2333589098302 cx + txtW 129.6000237963048 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 77.96877397796581 diffRight 44.347893578796885 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 77.96877397796581 cx + txtW 129.33543886444042 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx"]
-[00:00:30.773] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.773] Browser LOG     guides ["cx","cy"]
-[00:00:30.773] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.773] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.43960411423703 diffRight 44.87706344252567 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.43960411423703 cx + txtW 128.80626900071164 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 77.17501918237264 diffRight 45.14164837439006 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 77.17501918237264 cx + txtW 128.54168406884725 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 76.64584931864387 diffRight 45.67081823811883 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 76.64584931864387 cx + txtW 128.01251420511846 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx","cy"]
-[00:00:30.774] Browser LOG     cx 76.38126438677949 diffRight 45.9354031699832 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 76.38126438677949 cx + txtW 127.7479292732541 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx"]
-[00:00:30.774] Browser LOG     cx 76.1166794549151 diffRight 46.199988101847595 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 76.1166794549151 cx + txtW 127.48334434138971 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx"]
-[00:00:30.774] Browser LOG     cx 76.1166794549151 diffRight 46.199988101847595 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 76.1166794549151 cx + txtW 127.48334434138971 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx"]
-[00:00:30.774] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.774] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.774] Browser LOG     guides ["cx"]
-[00:00:30.774] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.775] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.775] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.775] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.775] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.775] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:30.775] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:30.775] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 76.38126438677949 diffRight 45.9354031699832 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 76.38126438677949 cx + txtW 127.7479292732541 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 76.91043425050826 diffRight 45.406233306254435 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 76.91043425050826 cx + txtW 128.27709913698288 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 77.17501918237264 diffRight 45.14164837439006 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 77.17501918237264 cx + txtW 128.54168406884725 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 77.43960411423703 diffRight 44.87706344252567 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 77.43960411423703 cx + txtW 128.80626900071164 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 77.43960411423703 diffRight 44.87706344252567 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 77.43960411423703 cx + txtW 128.80626900071164 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 78.2333589098302 diffRight 44.083308646932494 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 78.2333589098302 cx + txtW 129.6000237963048 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 78.49794384169458 diffRight 43.81872371506812 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 78.49794384169458 cx + txtW 129.86460872816917 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 78.49794384169458 diffRight 43.81872371506812 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 78.49794384169458 cx + txtW 129.86460872816917 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:30.776] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:30.776] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:30.776] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 77.96877397796581 diffRight 44.347893578796885 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 77.96877397796581 cx + txtW 129.33543886444042 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 77.43960411423703 diffRight 44.87706344252567 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 77.43960411423703 cx + txtW 128.80626900071164 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 76.38126438677949 diffRight 45.9354031699832 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 76.38126438677949 cx + txtW 127.7479292732541 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 76.38126438677949 diffRight 45.9354031699832 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 76.38126438677949 cx + txtW 127.7479292732541 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:31.925] Browser LOG     guides ["cx"]
-[00:00:31.925] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:31.925] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 75.05833972745755 diffRight 47.258327829305145 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 75.05833972745755 cx + txtW 126.42500461393216 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74.52916986372878 diffRight 47.78749769303391 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74.52916986372878 cx + txtW 125.89583475020339 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74.52916986372878 diffRight 47.78749769303391 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74.52916986372878 cx + txtW 125.89583475020339 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74 diffRight 48.316667556762695 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74 cx + txtW 125.36666488647461 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74 diffRight 48.316667556762695 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74 cx + txtW 125.36666488647461 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 74 diffRight 48.316667556762695 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 74 cx + txtW 125.36666488647461 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.73541506813561 diffRight 48.58125248862709 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.73541506813561 cx + txtW 125.10207995461022 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.73541506813561 diffRight 48.58125248862709 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.73541506813561 cx + txtW 125.10207995461022 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.73541506813561 diffRight 48.58125248862709 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.73541506813561 cx + txtW 125.10207995461022 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.47083013627122 diffRight 48.84583742049148 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.47083013627122 cx + txtW 124.83749502274583 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.47083013627122 diffRight 48.84583742049148 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.47083013627122 cx + txtW 124.83749502274583 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx"]
-[00:00:31.926] Browser LOG     cx 73.47083013627122 diffRight 48.84583742049148 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.47083013627122 cx + txtW 124.83749502274583 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.926] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.926] Browser LOG     guides ["cx","cy"]
-[00:00:31.926] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx","cy"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:31.927] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:31.927] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:31.927] Browser LOG     guides ["cx"]
-[00:00:32.243] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx"]
-[00:00:32.243] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx"]
-[00:00:32.243] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx","cy"]
-[00:00:32.243] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx","cy"]
-[00:00:32.243] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx","cy"]
-[00:00:32.243] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx","cy"]
-[00:00:32.243] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.243] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.243] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:32.933] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:32.933] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:32.933] Browser LOG     guides ["cx","cy"]
-[00:00:33.036] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:33.036] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:33.036] Browser LOG     guides ["cx","cy"]
-[00:00:34.410] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:34.410] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:34.410] Browser LOG     guides ["cx","cy"]
-[00:00:34.410] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx","cy"]
-[00:00:34.411] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx","cy"]
-[00:00:34.411] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx","cy"]
-[00:00:34.411] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 75.85209452305071 diffRight 46.464573033711986 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 75.85209452305071 cx + txtW 127.21875940952532 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 76.64584931864387 diffRight 45.67081823811883 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 76.64584931864387 cx + txtW 128.01251420511846 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 76.64584931864387 diffRight 45.67081823811883 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 76.64584931864387 cx + txtW 128.01251420511846 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 76.91043425050826 diffRight 45.406233306254435 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 76.91043425050826 cx + txtW 128.27709913698288 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 76.91043425050826 diffRight 45.406233306254435 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 76.91043425050826 cx + txtW 128.27709913698288 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 76.91043425050826 diffRight 45.406233306254435 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 76.91043425050826 cx + txtW 128.27709913698288 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.17501918237264 diffRight 45.14164837439006 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.17501918237264 cx + txtW 128.54168406884725 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.17501918237264 diffRight 45.14164837439006 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.17501918237264 cx + txtW 128.54168406884725 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.17501918237264 diffRight 45.14164837439006 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.17501918237264 cx + txtW 128.54168406884725 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 77.96877397796581 diffRight 44.347893578796885 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 77.96877397796581 cx + txtW 129.33543886444042 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 78.2333589098302 diffRight 44.083308646932494 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 78.2333589098302 cx + txtW 129.6000237963048 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 78.49794384169458 diffRight 43.81872371506812 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 78.49794384169458 cx + txtW 129.86460872816917 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 79.29169863728774 diffRight 43.02496891947496 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 79.29169863728774 cx + txtW 130.65836352376235 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 79.82086850101652 diffRight 42.495799055746176 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 79.82086850101652 cx + txtW 131.18753338749113 frameW 148
-[00:00:34.411] Browser LOG     guides ["cx"]
-[00:00:34.411] Browser LOG     cx 80.0854534328809 diffRight 42.2312141238818 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 80.0854534328809 cx + txtW 131.45211831935552 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 80.87920822847406 diffRight 41.43745932828864 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 80.87920822847406 cx + txtW 132.24587311494867 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 80.87920822847406 diffRight 41.43745932828864 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 80.87920822847406 cx + txtW 132.24587311494867 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 81.67296302406723 diffRight 40.643704532695466 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 81.67296302406723 cx + txtW 133.03962791054184 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 81.67296302406723 diffRight 40.643704532695466 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 81.67296302406723 cx + txtW 133.03962791054184 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 82.202132887796 diffRight 40.1145346689667 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 82.202132887796 cx + txtW 133.5687977742706 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 82.202132887796 diffRight 40.1145346689667 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 82.202132887796 cx + txtW 133.5687977742706 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 82.46671781966037 diffRight 39.84994973710232 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 82.46671781966037 cx + txtW 133.83338270613498 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 82.73130275152477 diffRight 39.58536480523793 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 82.73130275152477 cx + txtW 134.09796763799937 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 82.73130275152477 diffRight 39.58536480523793 rightTarget 122.3166675567627
-[00:00:34.411] Browser LOG     cx 82.73130275152477 cx + txtW 134.09796763799937 frameW 148
-[00:00:34.411] Browser LOG     guides []
-[00:00:34.411] Browser LOG     cx 83.52505754711794 diffRight 38.79161000964476 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 83.52505754711794 cx + txtW 134.89172243359255 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 83.78964247898232 diffRight 38.52702507778038 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 83.78964247898232 cx + txtW 135.15630736545694 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 83.78964247898232 diffRight 38.52702507778038 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 83.78964247898232 cx + txtW 135.15630736545694 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 83.52505754711794 diffRight 38.79161000964476 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 83.52505754711794 cx + txtW 134.89172243359255 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 82.99588768338916 diffRight 39.32077987337354 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 82.99588768338916 cx + txtW 134.36255256986377 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 82.73130275152477 diffRight 39.58536480523793 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 82.73130275152477 cx + txtW 134.09796763799937 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 82.202132887796 diffRight 40.1145346689667 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 82.202132887796 cx + txtW 133.5687977742706 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 81.67296302406723 diffRight 40.643704532695466 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 81.67296302406723 cx + txtW 133.03962791054184 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 81.40837809220284 diffRight 40.90828946455986 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 81.40837809220284 cx + txtW 132.77504297867745 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 80.87920822847406 diffRight 41.43745932828864 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 80.87920822847406 cx + txtW 132.24587311494867 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 80.61462329660966 diffRight 41.70204426015303 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 80.61462329660966 cx + txtW 131.98128818308427 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 80.35003836474529 diffRight 41.96662919201741 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 80.35003836474529 cx + txtW 131.71670325121988 frameW 148
-[00:00:34.412] Browser LOG     guides []
-[00:00:34.412] Browser LOG     cx 79.82086850101652 diffRight 42.495799055746176 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 79.82086850101652 cx + txtW 131.18753338749113 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 79.55628356915213 diffRight 42.76038398761057 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 79.55628356915213 cx + txtW 130.92294845562674 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 79.29169863728774 diffRight 43.02496891947496 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 79.29169863728774 cx + txtW 130.65836352376235 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 78.76252877355897 diffRight 43.554138783203726 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 78.76252877355897 cx + txtW 130.1291936600336 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 78.49794384169458 diffRight 43.81872371506812 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 78.49794384169458 cx + txtW 129.86460872816917 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 78.2333589098302 diffRight 44.083308646932494 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 78.2333589098302 cx + txtW 129.6000237963048 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 76.91043425050826 diffRight 45.406233306254435 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 76.91043425050826 cx + txtW 128.27709913698288 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 76.64584931864387 diffRight 45.67081823811883 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 76.64584931864387 cx + txtW 128.01251420511846 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 76.1166794549151 diffRight 46.199988101847595 rightTarget 122.3166675567627
-[00:00:34.412] Browser LOG     cx 76.1166794549151 cx + txtW 127.48334434138971 frameW 148
-[00:00:34.412] Browser LOG     guides ["cx"]
-[00:00:34.412] Browser LOG     cx 75.58750959118632 diffRight 46.72915796557638 rightTarget 122.3166675567627
-[00:00:34.413] Browser LOG     cx 75.58750959118632 cx + txtW 126.95417447766093 frameW 148
-[00:00:34.413] Browser LOG     guides ["cx"]
-[00:00:35.356] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:35.356] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:35.356] Browser LOG     guides ["cx"]
-[00:00:35.356] Browser LOG     cx 75.05833972745755 diffRight 47.258327829305145 rightTarget 122.3166675567627
-[00:00:35.356] Browser LOG     cx 75.05833972745755 cx + txtW 126.42500461393216 frameW 148
-[00:00:35.356] Browser LOG     guides ["cx"]
-[00:00:35.356] Browser LOG     cx 74.26458493186439 diffRight 48.052082624898304 rightTarget 122.3166675567627
-[00:00:35.356] Browser LOG     cx 74.26458493186439 cx + txtW 125.631249818339 frameW 148
-[00:00:35.356] Browser LOG     guides ["cx"]
-[00:00:35.356] Browser LOG     cx 74.26458493186439 diffRight 48.052082624898304 rightTarget 122.3166675567627
-[00:00:35.356] Browser LOG     cx 74.26458493186439 cx + txtW 125.631249818339 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 74 diffRight 48.316667556762695 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 74 cx + txtW 125.36666488647461 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 73.47083013627122 diffRight 48.84583742049148 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 73.47083013627122 cx + txtW 124.83749502274583 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 73.20624520440684 diffRight 49.110422352355855 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 73.20624520440684 cx + txtW 124.57291009088145 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 72.94166027254245 diffRight 49.375007284220246 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 72.94166027254245 cx + txtW 124.30832515901706 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 72.67707534067807 diffRight 49.63959221608462 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 72.67707534067807 cx + txtW 124.04374022715268 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 72.41249040881368 diffRight 49.904177147949014 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 72.41249040881368 cx + txtW 123.77915529528829 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 72.41249040881368 diffRight 49.904177147949014 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 72.41249040881368 cx + txtW 123.77915529528829 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 72.41249040881368 diffRight 49.904177147949014 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 72.41249040881368 cx + txtW 123.77915529528829 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.8833205450849 diffRight 50.433347011677796 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.8833205450849 cx + txtW 123.24998543155951 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.8833205450849 diffRight 50.433347011677796 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.8833205450849 cx + txtW 123.24998543155951 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.61873561322051 diffRight 50.69793194354219 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.61873561322051 cx + txtW 122.98540049969512 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.61873561322051 diffRight 50.69793194354219 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.61873561322051 cx + txtW 122.98540049969512 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.61873561322051 diffRight 50.69793194354219 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.61873561322051 cx + txtW 122.98540049969512 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.61873561322051 diffRight 50.69793194354219 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.61873561322051 cx + txtW 122.98540049969512 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.35415068135613 diffRight 50.962516875406564 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.35415068135613 cx + txtW 122.72081556783074 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.08956574949174 diffRight 51.227101807270955 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.08956574949174 cx + txtW 122.45623063596635 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.08956574949174 diffRight 51.227101807270955 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.08956574949174 cx + txtW 122.45623063596635 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.08956574949174 diffRight 51.227101807270955 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.08956574949174 cx + txtW 122.45623063596635 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 71.08956574949174 diffRight 51.227101807270955 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 71.08956574949174 cx + txtW 122.45623063596635 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 70.56039588576297 diffRight 51.75627167099972 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 70.56039588576297 cx + txtW 121.92706077223758 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 70.56039588576297 diffRight 51.75627167099972 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 70.56039588576297 cx + txtW 121.92706077223758 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.357] Browser LOG     cx 70.29581095389858 diffRight 52.020856602864114 rightTarget 122.3166675567627
-[00:00:35.357] Browser LOG     cx 70.29581095389858 cx + txtW 121.66247584037319 frameW 148
-[00:00:35.357] Browser LOG     guides ["cx"]
-[00:00:35.358] Browser LOG     cx 70.29581095389858 diffRight 52.020856602864114 rightTarget 122.3166675567627
-[00:00:35.358] Browser LOG     cx 70.29581095389858 cx + txtW 121.66247584037319 frameW 148
-[00:00:35.358] Browser LOG     guides ["cx"]
-[00:00:35.358] Browser LOG     cx 70.03122602203419 diffRight 52.285441534728506 rightTarget 122.3166675567627
-[00:00:35.358] Browser LOG     cx 70.03122602203419 cx + txtW 121.3978909085088 frameW 148
-[00:00:35.358] Browser LOG     guides ["cx"]
-[00:00:35.358] Browser LOG     cx 70.03122602203419 diffRight 52.285441534728506 rightTarget 122.3166675567627
-[00:00:35.358] Browser LOG     cx 70.03122602203419 cx + txtW 121.3978909085088 frameW 148
-[00:00:35.358] Browser LOG     guides ["cx"]
-[00:00:35.358] Browser LOG     cx 70.03122602203419 diffRight 52.285441534728506 rightTarget 122.3166675567627
-[00:00:35.358] Browser LOG     cx 70.03122602203419 cx + txtW 121.3978909085088 frameW 148
-[00:00:35.358] Browser LOG     guides ["cx"]
-[00:00:35.359] Browser LOG     cx 70.03122602203419 diffRight 52.285441534728506 rightTarget 122.3166675567627
-[00:00:35.359] Browser LOG     cx 70.03122602203419 cx + txtW 121.3978909085088 frameW 148
-[00:00:35.359] Browser LOG     guides ["cx"]
-[00:00:36.871] Browser LOG     cx 76.1166794549151 diffRight 46.199988101847595 rightTarget 122.3166675567627
-[00:00:36.871] Browser LOG     cx 76.1166794549151 cx + txtW 127.48334434138971 frameW 148
-[00:00:36.871] Browser LOG     guides ["cx"]
-[00:00:36.871] Browser LOG     cx 77.70418904610142 diffRight 44.612478510661276 rightTarget 122.3166675567627
-[00:00:36.871] Browser LOG     cx 77.70418904610142 cx + txtW 129.07085393257603 frameW 148
-[00:00:36.872] Browser LOG     guides ["cx"]
-[00:00:36.872] Browser LOG     cx 82.73130275152477 diffRight 39.58536480523793 rightTarget 122.3166675567627
-[00:00:36.872] Browser LOG     cx 82.73130275152477 cx + txtW 134.09796763799937 frameW 148
-[00:00:36.872] Browser LOG     guides []
-[00:00:36.872] Browser LOG     cx 84.0542274108467 diffRight 38.26244014591599 rightTarget 122.3166675567627
-[00:00:36.872] Browser LOG     cx 84.0542274108467 cx + txtW 135.4208922973213 frameW 148
-[00:00:36.872] Browser LOG     guides []
-[00:00:36.872] Browser LOG     cx 84.58339727457547 diffRight 37.73327028218722 rightTarget 122.3166675567627
-[00:00:36.872] Browser LOG     cx 84.58339727457547 cx + txtW 135.95006216105008 frameW 148
-[00:00:36.872] Browser LOG     guides []
-[00:00:36.872] Browser LOG     cx 85.64173700203303 diffRight 36.67493055472967 rightTarget 122.3166675567627
-[00:00:36.872] Browser LOG     cx 85.64173700203303 cx + txtW 137.00840188850765 frameW 148
-[00:00:36.872] Browser LOG     guides []
-[00:00:37.226] Browser LOG     cx 85.64173700203303 diffRight 36.67493055472967 rightTarget 122.3166675567627
-[00:00:37.226] Browser LOG     cx 85.64173700203303 cx + txtW 137.00840188850765 frameW 148
-[00:00:37.226] Browser LOG     guides []
-[00:00:37.226] Browser LOG     cx 85.37715207016865 diffRight 36.93951548659405 rightTarget 122.3166675567627
-[00:00:37.226] Browser LOG     cx 85.37715207016865 cx + txtW 136.74381695664326 frameW 148
-[00:00:37.226] Browser LOG     guides []
-[00:00:37.226] Browser LOG     cx 84.58339727457547 diffRight 37.73327028218722 rightTarget 122.3166675567627
-[00:00:37.226] Browser LOG     cx 84.58339727457547 cx + txtW 135.95006216105008 frameW 148
-[00:00:37.226] Browser LOG     guides []
-[00:00:37.226] Browser LOG     cx 79.82086850101652 diffRight 42.495799055746176 rightTarget 122.3166675567627
-[00:00:37.226] Browser LOG     cx 79.82086850101652 cx + txtW 131.18753338749113 frameW 148
-[00:00:37.227] Browser LOG     guides ["cx"]
-[00:00:37.227] Browser LOG     cx 78.2333589098302 diffRight 44.083308646932494 rightTarget 122.3166675567627
-[00:00:37.227] Browser LOG     cx 78.2333589098302 cx + txtW 129.6000237963048 frameW 148
-[00:00:37.227] Browser LOG     guides ["cx"]
-[00:00:37.227] Browser LOG     cx 75.32292465932193 diffRight 46.99374289744077 rightTarget 122.3166675567627
-[00:00:37.227] Browser LOG     cx 75.32292465932193 cx + txtW 126.68958954579654 frameW 148
-[00:00:37.227] Browser LOG     guides ["cx"]
-[00:00:37.227] Browser LOG     cx 74.26458493186439 diffRight 48.052082624898304 rightTarget 122.3166675567627
-[00:00:37.227] Browser LOG     cx 74.26458493186439 cx + txtW 125.631249818339 frameW 148
-[00:00:37.227] Browser LOG     guides ["cx"]
-[00:00:39.656] Browser LOG     cx 74 diffRight 48.316667556762695 rightTarget 122.3166675567627
-[00:00:39.656] Browser LOG     cx 74 cx + txtW 125.36666488647461 frameW 148
-[00:00:39.656] Browser LOG     guides ["cx"]
-[00:00:39.656] Browser LOG     cx 74.26458493186439 diffRight 48.052082624898304 rightTarget 122.3166675567627
-[00:00:39.656] Browser LOG     cx 74.26458493186439 cx + txtW 125.631249818339 frameW 148
-[00:00:39.657] Browser LOG     guides ["cx"]
-[00:00:39.774] Browser LOG     cx 74.52916986372878 diffRight 47.78749769303391 rightTarget 122.3166675567627
-[00:00:39.774] Browser LOG     cx 74.52916986372878 cx + txtW 125.89583475020339 frameW 148
-[00:00:39.774] Browser LOG     guides ["cx"]
-[00:00:40.056] Browser LOG     cx 74.79375479559316 diffRight 47.522912761169536 rightTarget 122.3166675567627
-[00:00:40.056] Browser LOG     cx 74.79375479559316 cx + txtW 126.16041968206777 frameW 148
-[00:00:40.056] Browser LOG     guides ["cx"]
-[00:00:46.926] Browser LOG     cx 84.25832245243353 diffRight 25.68334319698053 rightTarget 109.94166564941406
-[00:00:46.926] Browser LOG     cx 84.25832245243353 cx + txtW 160.3749911536054 frameW 148
-[00:00:46.927] Browser LOG     guides []
-[00:00:46.927] Browser LOG     cx 80.55413340633211 diffRight 29.38753224308195 rightTarget 109.94166564941406
-[00:00:46.927] Browser LOG     cx 80.55413340633211 cx + txtW 156.670802107504 frameW 148
-[00:00:46.927] Browser LOG     guides []
-[00:00:46.927] Browser LOG     cx 76.8499443602307 diffRight 33.09172128918337 rightTarget 109.94166564941406
-[00:00:46.927] Browser LOG     cx 76.8499443602307 cx + txtW 152.96661306140257 frameW 148
-[00:00:46.927] Browser LOG     guides ["cx"]
-[00:00:46.927] Browser LOG     cx 75.79160463277316 diffRight 34.150061016640905 rightTarget 109.94166564941406
-[00:00:46.927] Browser LOG     cx 75.79160463277316 cx + txtW 151.90827333394503 frameW 148
-[00:00:46.927] Browser LOG     guides ["cx"]
-[00:00:46.927] Browser LOG     cx 75.26243476904438 diffRight 34.67923088036969 rightTarget 109.94166564941406
-[00:00:46.927] Browser LOG     cx 75.26243476904438 cx + txtW 151.37910347021625 frameW 148
-[00:00:46.927] Browser LOG     guides ["cx"]
-[00:00:46.927] Browser LOG     cx 74.99784983717998 diffRight 34.94381581223408 rightTarget 109.94166564941406
-[00:00:46.927] Browser LOG     cx 74.99784983717998 cx + txtW 151.11451853835186 frameW 148
-[00:00:46.927] Browser LOG     guides ["cx"]
-[00:00:47.093] Browser LOG     cx 74.46867997345122 diffRight 35.472985675962846 rightTarget 109.94166564941406
-[00:00:47.093] Browser LOG     cx 74.46867997345122 cx + txtW 150.5853486746231 frameW 148
-[00:00:47.093] Browser LOG     guides ["cx"]
-[00:00:47.093] Browser LOG     cx 74.20409504158684 diffRight 35.73757060782722 rightTarget 109.94166564941406
-[00:00:47.093] Browser LOG     cx 74.20409504158684 cx + txtW 150.32076374275871 frameW 148
-[00:00:47.093] Browser LOG     guides ["cx"]
-[00:09:00.663] Browser LOG     cx 75.32292465932193 diffRight 34.618740990092135 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 75.32292465932193 cx + txtW 151.4395933604938 frameW 148
-[00:09:00.663] Browser LOG     guides ["cx"]
-[00:09:00.663] Browser LOG     cx 76.38126438677949 diffRight 33.56040126263457 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 76.38126438677949 cx + txtW 152.49793308795137 frameW 148
-[00:09:00.663] Browser LOG     guides ["cx"]
-[00:09:00.663] Browser LOG     cx 77.17501918237264 diffRight 32.766646467041426 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 77.17501918237264 cx + txtW 153.2916878835445 frameW 148
-[00:09:00.663] Browser LOG     guides ["cx"]
-[00:09:00.663] Browser LOG     cx 81.14379316033845 diffRight 28.797872489075615 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 81.14379316033845 cx + txtW 157.26046186151032 frameW 148
-[00:09:00.663] Browser LOG     guides []
-[00:09:00.663] Browser LOG     cx 85.64173700203303 diffRight 24.299928647381037 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 85.64173700203303 cx + txtW 161.75840570320491 frameW 148
-[00:09:00.663] Browser LOG     guides []
-[00:09:00.663] Browser LOG     cx 87.22924659321936 diffRight 22.712419056194705 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 87.22924659321936 cx + txtW 163.34591529439123 frameW 148
-[00:09:00.663] Browser LOG     guides []
-[00:09:00.663] Browser LOG     cx 90.1396808437276 diffRight 19.80198480568646 rightTarget 109.94166564941406
-[00:09:00.663] Browser LOG     cx 90.1396808437276 cx + txtW 166.25634954489948 frameW 148
-[00:09:00.663] Browser LOG     guides []
-[00:09:00.663] Browser LOG     cx 91.46260550304955 diffRight 18.479060146364517 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 91.46260550304955 cx + txtW 167.5792742042214 frameW 148
-[00:09:00.664] Browser LOG     guides []
-[00:09:00.664] Browser LOG     cx 91.99177536677831 diffRight 17.94989028263575 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 91.99177536677831 cx + txtW 168.1084440679502 frameW 148
-[00:09:00.664] Browser LOG     guides []
-[00:09:00.664] Browser LOG     cx 92.5209452305071 diffRight 17.420720418906967 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 92.5209452305071 cx + txtW 168.63761393167897 frameW 148
-[00:09:00.664] Browser LOG     guides []
-[00:09:00.664] Browser LOG     cx 92.78553016237147 diffRight 17.15613548704259 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 92.78553016237147 cx + txtW 168.90219886354333 frameW 148
-[00:09:00.664] Browser LOG     guides []
-[00:09:00.664] Browser LOG     cx 93.05011509423586 diffRight 16.8915505551782 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 93.05011509423586 cx + txtW 169.16678379540775 frameW 148
-[00:09:00.664] Browser LOG     guides []
-[00:09:00.664] Browser LOG     cx 94.3730397535578 diffRight 15.568625895856258 rightTarget 109.94166564941406
-[00:09:00.664] Browser LOG     cx 94.3730397535578 cx + txtW 170.48970845472968 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 95.43137948101534 diffRight 14.510286168398721 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 95.43137948101534 cx + txtW 171.54804818218722 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 95.96054934474412 diffRight 13.98111630466994 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 95.96054934474412 cx + txtW 172.077218045916 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 95.96054934474412 diffRight 13.98111630466994 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 95.96054934474412 cx + txtW 172.077218045916 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 95.96054934474412 diffRight 13.98111630466994 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 95.96054934474412 cx + txtW 172.077218045916 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 95.43137948101534 diffRight 14.510286168398721 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 95.43137948101534 cx + txtW 171.54804818218722 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 93.57928495796463 diffRight 16.36238069144943 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 93.57928495796463 cx + txtW 169.6959536591365 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 91.99177536677831 diffRight 17.94989028263575 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 91.99177536677831 cx + txtW 168.1084440679502 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 89.34592604813444 diffRight 20.595739601279618 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 89.34592604813444 cx + txtW 165.46259474930633 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 87.75841645694813 diffRight 22.183249192465937 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 87.75841645694813 cx + txtW 163.87508515812 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 85.90632193389742 diffRight 24.035343715516646 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 85.90632193389742 cx + txtW 162.02299063506928 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 84.84798220643987 diffRight 25.093683442974196 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 84.84798220643987 cx + txtW 160.96465090761174 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 84.58339727457547 diffRight 25.358268374838588 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 84.58339727457547 cx + txtW 160.70006597574735 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 84.31881234271108 diffRight 25.62285330670298 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 84.31881234271108 cx + txtW 160.43548104388296 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 84.0542274108467 diffRight 25.887438238567356 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 84.0542274108467 cx + txtW 160.17089611201857 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 83.78964247898232 diffRight 26.152023170431747 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 83.78964247898232 cx + txtW 159.9063111801542 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 83.52505754711794 diffRight 26.416608102296124 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 83.52505754711794 cx + txtW 159.6417262482898 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 83.26047261525355 diffRight 26.681193034160515 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 83.26047261525355 cx + txtW 159.37714131642542 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 82.46671781966037 diffRight 27.474947829753688 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 82.46671781966037 cx + txtW 158.58338652083225 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 81.67296302406723 diffRight 28.268702625346833 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 81.67296302406723 cx + txtW 157.7896317252391 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 81.14379316033845 diffRight 28.797872489075615 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 81.14379316033845 cx + txtW 157.26046186151032 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 80.61462329660966 diffRight 29.327042352804398 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 80.61462329660966 cx + txtW 156.73129199778154 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 80.0854534328809 diffRight 29.856212216533166 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 80.0854534328809 cx + txtW 156.2021221340528 frameW 148
-[00:09:00.665] Browser LOG     guides []
-[00:09:00.665] Browser LOG     cx 79.29169863728774 diffRight 30.649967012126325 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 79.29169863728774 cx + txtW 155.4083673384596 frameW 148
-[00:09:00.665] Browser LOG     guides ["cx"]
-[00:09:00.665] Browser LOG     cx 78.76252877355897 diffRight 31.179136875855093 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 78.76252877355897 cx + txtW 154.87919747473086 frameW 148
-[00:09:00.665] Browser LOG     guides ["cx"]
-[00:09:00.665] Browser LOG     cx 77.70418904610142 diffRight 32.23747660331264 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 77.70418904610142 cx + txtW 153.8208577472733 frameW 148
-[00:09:00.665] Browser LOG     guides ["cx"]
-[00:09:00.665] Browser LOG     cx 76.64584931864387 diffRight 33.295816330770194 rightTarget 109.94166564941406
-[00:09:00.665] Browser LOG     cx 76.64584931864387 cx + txtW 152.76251801981573 frameW 148
-[00:09:00.665] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 76.38126438677949 diffRight 33.56040126263457 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 76.38126438677949 cx + txtW 152.49793308795137 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 76.1166794549151 diffRight 33.82498619449896 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 76.1166794549151 cx + txtW 152.23334815608698 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 76.1166794549151 diffRight 33.82498619449896 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 76.1166794549151 cx + txtW 152.23334815608698 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 75.85209452305071 diffRight 34.08957112636335 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 75.85209452305071 cx + txtW 151.96876322422258 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 75.85209452305071 diffRight 34.08957112636335 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 75.85209452305071 cx + txtW 151.96876322422258 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 75.85209452305071 diffRight 34.08957112636335 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 75.85209452305071 cx + txtW 151.96876322422258 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:01.469] Browser LOG     cx 75.58750959118632 diffRight 34.354156058227744 rightTarget 109.94166564941406
-[00:09:01.469] Browser LOG     cx 75.58750959118632 cx + txtW 151.7041782923582 frameW 148
-[00:09:01.469] Browser LOG     guides ["cx"]
-[00:09:48.990] Browser LOG     cx 75.05833972745755 diffRight 34.88332592195651 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 75.05833972745755 cx + txtW 151.17500842862944 frameW 148
-[00:09:48.990] Browser LOG     guides ["cx"]
-[00:09:48.990] Browser LOG     cx 76.1166794549151 diffRight 33.82498619449896 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 76.1166794549151 cx + txtW 152.23334815608698 frameW 148
-[00:09:48.990] Browser LOG     guides ["cx"]
-[00:09:48.990] Browser LOG     cx 77.17501918237264 diffRight 32.766646467041426 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 77.17501918237264 cx + txtW 153.2916878835445 frameW 148
-[00:09:48.990] Browser LOG     guides ["cx"]
-[00:09:48.990] Browser LOG     cx 79.82086850101652 diffRight 30.120797148397543 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 79.82086850101652 cx + txtW 155.9375372021884 frameW 148
-[00:09:48.990] Browser LOG     guides ["cx"]
-[00:09:48.990] Browser LOG     cx 81.14379316033845 diffRight 28.797872489075615 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 81.14379316033845 cx + txtW 157.26046186151032 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 81.9375479559316 diffRight 28.004117693482456 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 81.9375479559316 cx + txtW 158.0542166571035 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 84.0542274108467 diffRight 25.887438238567356 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 84.0542274108467 cx + txtW 160.17089611201857 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 84.58339727457547 diffRight 25.358268374838588 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 84.58339727457547 cx + txtW 160.70006597574735 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 84.84798220643987 diffRight 25.093683442974196 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 84.84798220643987 cx + txtW 160.96465090761174 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 85.11256713830426 diffRight 24.829098511109805 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 85.11256713830426 cx + txtW 161.22923583947613 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 85.37715207016865 diffRight 24.564513579245414 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 85.37715207016865 cx + txtW 161.49382077134052 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 85.64173700203303 diffRight 24.299928647381037 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 85.64173700203303 cx + txtW 161.75840570320491 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:48.990] Browser LOG     cx 85.64173700203303 diffRight 24.299928647381037 rightTarget 109.94166564941406
-[00:09:48.990] Browser LOG     cx 85.64173700203303 cx + txtW 161.75840570320491 frameW 148
-[00:09:48.990] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 85.37715207016865 diffRight 24.564513579245414 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 85.37715207016865 cx + txtW 161.49382077134052 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 85.11256713830426 diffRight 24.829098511109805 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 85.11256713830426 cx + txtW 161.22923583947613 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 83.78964247898232 diffRight 26.152023170431747 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 83.78964247898232 cx + txtW 159.9063111801542 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 82.99588768338916 diffRight 26.945777966024906 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 82.99588768338916 cx + txtW 159.11255638456103 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 81.67296302406723 diffRight 28.268702625346833 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 81.67296302406723 cx + txtW 157.7896317252391 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 81.14379316033845 diffRight 28.797872489075615 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 81.14379316033845 cx + txtW 157.26046186151032 frameW 148
-[00:09:49.506] Browser LOG     guides []
-[00:09:49.506] Browser LOG     cx 80.87920822847406 diffRight 29.062457420940007 rightTarget 109.94166564941406
-[00:09:49.506] Browser LOG     cx 80.87920822847406 cx + txtW 156.99587692964593 frameW 148
-[00:09:49.507] Browser LOG     guides []
-[00:09:49.507] Browser LOG     cx 80.61462329660966 diffRight 29.327042352804398 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 80.61462329660966 cx + txtW 156.73129199778154 frameW 148
-[00:09:49.507] Browser LOG     guides []
-[00:09:49.507] Browser LOG     cx 80.35003836474529 diffRight 29.591627284668775 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 80.35003836474529 cx + txtW 156.46670706591715 frameW 148
-[00:09:49.507] Browser LOG     guides []
-[00:09:49.507] Browser LOG     cx 79.55628356915213 diffRight 30.385382080261934 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 79.55628356915213 cx + txtW 155.672952270324 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 78.76252877355897 diffRight 31.179136875855093 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 78.76252877355897 cx + txtW 154.87919747473086 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 78.2333589098302 diffRight 31.70830673958386 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 78.2333589098302 cx + txtW 154.35002761100208 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 77.43960411423703 diffRight 32.502061535177035 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 77.43960411423703 cx + txtW 153.5562728154089 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 76.91043425050826 diffRight 33.0312313989058 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 76.91043425050826 cx + txtW 153.02710295168015 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 76.38126438677949 diffRight 33.56040126263457 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 76.38126438677949 cx + txtW 152.49793308795137 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 75.32292465932193 diffRight 34.618740990092135 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 75.32292465932193 cx + txtW 151.4395933604938 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 75.05833972745755 diffRight 34.88332592195651 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 75.05833972745755 cx + txtW 151.17500842862944 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
-[00:09:49.507] Browser LOG     cx 74.79375479559316 diffRight 35.1479108538209 rightTarget 109.94166564941406
-[00:09:49.507] Browser LOG     cx 74.79375479559316 cx + txtW 150.91042349676502 frameW 148
-[00:09:49.507] Browser LOG     guides ["cx"]
+[00:00:01.433] Server  LOG     ✓ Ready in 980ms
+[00:00:02.644] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:02.940] Browser WARN    Image with src "http://localhost:3000/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:00:02.941] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[00:00:02.941] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
+[00:00:02.941] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773756677520} /_vercel/insights/view
+[00:00:11.057] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/editor/2 color: rgb(120, 120, 120) color: inherit {"dp":"/editor/[id]","o":"http://localhost:3000/editor/2","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773756685635} /_vercel/insights/view
+[00:00:25.150] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:25.405] Browser WARN    Image with src "http://localhost:3000/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:00:25.405] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[00:00:25.405] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/","route":"/"}
+[00:00:25.406] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/ color: rgb(120, 120, 120) color: inherit {"dp":"/","o":"http://localhost:3000/","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773756699985} /_vercel/insights/view
+[00:00:27.034] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/editor/2 color: rgb(120, 120, 120) color: inherit {"dp":"/editor/[id]","o":"http://localhost:3000/editor/2","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773756701612} /_vercel/insights/view
+[00:00:30.681] Browser LOG     cx 59.16259451597104 diffRight 67.620738308736 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 59.16259451597104 cx + txtW 101.59592886655697 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 57.8396698566491 diffRight 68.94366296805794 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 57.8396698566491 cx + txtW 100.27300420723503 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 57.31049999292033 diffRight 69.4728328317867 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 57.31049999292033 cx + txtW 99.74383434350626 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 55.193820538005234 diffRight 71.58951228670179 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 55.193820538005234 cx + txtW 97.62715488859118 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 53.60631094681891 diffRight 73.17702187788812 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 53.60631094681891 cx + txtW 96.03964529740485 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 51.7542164237682 diffRight 75.02911640093883 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 51.7542164237682 cx + txtW 94.18755077435414 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 49.90212190071749 diffRight 76.88121092398954 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 49.90212190071749 cx + txtW 92.33545625130343 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 48.31461230953117 diffRight 78.46872051517586 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 48.31461230953117 cx + txtW 90.74794666011711 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 46.72710271834485 diffRight 80.05623010636218 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 46.72710271834485 cx + txtW 89.16043706893079 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 45.933347922751686 diffRight 80.84998490195534 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 45.933347922751686 cx + txtW 88.36668227333763 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 44.87500819529414 diffRight 81.90832462941289 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 44.87500819529414 cx + txtW 87.30834254588008 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 44.081253399700984 diffRight 82.70207942500605 rightTarget 126.78333282470703
+[00:00:30.681] Browser LOG     cx 44.081253399700984 cx + txtW 86.51458775028692 frameW 148
+[00:00:30.681] Browser LOG     guides []
+[00:00:30.681] Browser LOG     cx 42.75832874037904 diffRight 84.02500408432799 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 42.75832874037904 cx + txtW 85.19166309096498 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 41.96457394478588 diffRight 84.81875887992115 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 41.96457394478588 cx + txtW 84.39790829537182 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 41.170819149192724 diffRight 85.61251367551431 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 41.170819149192724 cx + txtW 83.60415349977866 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 40.64164928546395 diffRight 86.14168353924308 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 40.64164928546395 cx + txtW 83.0749836360499 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 40.64164928546395 diffRight 86.14168353924308 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 40.64164928546395 cx + txtW 83.0749836360499 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 40.64164928546395 diffRight 86.14168353924308 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 40.64164928546395 cx + txtW 83.0749836360499 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 41.43540408105711 diffRight 85.34792874364993 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 41.43540408105711 cx + txtW 83.86873843164304 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 41.69998901292149 diffRight 85.08334381178554 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 41.69998901292149 cx + txtW 84.13332336350743 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 42.229158876650274 diffRight 84.55417394805676 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 42.229158876650274 cx + txtW 84.66249322723621 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:00:30.682] Browser LOG     cx 43.02291367224343 diffRight 83.7604191524636 rightTarget 126.78333282470703
+[00:00:30.682] Browser LOG     cx 43.02291367224343 cx + txtW 85.45624802282937 frameW 148
+[00:00:30.682] Browser LOG     guides []
+[00:01:43.401] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:43.662] Browser WARN    Image with src "http://localhost:3000/logo.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:01:43.662] Browser LOG     %c[Vercel Web Analytics]%c Debug mode is enabled by default in development. No requests will be sent to the server. color: rgb(120, 120, 120) color: inherit
+[00:01:43.662] Browser LOG     %c[Vercel Web Analytics]%c Running queued event color: rgb(120, 120, 120) color: inherit pageview {"path":"/editor/2","route":"/editor/[id]"}
+[00:01:43.663] Browser LOG     %c[Vercel Web Analytics]%c [view] http://localhost:3000/editor/2 color: rgb(120, 120, 120) color: inherit {"dp":"/editor/[id]","o":"http://localhost:3000/editor/2","r":"","sdkn":"@vercel/analytics/next","sdkv":"1.6.1","sv":"0.1.3","ts":1773756778219} /_vercel/insights/view
+[00:03:51.413] Browser LOG     cx 60.750104107157355 diffRight 66.03322871754968 rightTarget 126.78333282470703
+[00:03:51.413] Browser LOG     cx 60.750104107157355 cx + txtW 103.18343845774329 frameW 148
+[00:03:51.413] Browser LOG     guides []
+[00:03:51.413] Browser LOG     cx 61.01468903902175 diffRight 65.76864378568528 rightTarget 126.78333282470703
+[00:03:51.413] Browser LOG     cx 61.01468903902175 cx + txtW 103.44802338960768 frameW 148
+[00:03:51.413] Browser LOG     guides []
+[00:03:51.413] Browser LOG     cx 61.01468903902175 diffRight 65.76864378568528 rightTarget 126.78333282470703
+[00:03:51.413] Browser LOG     cx 61.01468903902175 cx + txtW 103.44802338960768 frameW 148
+[00:03:51.413] Browser LOG     guides []
+[00:03:51.413] Browser LOG     cx 61.01468903902175 diffRight 65.76864378568528 rightTarget 126.78333282470703
+[00:03:51.413] Browser LOG     cx 61.01468903902175 cx + txtW 103.44802338960768 frameW 148
+[00:03:51.413] Browser LOG     guides []
+[00:03:51.413] Browser LOG     cx 61.01468903902175 diffRight 65.76864378568528 rightTarget 126.78333282470703
+[00:03:51.413] Browser LOG     cx 61.01468903902175 cx + txtW 103.44802338960768 frameW 148
+[00:03:51.413] Browser LOG     guides []
+[00:03:51.413] Browser LOG     cx 61.01468903902175 diffRight 65.76864378568528 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 61.01468903902175 cx + txtW 103.44802338960768 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.750104107157355 diffRight 66.03322871754968 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.750104107157355 cx + txtW 103.18343845774329 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.48551917529297 diffRight 66.29781364941405 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.48551917529297 cx + txtW 102.91885352587892 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.48551917529297 diffRight 66.29781364941405 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.48551917529297 cx + txtW 102.91885352587892 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.48551917529297 diffRight 66.29781364941405 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.48551917529297 cx + txtW 102.91885352587892 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.22093424342859 diffRight 66.56239858127844 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.22093424342859 cx + txtW 102.65426859401452 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 60.22093424342859 diffRight 66.56239858127844 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 60.22093424342859 cx + txtW 102.65426859401452 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 59.69176437969981 diffRight 67.09156844500723 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 59.69176437969981 cx + txtW 102.12509873028574 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 59.42717944783542 diffRight 67.35615337687162 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 59.42717944783542 cx + txtW 101.86051379842135 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 59.16259451597104 diffRight 67.620738308736 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 59.16259451597104 cx + txtW 101.59592886655697 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:51.414] Browser LOG     cx 59.16259451597104 diffRight 67.620738308736 rightTarget 126.78333282470703
+[00:03:51.414] Browser LOG     cx 59.16259451597104 cx + txtW 101.59592886655697 frameW 148
+[00:03:51.414] Browser LOG     guides []
+[00:03:52.123] Browser LOG     cx 59.16259451597104 diffRight 67.620738308736 rightTarget 126.78333282470703
+[00:03:52.123] Browser LOG     cx 59.16259451597104 cx + txtW 101.59592886655697 frameW 148
+[00:03:52.123] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 59.90215988399305 diffRight 63.23117332218371 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 59.90215988399305 cx + txtW 109.63549347163953 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 54.08129138297654 diffRight 69.05204182320023 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 54.08129138297654 cx + txtW 103.81462497062302 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 51.70002699619705 diffRight 71.4333062099797 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 51.70002699619705 cx + txtW 101.43336058384354 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 48.7895927456888 diffRight 74.34374046048796 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 48.7895927456888 cx + txtW 98.52292633333528 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 48.525007813824416 diffRight 74.60832539235234 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 48.525007813824416 cx + txtW 98.2583414014709 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 48.260422881960025 diffRight 74.87291032421673 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 48.260422881960025 cx + txtW 97.99375646960651 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.333] Browser LOG     cx 47.99583795009564 diffRight 75.13749525608111 rightTarget 123.13333320617676
+[00:04:01.333] Browser LOG     cx 47.99583795009564 cx + txtW 97.72917153774213 frameW 148
+[00:04:01.333] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 47.73125301823126 diffRight 75.4020801879455 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 47.73125301823126 cx + txtW 97.46458660587774 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 47.73125301823126 diffRight 75.4020801879455 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 47.73125301823126 cx + txtW 97.46458660587774 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 47.73125301823126 diffRight 75.4020801879455 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 47.73125301823126 cx + txtW 97.46458660587774 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 47.73125301823126 diffRight 75.4020801879455 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 47.73125301823126 cx + txtW 97.46458660587774 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 47.99583795009564 diffRight 75.13749525608111 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 47.99583795009564 cx + txtW 97.72917153774213 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 48.525007813824416 diffRight 74.60832539235234 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 48.525007813824416 cx + txtW 98.2583414014709 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:01.658] Browser LOG     cx 48.525007813824416 diffRight 74.60832539235234 rightTarget 123.13333320617676
+[00:04:01.658] Browser LOG     cx 48.525007813824416 cx + txtW 98.2583414014709 frameW 148
+[00:04:01.658] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 49.318762609417576 diffRight 73.81457059675918 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 49.318762609417576 cx + txtW 99.05209619706406 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 49.84793247314635 diffRight 73.2854007330304 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 49.84793247314635 cx + txtW 99.58126606079284 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 52.7583667236546 diffRight 70.37496648252215 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 52.7583667236546 cx + txtW 102.49170031130109 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 54.61046124670531 diffRight 68.52287195947144 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 54.61046124670531 cx + txtW 104.3437948343518 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 56.9917256334848 diffRight 66.14160757269195 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 56.9917256334848 cx + txtW 106.72505922113129 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 60.431329747721826 diffRight 62.70200345845493 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 60.431329747721826 cx + txtW 110.16466333536832 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 60.69591467958622 diffRight 62.43741852659054 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 60.69591467958622 cx + txtW 110.42924826723271 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 61.22508454331499 diffRight 61.908248662861766 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 61.22508454331499 cx + txtW 110.95841813096148 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 61.489669475179376 diffRight 61.64366373099738 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 61.489669475179376 cx + txtW 111.22300306282585 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 62.548009202636926 diffRight 60.58532400353983 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 62.548009202636926 cx + txtW 112.28134279028342 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 63.077179066365694 diffRight 60.05615413981106 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 63.077179066365694 cx + txtW 112.81051265401217 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 64.66468865755202 diffRight 58.46864454862474 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 64.66468865755202 cx + txtW 114.3980222451985 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 65.72302838500957 diffRight 57.41030482116719 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 65.72302838500957 cx + txtW 115.45636197265605 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 66.51678318060273 diffRight 56.61655002557403 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 66.51678318060273 cx + txtW 116.25011676824921 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.125] Browser LOG     cx 67.0459530443315 diffRight 56.08738016184526 rightTarget 123.13333320617676
+[00:04:02.125] Browser LOG     cx 67.0459530443315 cx + txtW 116.77928663197798 frameW 148
+[00:04:02.125] Browser LOG     guides []
+[00:04:02.873] Browser LOG     cx 67.31053797619589 diffRight 55.82279522998087 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 67.31053797619589 cx + txtW 117.04387156384237 frameW 148
+[00:04:02.873] Browser LOG     guides []
+[00:04:02.873] Browser LOG     cx 67.57512290806028 diffRight 55.55821029811648 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 67.57512290806028 cx + txtW 117.30845649570676 frameW 148
+[00:04:02.873] Browser LOG     guides []
+[00:04:02.873] Browser LOG     cx 67.83970783992467 diffRight 55.29362536625209 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 67.83970783992467 cx + txtW 117.57304142757116 frameW 148
+[00:04:02.873] Browser LOG     guides []
+[00:04:02.873] Browser LOG     cx 68.36887770365344 diffRight 54.76445550252332 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 68.36887770365344 cx + txtW 118.10221129129992 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 68.8980475673822 diffRight 54.23528563879455 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 68.8980475673822 cx + txtW 118.63138115502869 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 69.1626324992466 diffRight 53.97070070693016 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 69.1626324992466 cx + txtW 118.89596608689308 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 69.42721743111099 diffRight 53.70611577506577 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 69.42721743111099 cx + txtW 119.16055101875747 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 69.69180236297538 diffRight 53.44153084320138 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 69.69180236297538 cx + txtW 119.42513595062186 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 70.22097222670415 diffRight 52.91236097947261 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 70.22097222670415 cx + txtW 119.95430581435063 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 71.01472702229731 diffRight 52.11860618387945 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 71.01472702229731 cx + txtW 120.74806060994379 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 71.01472702229731 diffRight 52.11860618387945 rightTarget 123.13333320617676
+[00:04:02.873] Browser LOG     cx 71.01472702229731 cx + txtW 120.74806060994379 frameW 148
+[00:04:02.873] Browser LOG     guides ["cx"]
+[00:04:02.873] Browser LOG     cx 71.01472702229731 diffRight 52.11860618387945 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 71.01472702229731 cx + txtW 120.74806060994379 frameW 148
+[00:04:02.874] Browser LOG     guides ["cx"]
+[00:04:02.874] Browser LOG     cx 70.48555715856853 diffRight 52.64777604760823 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 70.48555715856853 cx + txtW 120.21889074621501 frameW 148
+[00:04:02.874] Browser LOG     guides ["cx"]
+[00:04:02.874] Browser LOG     cx 70.22097222670415 diffRight 52.91236097947261 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 70.22097222670415 cx + txtW 119.95430581435063 frameW 148
+[00:04:02.874] Browser LOG     guides ["cx"]
+[00:04:02.874] Browser LOG     cx 68.63346263551782 diffRight 54.49987057065894 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 68.63346263551782 cx + txtW 118.3667962231643 frameW 148
+[00:04:02.874] Browser LOG     guides ["cx"]
+[00:04:02.874] Browser LOG     cx 67.83970783992467 diffRight 55.29362536625209 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 67.83970783992467 cx + txtW 117.57304142757116 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 67.31053797619589 diffRight 55.82279522998087 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 67.31053797619589 cx + txtW 117.04387156384237 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 66.25219824873834 diffRight 56.88113495743842 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 66.25219824873834 cx + txtW 115.98553183638482 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 64.66468865755202 diffRight 58.46864454862474 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 64.66468865755202 cx + txtW 114.3980222451985 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 63.341763998230086 diffRight 59.79156920794667 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 63.341763998230086 cx + txtW 113.07509758587656 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 62.283424270772535 diffRight 60.84990893540422 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 62.283424270772535 cx + txtW 112.01675785841903 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 61.22508454331499 diffRight 61.908248662861766 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 61.22508454331499 cx + txtW 110.95841813096148 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 60.9604996114506 diffRight 62.17283359472616 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 60.9604996114506 cx + txtW 110.69383319909709 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 58.84382015653551 diffRight 64.28951304964124 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 58.84382015653551 cx + txtW 108.577153744182 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 57.52089549721357 diffRight 65.61243770896318 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 57.52089549721357 cx + txtW 107.25422908486006 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:02.874] Browser LOG     cx 57.25631056534918 diffRight 65.87702264082758 rightTarget 123.13333320617676
+[00:04:02.874] Browser LOG     cx 57.25631056534918 cx + txtW 106.98964415299567 frameW 148
+[00:04:02.874] Browser LOG     guides []
+[00:04:03.139] Browser LOG     cx 56.9917256334848 diffRight 66.14160757269195 rightTarget 123.13333320617676
+[00:04:03.139] Browser LOG     cx 56.9917256334848 cx + txtW 106.72505922113129 frameW 148
+[00:04:03.139] Browser LOG     guides []
+[00:04:03.139] Browser LOG     cx 56.19797083789163 diffRight 66.93536236828513 rightTarget 123.13333320617676
+[00:04:03.139] Browser LOG     cx 56.19797083789163 cx + txtW 105.93130442553812 frameW 148
+[00:04:03.139] Browser LOG     guides []
+[00:04:03.139] Browser LOG     cx 55.93338590602725 diffRight 67.19994730014952 rightTarget 123.13333320617676
+[00:04:03.139] Browser LOG     cx 55.93338590602725 cx + txtW 105.66671949367372 frameW 148
+[00:04:03.139] Browser LOG     guides []
+[00:04:03.139] Browser LOG     cx 54.61046124670531 diffRight 68.52287195947144 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 54.61046124670531 cx + txtW 104.3437948343518 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.140] Browser LOG     cx 54.08129138297654 diffRight 69.05204182320023 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 54.08129138297654 cx + txtW 103.81462497062302 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.140] Browser LOG     cx 53.816706451112154 diffRight 69.3166267550646 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 53.816706451112154 cx + txtW 103.55004003875864 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.140] Browser LOG     cx 53.022951655518995 diffRight 70.11038155065776 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 53.022951655518995 cx + txtW 102.75628524316548 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.140] Browser LOG     cx 52.229196859925835 diffRight 70.90413634625092 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 52.229196859925835 cx + txtW 101.96253044757232 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.140] Browser LOG     cx 51.70002699619705 diffRight 71.4333062099797 rightTarget 123.13333320617676
+[00:04:03.140] Browser LOG     cx 51.70002699619705 cx + txtW 101.43336058384354 frameW 148
+[00:04:03.140] Browser LOG     guides []
+[00:04:03.870] Browser LOG     cx 51.70002699619705 diffRight 71.4333062099797 rightTarget 123.13333320617676
+[00:04:03.870] Browser LOG     cx 51.70002699619705 cx + txtW 101.43336058384354 frameW 148
+[00:04:03.870] Browser LOG     guides []

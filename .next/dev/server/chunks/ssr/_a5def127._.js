@@ -797,7 +797,7 @@ const allTemplates = [
             "#EC4899"
         ],
         emoji: "💒",
-        svg: "/assets/greeting-card.svg"
+        svg: "/assets/greeting-card-2.svg"
     },
     {
         id: "3",

@@ -16,6 +16,53 @@ const IMAGE_ZONE_PREFIX = "image_zone_"
 // Multiplier to make image drag feel more responsive.
 // 1 = geometric mapping only, >1 = faster movement.
 const IMAGE_DRAG_SPEED = 4
+const IMAGE_COMPRESS_QUALITY = 0.75
+const IMAGE_COMPRESS_SKIP_BELOW_BYTES = 500 * 1024
+
+async function fileToDataUrl(file: Blob): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve((reader.result as string) || "")
+    reader.onerror = () => reject(new Error("FileReader failed"))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function compressImageFileToJpegDataUrl(file: File): Promise<{ dataUrl: string; w: number; h: number; outBytes: number }> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.decoding = "async"
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error("Image load failed"))
+      img.src = url
+    })
+
+    const canvas = document.createElement("canvas")
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("No canvas context")
+    ctx.drawImage(img, 0, 0)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => {
+          if (!b) reject(new Error("toBlob failed"))
+          else resolve(b)
+        },
+        "image/jpeg",
+        IMAGE_COMPRESS_QUALITY
+      )
+    })
+
+    const dataUrl = await fileToDataUrl(blob)
+    return { dataUrl, w: img.naturalWidth, h: img.naturalHeight, outBytes: blob.size }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
 /** Selector for element by id (avoids template literals in JSX for Turbopack) */
 function idSelector(id: string) {
   return "[id=\"" + id + "\"]"
@@ -54,6 +101,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   >([])
   const [textValues, setTextValues] = useState<Record<string, string>>({})
   const [zoneStates, setZoneStates] = useState<Record<string, ImageZoneState>>({})
+  const [zoneBusy, setZoneBusy] = useState<Record<string, boolean>>({})
   const [isExporting, setIsExporting] = useState(false)
   const [svgLoaded, setSvgLoaded] = useState(false)
 
@@ -245,8 +293,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     // Image zone overlays
     Object.entries(zoneStates).forEach(([zoneId, st]) => {
+      const clipBounds = st.hasClip && st.existingClipId ? getClipBounds(previewDoc, st.existingClipId) : null
+      const zoneX = clipBounds ? clipBounds.x : st.zoneX
+      const zoneY = clipBounds ? clipBounds.y : st.zoneY
+      const zoneW = clipBounds ? clipBounds.w : st.zoneW
+      const zoneH = clipBounds ? clipBounds.h : st.zoneH
       if (!st.b64) {
-        const { zoneX, zoneY, zoneW, zoneH } = st
         const cx = zoneX + zoneW / 2
         const cy = zoneY + zoneH / 2
         const r = Math.min(zoneW, zoneH) * 0.09
@@ -288,17 +340,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         hotspot.setAttribute("data-upload-zone", zoneId)
         hotspot.setAttribute("pointer-events", "all")
         hotspot.setAttribute("style", "cursor:pointer")
+        if (st.hasClip && st.existingClipId) hotspot.setAttribute("clip-path", st.existingClipId)
         svgEl.appendChild(hotspot)
       } else {
         const rect = previewDoc.createElementNS(ns, "rect")
-        rect.setAttribute("x", String(st.zoneX))
-        rect.setAttribute("y", String(st.zoneY))
-        rect.setAttribute("width", String(st.zoneW))
-        rect.setAttribute("height", String(st.zoneH))
+        rect.setAttribute("x", String(zoneX))
+        rect.setAttribute("y", String(zoneY))
+        rect.setAttribute("width", String(zoneW))
+        rect.setAttribute("height", String(zoneH))
         rect.setAttribute("fill", "transparent")
         rect.setAttribute("data-img-zone", zoneId)
         rect.setAttribute("style", "cursor:grab")
-        
+        if (st.hasClip && st.existingClipId) rect.setAttribute("clip-path", st.existingClipId)
         svgEl.appendChild(rect)
       }
     })
@@ -475,15 +528,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true
       if (!drag.moved) return
       if (drag.type === "img") {
+        // Capture drag fields; React may run state updaters after drag is cleared.
+        const dragId = drag.id
+        const startOX = drag.startOX ?? 0
+        const startOY = drag.startOY ?? 0
+        const sx = drag.sx
+        const sy = drag.sy
         setZoneStates((prev) => {
-          const st = prev[drag!.id]
+          const st = prev[dragId]
           if (!st) return prev
           return {
             ...prev,
-            [drag!.id]: {
+            [dragId]: {
               ...st,
-              offsetX: (drag!.startOX ?? 0) + dx * drag!.sx * IMAGE_DRAG_SPEED,
-              offsetY: (drag!.startOY ?? 0) + dy * drag!.sy * IMAGE_DRAG_SPEED,
+              offsetX: startOX + dx * sx * IMAGE_DRAG_SPEED,
+              offsetY: startOY + dy * sy * IMAGE_DRAG_SPEED,
             },
           }
         })
@@ -764,14 +823,55 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0]
                                 if (!file) return
-                                const reader = new FileReader()
-                                reader.onload = (re) => {
-                                  const b64 = (re.target?.result as string) || ""
-                                  const img = new Image()
-                                  img.onload = () => {
+                                setZoneBusy((prev) => ({ ...prev, [zone.id]: true }))
+                                try {
+                                  let b64 = ""
+                                  let iw = 0
+                                  let ih = 0
+
+                                  if (file.size >= IMAGE_COMPRESS_SKIP_BELOW_BYTES) {
+                                    const c = await compressImageFileToJpegDataUrl(file)
+                                    b64 = c.dataUrl
+                                    iw = c.w
+                                    ih = c.h
+                                  } else {
+                                    b64 = await fileToDataUrl(file)
+                                    const img = new Image()
+                                    await new Promise<void>((resolve, reject) => {
+                                      img.onload = () => resolve()
+                                      img.onerror = () => reject(new Error("Image load failed"))
+                                      img.src = b64
+                                    })
+                                    iw = img.naturalWidth
+                                    ih = img.naturalHeight
+                                  }
+
+                                  setZoneStates((prev) => ({
+                                    ...prev,
+                                    [zone.id]: {
+                                      ...prev[zone.id],
+                                      b64,
+                                      imgW: iw,
+                                      imgH: ih,
+                                      scale: 1,
+                                      offsetX: 0,
+                                      offsetY: 0,
+                                    },
+                                  }))
+                                  setPreviewVersion((v) => v + 1)
+                                } catch {
+                                  // Fallback: try original data URL path
+                                  try {
+                                    const b64 = await fileToDataUrl(file)
+                                    const img = new Image()
+                                    await new Promise<void>((resolve, reject) => {
+                                      img.onload = () => resolve()
+                                      img.onerror = () => reject(new Error("Image load failed"))
+                                      img.src = b64
+                                    })
                                     setZoneStates((prev) => ({
                                       ...prev,
                                       [zone.id]: {
@@ -785,19 +885,28 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                       },
                                     }))
                                     setPreviewVersion((v) => v + 1)
+                                  } catch {
+                                    toast.error("Image upload failed")
                                   }
-                                  img.src = b64
+                                } finally {
+                                  setZoneBusy((prev) => ({ ...prev, [zone.id]: false }))
                                 }
-                                reader.readAsDataURL(file)
                               }}
                             />
                             <button
                               type="button"
-                              className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                              className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                              disabled={!!zoneBusy[zone.id]}
                               onClick={() => fileInputRefs.current[zone.id]?.click()}
                             >
                               <span className="text-sm">+</span>
-                              <span>{hasImage ? (fileInputRefs.current[zone.id]?.files?.[0]?.name?.slice(0, 20) || "Image") : "Choose image"}</span>
+                              <span>
+                                {zoneBusy[zone.id]
+                                  ? "Compressing…"
+                                  : hasImage
+                                    ? fileInputRefs.current[zone.id]?.files?.[0]?.name?.slice(0, 20) || "Image"
+                                    : "Choose image"}
+                              </span>
                             </button>
                             {hasImage && (
                               <>
