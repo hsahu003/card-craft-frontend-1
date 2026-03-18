@@ -74,12 +74,29 @@ export function textOverlayRect(tel: SVGElement): {
   const { width, ascent, descent } = getTextMetrics(txt || "W", fs, fw, ff)
   const PAD = fs * 0.08
   let rx: number
-  if (anchor === "middle") rx = tx - width / 2 - PAD
-  else if (anchor === "end") rx = tx - width - PAD
-  else rx = tx - PAD
-  const ry = ty - ascent - PAD
-  const rw = width + PAD * 2
-  const rh = ascent + descent + PAD * 2
+  let ry: number
+  let rw: number
+  let rh: number
+
+  // Prefer real rendered bounds when available (handles multiline <tspan> and nested styling)
+  try {
+    const bb = (tel as unknown as SVGGraphicsElement).getBBox?.()
+    if (bb && bb.width > 0 && bb.height > 0) {
+      rx = bb.x - PAD
+      ry = bb.y - PAD
+      rw = bb.width + PAD * 2
+      rh = bb.height + PAD * 2
+    } else {
+      throw new Error("empty bbox")
+    }
+  } catch {
+    if (anchor === "middle") rx = tx - width / 2 - PAD
+    else if (anchor === "end") rx = tx - width - PAD
+    else rx = tx - PAD
+    ry = ty - ascent - PAD
+    rw = width + PAD * 2
+    rh = ascent + descent + PAD * 2
+  }
   return { rx, ry, rw, rh, tx, ty, fs, fw, ff, anchor, width, ascent, descent }
 }
 

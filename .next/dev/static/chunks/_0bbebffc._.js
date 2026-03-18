@@ -846,7 +846,7 @@ const allTemplates = [
             "#22C55E"
         ],
         emoji: "💐",
-        svg: "/assets/greeting-card.svg"
+        svg: "/assets/greeting-card-3.svg"
     },
     {
         id: "4",
