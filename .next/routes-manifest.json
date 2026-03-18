@@ -28,6 +28,14 @@
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/editor/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/fabric-editor/[id]",
+      "regex": "^/fabric\\-editor/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/fabric\\-editor/(?<nxtPid>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [

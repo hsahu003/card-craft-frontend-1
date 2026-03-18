@@ -6,6 +6,7 @@
   "/checkout/page": "/checkout",
   "/confirmation/page": "/confirmation",
   "/editor/[id]/page": "/editor/[id]",
+  "/fabric-editor/[id]/page": "/fabric-editor/[id]",
   "/how-it-works/page": "/how-it-works",
   "/login/page": "/login",
   "/page": "/",

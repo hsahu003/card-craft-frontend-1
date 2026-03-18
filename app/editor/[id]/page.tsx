@@ -367,7 +367,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("width", String(rw))
       ov.setAttribute("height", String(rh))
       ov.setAttribute("fill", "transparent")
-      ov.setAttribute("stroke", "transparent")
+      ov.setAttribute("stroke", "red")
       ov.setAttribute("stroke-width", "1")
       ov.setAttribute("stroke-dasharray", "3 2")
       ov.setAttribute("rx", "2")
@@ -412,20 +412,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const scaleX = bbox.width / vb[2]
       const scaleY = bbox.height / vb[3]
       const st = textOverlayRect(liveText)
-      const fillColor = liveText.getAttribute("fill") || "#111"
+      const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : (null as any)
+      const fillColor = (cs?.getPropertyValue("fill") || "").trim() || liveText.getAttribute("fill") || "#111"
+      const fontFamily = (cs?.fontFamily || "").trim() || st.ff
+      const fontWeight = (cs?.fontWeight || "").trim() || st.fw
       const txt = liveText.textContent || ""
       const screenX = (st.rx - vb[0]) * scaleX
       const screenY = (st.ry - vb[1]) * scaleY
       const screenW = st.rw * scaleX
       const screenH = st.rh * scaleY
-      const screenFs = st.fs * scaleX
+      const screenFs = parseFloat(cs?.fontSize || "") || st.fs * scaleX
       const inp = document.createElement("input")
       inp.type = "text"
       inp.value = txt
-      inp.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${st.ff};font-weight:${st.fw};color:${fillColor};background:rgba(255,255,255,0.93);border:1.5px solid #378ADD;border-radius:2px;padding:0 4px;outline:none;z-index:100;`
+      inp.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};color:${fillColor};background:rgba(255,255,255,0.93);border:1.5px solid #378ADD;border-radius:2px;padding:0 4px;outline:none;z-index:100;`
       inp.addEventListener("input", () => {
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid))
-        if (docEl2) docEl2.textContent = inp.value
+        if (docEl2) {
+          const t = (docEl2 as SVGElement).querySelector("tspan")
+          if (t) t.textContent = inp.value
+          else docEl2.textContent = inp.value
+        }
         setTextValues((prev) => ({ ...prev, [tid]: inp.value }))
         const panel = panelInputRefs.current[tid]
         if (panel) panel.value = inp.value
@@ -438,12 +445,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
         const val = inp.value
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid))
-        if (docEl2) docEl2.textContent = val
+        if (docEl2) {
+          const t = (docEl2 as SVGElement).querySelector("tspan")
+          if (t) t.textContent = val
+          else docEl2.textContent = val
+        }
         setTextValues((prev) => ({ ...prev, [tid]: val }))
         const panel = panelInputRefs.current[tid]
         if (panel) panel.value = val
         if (liveText) {
-          liveText.textContent = val
+          const t = liveText.querySelector("tspan")
+          if (t) t.textContent = val
+          else liveText.textContent = val
           liveText.style.display = ""
         }
         if (ov && liveText) {
@@ -505,6 +518,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const tid = txtOv.getAttribute("data-text-zone")!
         const docEl = svgDocRef.current?.querySelector(idSelector(tid))
         if (!docEl) return
+        const firstTspan = (docEl as SVGElement).querySelector("tspan") as SVGElement | null
+        const startTX = parseFloat(firstTspan?.getAttribute("x") || docEl.getAttribute("x") || "0")
+        const startTY = parseFloat(firstTspan?.getAttribute("y") || docEl.getAttribute("y") || "0")
         drag = {
           type: "txt",
           id: tid,
@@ -513,8 +529,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           sy,
           startX: e.clientX,
           startY: e.clientY,
-          startTX: parseFloat(docEl.getAttribute("x") || "0"),
-          startTY: parseFloat(docEl.getAttribute("y") || "0"),
+          startTX,
+          startTY,
           moved: false,
         }
         ;(txtOv as HTMLElement).style.cursor = "grabbing"
@@ -549,6 +565,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setPreviewVersion((v) => v + 1)
       }
       if (drag.type === "txt") {
+        console.log("mouse move drag.id", drag.id);
         const rawX = (drag.startTX ?? 0) + dx * drag.sx
         const rawY = (drag.startTY ?? 0) + dy * drag.sy
         const liveText = svgEl.querySelector(idSelector(drag.id)) as SVGElement
@@ -613,12 +630,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         else if (anchor === "end") finalX = nx + txtW / 2
         else finalX = nx - txtW / 2
         const finalY = ny + txtH / 2
-        const docEl = svgDocRef.current?.querySelector(idSelector(drag.id))
+        const docEl = svgDocRef.current?.querySelector(idSelector(drag.id)) as SVGElement | null
         if (docEl) {
+          // If tspans are used for positioning, update them (and parent text as fallback)
+          const tspans = Array.from(docEl.querySelectorAll("tspan")) as SVGElement[]
+          if (tspans.length) tspans.forEach((t) => (t.setAttribute("x", String(finalX)), t.setAttribute("y", String(finalY))))
           docEl.setAttribute("x", String(finalX))
           docEl.setAttribute("y", String(finalY))
         }
         if (liveText) {
+          const tspansLive = Array.from(liveText.querySelectorAll("tspan")) as SVGElement[]
+          if (tspansLive.length) tspansLive.forEach((t) => (t.setAttribute("x", String(finalX)), t.setAttribute("y", String(finalY))))
           liveText.setAttribute("x", String(finalX))
           liveText.setAttribute("y", String(finalY))
           const r = textOverlayRect(liveText)
