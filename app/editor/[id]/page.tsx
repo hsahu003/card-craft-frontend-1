@@ -445,7 +445,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       const leafTspans = getLeafTspans(liveText)
-      const isMultiline = leafTspans.length > 1
+      // If a template has at least one leaf <tspan>, open a multiline editor so the user can add more lines.
+      const isMultiline = leafTspans.length >= 1
       const lines = leafTspans.map((t) => t.textContent || "")
       const txt = isMultiline ? lines.join("\n") : (lines[0] || liveText.textContent || "")
       const screenX = (st.rx - vb[0]) * scaleX
@@ -456,8 +457,35 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       const applyTextToTextEl = (target: SVGElement, val: string) => {
         const leaf = getLeafTspans(target)
-        if (leaf.length > 1) {
-          const parts = val.split("\n")
+        const parts = val.split("\n")
+        // #region agent log
+        fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
+          body: JSON.stringify({
+            sessionId: "d7e809",
+            runId: "pre-fix-merge-lines",
+            hypothesisId: "H1",
+            location: "app/editor/[id]/page.tsx:applyTextToTextEl:entry",
+            message: "applyTextToTextEl entry",
+            data: {
+              tid,
+              leafCount: leaf.length,
+              partsCount: parts.length,
+              inputVal: val,
+              leafTexts: leaf.map((t) => t.textContent || ""),
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {})
+        // #endregion
+        if (parts.length > 1) {
+          // If we have multiline input but no leaf tspans exist, fall back to plain textContent.
+          if (leaf.length === 0) {
+            target.textContent = val
+            return
+          }
+
           // If user typed more lines than existing leaf <tspan>s, create new leaf tspans.
           if (parts.length > leaf.length) {
             const firstX = parseFloat(leaf[0].getAttribute("x") || "0")
@@ -490,10 +518,55 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           leaf2.forEach((t, i) => {
             t.textContent = parts[i] ?? ""
           })
+          // #region agent log
+          fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
+            body: JSON.stringify({
+              sessionId: "d7e809",
+              runId: "pre-fix-merge-lines",
+              hypothesisId: "H2",
+              location: "app/editor/[id]/page.tsx:applyTextToTextEl:multiline",
+              message: "applied multiline mapping",
+              data: {
+                tid,
+                partsCount: parts.length,
+                leaf2Count: leaf2.length,
+                leaf2Texts: leaf2.map((t) => t.textContent || ""),
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {})
+          // #endregion
         } else {
-          const t = target.querySelector("tspan")
-          if (t) t.textContent = val
-          else target.textContent = val
+          if (leaf.length > 0) {
+            // Collapse to a single visible line: keep first leaf text, clear stale extra lines.
+            leaf[0].textContent = val
+            for (let i = 1; i < leaf.length; i++) leaf[i].textContent = ""
+          } else {
+            const t = target.querySelector("tspan")
+            if (t) t.textContent = val
+            else target.textContent = val
+          }
+          // #region agent log
+          fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
+            body: JSON.stringify({
+              sessionId: "d7e809",
+              runId: "pre-fix-merge-lines",
+              hypothesisId: "H3",
+              location: "app/editor/[id]/page.tsx:applyTextToTextEl:singleline",
+              message: "applied single-line mapping",
+              data: {
+                tid,
+                targetTextContent: target.textContent || "",
+                firstLeafTexts: getLeafTspans(target).map((x) => x.textContent || ""),
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {})
+          // #endregion
         }
       }
 
@@ -651,14 +724,25 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const rawY = (drag.startTY ?? 0) + dy * drag.sy
         const liveText = svgEl.querySelector(idSelector(drag.id)) as SVGElement
         const st = textOverlayRect(liveText)
-        const txtW = st.width
-        const txtH = st.ascent + st.descent
+        // Use rendered bbox for snap geometry, especially for multiline tspans.
+        let bb: { x: number; y: number; width: number; height: number } | null = null
+        try {
+          const b = (liveText as unknown as SVGGraphicsElement).getBBox?.()
+          if (b && b.width > 0 && b.height > 0) bb = { x: b.x, y: b.y, width: b.width, height: b.height }
+        } catch {}
+        const txtW = bb?.width ?? st.width
+        const txtH = bb?.height ?? st.ascent + st.descent
         const anchor = st.anchor
-        let cx: number
-        if (anchor === "middle") cx = rawX
-        else if (anchor === "end") cx = rawX - txtW / 2
-        else cx = rawX + txtW / 2
-        const cy = rawY - txtH / 2
+        // Predict bbox center from drag baseline (first tspan x/y) to keep snap aligned visually.
+        const firstTspanLive = liveText.querySelector("tspan") as SVGElement | null
+        const firstXCur = parseFloat(firstTspanLive?.getAttribute("x") || liveText.getAttribute("x") || "0")
+        const firstYCur = parseFloat(firstTspanLive?.getAttribute("y") || liveText.getAttribute("y") || "0")
+        const offsetX = bb ? firstXCur - bb.x : 0
+        const offsetY = bb ? firstYCur - bb.y : txtH / 2
+        const predictedLeft = rawX - offsetX
+        const predictedTop = rawY - offsetY
+        const cx = predictedLeft + txtW / 2
+        const cy = predictedTop
 
         const { nx, ny, guides, frameX, frameY, frameW, frameH } = applySnap(svgEl as unknown as SVGElement, cx, cy, txtW, txtH)
 
@@ -924,6 +1008,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               }}
                             />
                           )}
+                          {/* #region agent log */}
+                          {id === "editable_title" && (() => {
+                            const v = textValues[id] || ""
+                            fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
+                              body: JSON.stringify({
+                                sessionId: "d7e809",
+                                runId: "pre-fix-merge-lines",
+                                hypothesisId: "H4",
+                                location: "app/editor/[id]/page.tsx:left-panel-input-switch",
+                                message: "left panel control type decision",
+                                data: {
+                                  id,
+                                  hasNewline: v.includes("\n"),
+                                  length: v.length,
+                                  chosen: v.includes("\n") || v.length > 60 ? "textarea" : "input",
+                                  value: v,
+                                },
+                                timestamp: Date.now(),
+                              }),
+                            }).catch(() => {})
+                            return null
+                          })()}
+                          {/* #endregion */}
                         </div>
                       ))}
                     </>
