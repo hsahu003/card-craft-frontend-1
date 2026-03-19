@@ -377,10 +377,64 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       svgEl.appendChild(ov)
     })
 
+    // Selection state: which editable text is selected (shows bounding box + handles).
+    let selectedTextId: string | null = null
+
+    const renderTextHandles = (tid: string | null) => {
+      selectedTextId = tid
+      // Remove any existing handle groups
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
+        g.parentNode?.removeChild(g)
+      })
+      if (!tid) return
+      const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
+      if (!ov) return
+      const x = parseFloat(ov.getAttribute("x") || "0")
+      const y = parseFloat(ov.getAttribute("y") || "0")
+      const w = parseFloat(ov.getAttribute("width") || "0")
+      const h = parseFloat(ov.getAttribute("height") || "0")
+      if (!w || !h) return
+
+      const g = previewDoc.createElementNS(ns, "g")
+      g.setAttribute("id", "handles_" + tid)
+      g.setAttribute("data-text-handles", "1")
+      g.setAttribute("pointer-events", "none")
+
+      const HANDLE_SIZE = Math.max(Math.min(Math.min(w, h) * 0.12, 12), 5)
+      const R = HANDLE_SIZE / 2
+
+      const corners: { key: "tl" | "tr" | "bl" | "br"; cx: number; cy: number; cursor: string }[] = [
+        { key: "tl", cx: x, cy: y, cursor: "nwse-resize" },
+        { key: "tr", cx: x + w, cy: y, cursor: "nesw-resize" },
+        { key: "bl", cx: x, cy: y + h, cursor: "nesw-resize" },
+        { key: "br", cx: x + w, cy: y + h, cursor: "nwse-resize" },
+      ]
+
+      corners.forEach(({ key, cx, cy, cursor }) => {
+        const r = previewDoc.createElementNS(ns, "rect")
+        r.setAttribute("x", String(cx - R))
+        r.setAttribute("y", String(cy - R))
+        r.setAttribute("width", String(HANDLE_SIZE))
+        r.setAttribute("height", String(HANDLE_SIZE))
+        r.setAttribute("rx", String(Math.max(1, HANDLE_SIZE * 0.25)))
+        r.setAttribute("fill", "#ffffff")
+        r.setAttribute("stroke", "#378ADD")
+        r.setAttribute("stroke-width", "0.8")
+        r.setAttribute("pointer-events", "all")
+        r.setAttribute("data-text-handle", key)
+        r.setAttribute("data-text-id", tid)
+        r.setAttribute("style", "cursor:" + cursor)
+        g.appendChild(r)
+      })
+
+      svgEl.appendChild(g)
+    }
+
     container.innerHTML = ""
     container.appendChild(svgEl)
 
-    // After inserting into DOM, recompute text overlays using getBBox() (needed for multiline tspans).
+    // After inserting into DOM, recompute text overlays using getBBox() (needed for multiline tspans)
+    // so that selection/handles use accurate geometry.
     textFields.forEach(({ id: tid }) => {
       const tel = svgEl.querySelector(idSelector(tid)) as SVGElement | null
       const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
@@ -392,20 +446,54 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("height", String(r.rh))
     })
 
-    let drag: {
-      type: "img" | "txt"
-      id: string
-      overlay: Element
-      sx: number
-      sy: number
-      startX: number
-      startY: number
-      startOX?: number
-      startOY?: number
-      startTX?: number
-      startTY?: number
-      moved: boolean
-    } | null = null
+    type DragState =
+      | {
+          type: "img"
+          id: string
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          startOX?: number
+          startOY?: number
+          moved: boolean
+        }
+      | {
+          type: "txt"
+          id: string
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          startTX?: number
+          startTY?: number
+          moved: boolean
+        }
+      | {
+          type: "resize"
+          id: string
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          startMouseX: number
+          startMouseY: number
+          corner: "tl" | "tr" | "bl" | "br"
+          anchorX: number
+          anchorY: number
+          startCornerX: number
+          startCornerY: number
+          startFontSizePx: number
+          startBBox: { x: number; y: number; width: number; height: number }
+          startFirstTspanX: number
+          startFirstTspanY: number
+          moved: boolean
+        }
+
+    let drag: DragState | null = null
 
     function getScale() {
       const bbox = svgEl.getBoundingClientRect()
@@ -458,27 +546,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const applyTextToTextEl = (target: SVGElement, val: string) => {
         const leaf = getLeafTspans(target)
         const parts = val.split("\n")
-        // #region agent log
-        fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
-          body: JSON.stringify({
-            sessionId: "d7e809",
-            runId: "pre-fix-merge-lines",
-            hypothesisId: "H1",
-            location: "app/editor/[id]/page.tsx:applyTextToTextEl:entry",
-            message: "applyTextToTextEl entry",
-            data: {
-              tid,
-              leafCount: leaf.length,
-              partsCount: parts.length,
-              inputVal: val,
-              leafTexts: leaf.map((t) => t.textContent || ""),
-            },
-            timestamp: Date.now(),
-          }),
-        }).catch(() => {})
-        // #endregion
         if (parts.length > 1) {
           // If we have multiline input but no leaf tspans exist, fall back to plain textContent.
           if (leaf.length === 0) {
@@ -518,26 +585,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           leaf2.forEach((t, i) => {
             t.textContent = parts[i] ?? ""
           })
-          // #region agent log
-          fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
-            body: JSON.stringify({
-              sessionId: "d7e809",
-              runId: "pre-fix-merge-lines",
-              hypothesisId: "H2",
-              location: "app/editor/[id]/page.tsx:applyTextToTextEl:multiline",
-              message: "applied multiline mapping",
-              data: {
-                tid,
-                partsCount: parts.length,
-                leaf2Count: leaf2.length,
-                leaf2Texts: leaf2.map((t) => t.textContent || ""),
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {})
-          // #endregion
         } else {
           if (leaf.length > 0) {
             // Collapse to a single visible line: keep first leaf text, clear stale extra lines.
@@ -548,25 +595,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             if (t) t.textContent = val
             else target.textContent = val
           }
-          // #region agent log
-          fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
-            body: JSON.stringify({
-              sessionId: "d7e809",
-              runId: "pre-fix-merge-lines",
-              hypothesisId: "H3",
-              location: "app/editor/[id]/page.tsx:applyTextToTextEl:singleline",
-              message: "applied single-line mapping",
-              data: {
-                tid,
-                targetTextContent: target.textContent || "",
-                firstLeafTexts: getLeafTspans(target).map((x) => x.textContent || ""),
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {})
-          // #endregion
         }
       }
 
@@ -640,17 +668,94 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     const onMouseDown = (e: MouseEvent) => {
-      const imgOv = (e.target as Element).closest("[data-img-zone]")
-      const txtOv = (e.target as Element).closest("[data-text-zone]")
-      const up = (e.target as Element).closest("[data-upload-zone]")
+      const target = e.target as Element
+      const handle = target.closest("[data-text-handle]") as SVGElement | null
+      const imgOv = target.closest("[data-img-zone]")
+      const txtOv = target.closest("[data-text-zone]")
+      const up = target.closest("[data-upload-zone]")
       if (up) {
         const zoneId = up.getAttribute("data-upload-zone")
         if (zoneId && fileInputRefs.current[zoneId]) fileInputRefs.current[zoneId].click()
         return
       }
-      if (!imgOv && !txtOv) return
+      if (!imgOv && !txtOv && !handle) {
+        renderTextHandles(null)
+        return
+      }
       e.preventDefault()
       const { sx, sy } = getScale()
+      if (handle) {
+        const tid = handle.getAttribute("data-text-id")
+        const cornerAttr = handle.getAttribute("data-text-handle") as "tl" | "tr" | "bl" | "br" | null
+        if (!tid || !cornerAttr) return
+        const liveText = svgEl.querySelector(idSelector(tid)) as SVGElement | null
+        const docEl = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
+        const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
+        if (!liveText || !docEl || !ov) return
+
+        // Inline editor hides live text and overlay; restore so getBBox() returns valid bounds.
+        ;(liveText as unknown as HTMLElement).style.display = ""
+        ;(ov as unknown as HTMLElement).style.display = ""
+
+        let bbox: { x: number; y: number; width: number; height: number } | null = null
+        try {
+          const b = (liveText as unknown as SVGGraphicsElement).getBBox?.()
+          if (b && b.width > 0 && b.height > 0) {
+            bbox = { x: b.x, y: b.y, width: b.width, height: b.height }
+          }
+        } catch {}
+        if (!bbox) return
+
+        const firstTspan = liveText.querySelector("tspan") as SVGElement | null
+        const startFirstTspanX = parseFloat(firstTspan?.getAttribute("x") || liveText.getAttribute("x") || "0")
+        const startFirstTspanY = parseFloat(firstTspan?.getAttribute("y") || liveText.getAttribute("y") || "0")
+
+        const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : null
+        const fsAttr = cs?.fontSize || liveText.getAttribute("font-size") || docEl.getAttribute("font-size") || "16"
+        const startFontSizePx = parseFloat(fsAttr)
+
+        const corners: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
+          tl: { x: bbox.x, y: bbox.y },
+          tr: { x: bbox.x + bbox.width, y: bbox.y },
+          bl: { x: bbox.x, y: bbox.y + bbox.height },
+          br: { x: bbox.x + bbox.width, y: bbox.y + bbox.height },
+        }
+
+        const startCorner = corners[cornerAttr]
+        if (!startCorner) return
+
+        const opposite: Record<"tl" | "tr" | "bl" | "br", "br" | "bl" | "tr" | "tl"> = {
+          tl: "br",
+          tr: "bl",
+          bl: "tr",
+          br: "tl",
+        }
+        const anchorCorner = corners[opposite[cornerAttr]]
+
+        drag = {
+          type: "resize",
+          id: tid,
+          overlay: ov,
+          sx,
+          sy,
+          startX: e.clientX,
+          startY: e.clientY,
+          startMouseX: e.clientX,
+          startMouseY: e.clientY,
+          corner: cornerAttr,
+          anchorX: anchorCorner.x,
+          anchorY: anchorCorner.y,
+          startCornerX: startCorner.x,
+          startCornerY: startCorner.y,
+          startFontSizePx,
+          startBBox: bbox,
+          startFirstTspanX,
+          startFirstTspanY,
+          moved: false,
+        }
+        ;(handle as unknown as HTMLElement).style.cursor = getComputedStyle(handle).cursor || "nwse-resize"
+        return
+      }
       if (imgOv) {
         const zoneId = imgOv.getAttribute("data-img-zone")!
         const st = zoneStates[zoneId]
@@ -671,6 +776,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
       if (txtOv) {
         const tid = txtOv.getAttribute("data-text-zone")!
+        renderTextHandles(tid)
         const docEl = svgDocRef.current?.querySelector(idSelector(tid))
         if (!docEl) return
         const firstTspan = (docEl as SVGElement).querySelector("tspan") as SVGElement | null
@@ -694,10 +800,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     const onMouseMove = (e: MouseEvent) => {
       if (!drag) return
+
       const dx = e.clientX - drag.startX
       const dy = e.clientY - drag.startY
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true
       if (!drag.moved) return
+
       if (drag.type === "img") {
         // Capture drag fields; React may run state updaters after drag is cleared.
         const dragId = drag.id
@@ -841,6 +949,108 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         // Do not bump previewVersion during drag — we already update live DOM above; bumping would re-run the effect and rebuild the whole SVG every frame (jank)
       }
+      if (drag.type === "resize") {
+        const resizeDrag = drag
+        const { sx, sy } = getScale()
+        const dxSvg = (e.clientX - resizeDrag.startMouseX) * sx
+        const dySvg = (e.clientY - resizeDrag.startMouseY) * sy
+
+        const newCornerX = resizeDrag.startCornerX + dxSvg
+        const newCornerY = resizeDrag.startCornerY + dySvg
+
+        const startDiag = Math.hypot(
+          resizeDrag.startCornerX - resizeDrag.anchorX,
+          resizeDrag.startCornerY - resizeDrag.anchorY
+        )
+        const newDiag = Math.hypot(newCornerX - resizeDrag.anchorX, newCornerY - resizeDrag.anchorY)
+        if (!startDiag || !Number.isFinite(startDiag)) return
+        let scale = newDiag / startDiag
+        if (!Number.isFinite(scale) || scale <= 0) scale = 1
+
+        const rawFont = resizeDrag.startFontSizePx * scale
+        const newFont = Math.max(8, Math.min(200, rawFont))
+
+        const docEl = svgDocRef.current?.querySelector(idSelector(resizeDrag.id)) as SVGElement | null
+        const liveText = svgEl.querySelector(idSelector(resizeDrag.id)) as SVGElement | null
+        if (!docEl || !liveText) return
+
+        const applyFontSize = (el: SVGElement) => {
+          el.setAttribute("font-size", String(newFont))
+          ;(el as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+          const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+          tspans.forEach((t) => {
+            if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(newFont))
+            ;(t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+            const style = t.getAttribute("style")
+            if (style && style.includes("font-size")) {
+              const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
+              t.setAttribute("style", withoutSize ? `${withoutSize}font-size:${newFont}px;` : `font-size:${newFont}px;`)
+            }
+          })
+        }
+
+        applyFontSize(docEl)
+        applyFontSize(liveText)
+
+        const updatePosition = (el: SVGElement) => {
+          let bb: { x: number; y: number; width: number; height: number } | null = null
+          try {
+            const b = (el as unknown as SVGGraphicsElement).getBBox?.()
+            if (b && b.width > 0 && b.height > 0) {
+              bb = { x: b.x, y: b.y, width: b.width, height: b.height }
+            }
+          } catch {}
+          if (!bb) return
+
+          const anchors: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
+            tl: { x: bb.x, y: bb.y },
+            tr: { x: bb.x + bb.width, y: bb.y },
+            bl: { x: bb.x, y: bb.y + bb.height },
+            br: { x: bb.x + bb.width, y: bb.y + bb.height },
+          }
+
+          const anchorKey = ((): "tl" | "tr" | "bl" | "br" => {
+            const c = resizeDrag.corner
+            if (c === "tl") return "br"
+            if (c === "tr") return "bl"
+            if (c === "bl") return "tr"
+            return "tl"
+          })()
+
+          const currentAnchor = anchors[anchorKey]
+          const dxAnchor = resizeDrag.anchorX - currentAnchor.x
+          const dyAnchor = resizeDrag.anchorY - currentAnchor.y
+
+          const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+          if (tspans.length) {
+            tspans.forEach((t) => {
+              const ox = parseFloat(t.getAttribute("x") || "0")
+              const oy = parseFloat(t.getAttribute("y") || "0")
+              t.setAttribute("x", String(ox + dxAnchor))
+              t.setAttribute("y", String(oy + dyAnchor))
+            })
+          } else {
+            const ox = parseFloat(el.getAttribute("x") || "0")
+            const oy = parseFloat(el.getAttribute("y") || "0")
+            el.setAttribute("x", String(ox + dxAnchor))
+            el.setAttribute("y", String(oy + dyAnchor))
+          }
+        }
+
+        updatePosition(docEl)
+        updatePosition(liveText)
+
+        const r = textOverlayRect(liveText)
+        const ov = svgEl.querySelector("#overlay_" + resizeDrag.id) as SVGRectElement | null
+        if (ov) {
+          ov.setAttribute("x", String(r.rx))
+          ov.setAttribute("y", String(r.ry))
+          ov.setAttribute("width", String(r.rw))
+          ov.setAttribute("height", String(r.rh))
+        }
+
+        renderTextHandles(resizeDrag.id)
+      }
     }
 
     const onMouseUp = () => {
@@ -852,6 +1062,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (type === "txt") hideGuides(svgEl)
       drag = null
       if (wasDrag && type === "txt") setPreviewVersion((v) => v + 1)
+      if (type === "resize" && wasDrag) {
+        setPreviewVersion((v) => v + 1)
+        return
+      }
       if (!wasDrag && type === "txt") openEditor(tid)
     }
 
@@ -1008,31 +1222,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               }}
                             />
                           )}
-                          {/* #region agent log */}
-                          {id === "editable_title" && (() => {
-                            const v = textValues[id] || ""
-                            fetch("http://127.0.0.1:7918/ingest/0625c21e-ccbe-468d-acee-2a41c806255c", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "d7e809" },
-                              body: JSON.stringify({
-                                sessionId: "d7e809",
-                                runId: "pre-fix-merge-lines",
-                                hypothesisId: "H4",
-                                location: "app/editor/[id]/page.tsx:left-panel-input-switch",
-                                message: "left panel control type decision",
-                                data: {
-                                  id,
-                                  hasNewline: v.includes("\n"),
-                                  length: v.length,
-                                  chosen: v.includes("\n") || v.length > 60 ? "textarea" : "input",
-                                  value: v,
-                                },
-                                timestamp: Date.now(),
-                              }),
-                            }).catch(() => {})
-                            return null
-                          })()}
-                          {/* #endregion */}
                         </div>
                       ))}
                     </>
