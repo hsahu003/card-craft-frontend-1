@@ -95,6 +95,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement>>({})
   const panelInputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement>>({})
+  // When starting a resize from resize handles, the inline editor overlay blurs.
+  // Its blur handler calls `commit()`, which rebuilds the preview and interrupts resize dragging.
+  // This flag suppresses commit during an active resize.
+  const suppressEditorCommitRef = useRef(false)
 
   const [previewVersion, setPreviewVersion] = useState(0)
   const [textFields, setTextFields] = useState<{ id: string; label: string }[]>([])
@@ -496,6 +500,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
 
     let drag: DragState | null = null
+    let hiddenTextEditorOverlay: HTMLElement | null = null
+    let hiddenTextEditorForTid: string | null = null
 
     function getScale() {
       const bbox = svgEl.getBoundingClientRect()
@@ -632,6 +638,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       overlayDiv.appendChild(editorEl)
       const commit = () => {
+        if (suppressEditorCommitRef.current) return
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
         const val = editorEl.value
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
@@ -704,6 +711,19 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
         if (!liveText || !docEl || !ov) return
 
+        suppressEditorCommitRef.current = true
+
+        // Hide the inline typing overlay during resize so resizing is visible live.
+        // The overlay itself already uses absolute positioning over the SVG.
+        if (container) {
+          const existingOverlay = container.querySelector("#txt-editor-overlay") as HTMLElement | null
+          if (existingOverlay) {
+            hiddenTextEditorOverlay = existingOverlay
+            hiddenTextEditorForTid = tid
+            existingOverlay.style.display = "none"
+          }
+        }
+
         // Inline editor hides live text and overlay; restore so getBBox() returns valid bounds.
         ;(liveText as unknown as HTMLElement).style.display = ""
         ;(ov as unknown as HTMLElement).style.display = ""
@@ -715,7 +735,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             bbox = { x: b.x, y: b.y, width: b.width, height: b.height }
           }
         } catch {}
-        if (!bbox) return
+        if (!bbox) {
+          suppressEditorCommitRef.current = false
+          return
+        }
 
         const firstTspan = liveText.querySelector("tspan") as SVGElement | null
         const startFirstTspanX = parseFloat(firstTspan?.getAttribute("x") || liveText.getAttribute("x") || "0")
@@ -733,7 +756,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
 
         const startCorner = corners[cornerAttr]
-        if (!startCorner) return
+        if (!startCorner) {
+          suppressEditorCommitRef.current = false
+          return
+        }
 
         const opposite: Record<"tl" | "tr" | "bl" | "br", "br" | "bl" | "tr" | "tl"> = {
           tl: "br",
@@ -1094,11 +1120,51 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ;(drag.overlay as HTMLElement).style.cursor = "grab"
       if (type === "txt") hideGuides(svgEl)
       drag = null
-      if (wasDrag && type === "txt") setPreviewVersion((v) => v + 1)
-      if (type === "resize" && wasDrag) {
-        setPreviewVersion((v) => v + 1)
+      if (type === "resize") {
+        // Restore hidden typing overlay and align it to resized text.
+        if (hiddenTextEditorOverlay && hiddenTextEditorForTid === tid) {
+          const liveText = svgEl.querySelector(idSelector(tid)) as SVGElement | null
+          if (liveText) {
+            const st = textOverlayRect(liveText)
+            const svgRect = svgEl.getBoundingClientRect()
+            const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
+            const scaleX = svgRect.width / vb[2]
+            const scaleY = svgRect.height / vb[3]
+
+            const screenX = (st.rx - vb[0]) * scaleX
+            const screenY = (st.ry - vb[1]) * scaleY
+            const screenW = st.rw * scaleX
+            const screenH = st.rh * scaleY
+
+            const editorEl = hiddenTextEditorOverlay.querySelector("textarea,input") as
+              | HTMLInputElement
+              | HTMLTextAreaElement
+              | null
+
+            if (editorEl) {
+              editorEl.style.left = screenX + "px"
+              editorEl.style.top = screenY + "px"
+              editorEl.style.width = Math.max(screenW, 40) + "px"
+              editorEl.style.height = screenH + "px"
+
+              // Keep textarea font-size aligned with visible SVG text.
+              const leaf = liveText.querySelector("tspan") as SVGElement | null
+              const leafCs = leaf ? window.getComputedStyle(leaf as any) : null
+              const leafFont = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
+              if (Number.isFinite(leafFont) && leafFont > 0) editorEl.style.fontSize = leafFont + "px"
+            }
+          }
+          hiddenTextEditorOverlay.style.display = ""
+        }
+        hiddenTextEditorOverlay = null
+        hiddenTextEditorForTid = null
+
+        suppressEditorCommitRef.current = false
+        if (wasDrag) setPreviewVersion((v) => v + 1)
         return
       }
+
+      if (wasDrag && type === "txt") setPreviewVersion((v) => v + 1)
       if (!wasDrag && type === "txt") openEditor(tid)
     }
 
@@ -1122,7 +1188,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const s = new XMLSerializer().serializeToString(doc)
       const dataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(s)))
       const { w, h } = getSVGSize(doc)
-      const scale = 2
+      // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
+      // (jsPDF embeds the canvas as a raster image, so this directly impacts perceived sharpness.)
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+      const scale = Math.max(3, Math.min(8, dpr * 3))
       const canvas = document.createElement("canvas")
       canvas.width = w * scale
       canvas.height = h * scale
