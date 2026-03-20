@@ -18,6 +18,8 @@ const IMAGE_ZONE_PREFIX = "image_zone_"
 const IMAGE_DRAG_SPEED = 4
 const IMAGE_COMPRESS_QUALITY = 0.75
 const IMAGE_COMPRESS_SKIP_BELOW_BYTES = 500 * 1024
+// Line spacing multiplier so line-height scales with font-size (e.g. 1.25 = 125% of font size).
+const LINE_HEIGHT_RATIO = 1.25
 
 async function fileToDataUrl(file: Blob): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
@@ -541,7 +543,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const screenY = (st.ry - vb[1]) * scaleY
       const screenW = st.rw * scaleX
       const screenH = st.rh * scaleY
-      const screenFs = parseFloat(cs?.fontSize || "") || st.fs * scaleX
+      // Match the effective font-size of the visible SVG text.
+      // Many Inkscape templates define font-size on leaf <tspan>s, so parent <text> can differ.
+      const firstLeaf = leafTspans[0]
+      const leafCs = typeof window !== "undefined" && firstLeaf ? window.getComputedStyle(firstLeaf as any) : null
+      const leafFontSizePx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
+      // `getComputedStyle(...).fontSize` for SVG text often represents the SVG user-unit size.
+      // We need to convert it to CSS pixels using the same scale factors we use for overlay positioning.
+      const baseSvgFontSize = parseFloat(cs?.fontSize || "") || st.fs
+      const svgFontSizeForOverlay = Number.isFinite(leafFontSizePx) && leafFontSizePx > 0 ? leafFontSizePx : baseSvgFontSize
+      const screenFs = svgFontSizeForOverlay * scaleX
 
       const applyTextToTextEl = (target: SVGElement, val: string) => {
         const leaf = getLeafTspans(target)
@@ -969,7 +980,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (!Number.isFinite(scale) || scale <= 0) scale = 1
 
         const rawFont = resizeDrag.startFontSizePx * scale
-        const newFont = Math.max(8, Math.min(200, rawFont))
+        const newFont = Math.max(4, Math.min(200, rawFont))
 
         const docEl = svgDocRef.current?.querySelector(idSelector(resizeDrag.id)) as SVGElement | null
         const liveText = svgEl.querySelector(idSelector(resizeDrag.id)) as SVGElement | null
@@ -992,6 +1003,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
         applyFontSize(docEl)
         applyFontSize(liveText)
+
+        const respaceTspansByFontSize = (el: SVGElement) => {
+          const all = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+          const leaf = all.filter((t) => t.querySelectorAll("tspan").length === 0)
+          if (leaf.length <= 1) return
+          leaf.sort((a, b) => {
+            const ay = parseFloat(a.getAttribute("y") || "0")
+            const by = parseFloat(b.getAttribute("y") || "0")
+            if (ay !== by) return ay - by
+            const ax = parseFloat(a.getAttribute("x") || "0")
+            const bx = parseFloat(b.getAttribute("x") || "0")
+            return ax - bx
+          })
+          const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
+          const stepY = newFont * LINE_HEIGHT_RATIO
+          leaf.forEach((t, i) => {
+            t.setAttribute("y", String(firstY + i * stepY))
+          })
+        }
+        respaceTspansByFontSize(docEl)
+        respaceTspansByFontSize(liveText)
 
         const updatePosition = (el: SVGElement) => {
           let bb: { x: number; y: number; width: number; height: number } | null = null
