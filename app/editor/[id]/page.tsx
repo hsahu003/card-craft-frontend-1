@@ -946,6 +946,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
             ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
           }
+          renderTextHandles(drag.id)
         }
         // Do not bump previewVersion during drag — we already update live DOM above; bumping would re-run the effect and rebuild the whole SVG every frame (jank)
       }
