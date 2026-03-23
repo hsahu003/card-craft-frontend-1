@@ -21,7 +21,7 @@ const EDITABLE_PREFIX = "editable_"
 const IMAGE_ZONE_PREFIX = "image_zone_"
 // Multiplier to make image drag feel more responsive.
 // 1 = geometric mapping only, >1 = faster movement.
-const IMAGE_DRAG_SPEED = 4
+const IMAGE_DRAG_SPEED = 1.25
 const IMAGE_COMPRESS_QUALITY = 0.75
 const IMAGE_COMPRESS_SKIP_BELOW_BYTES = 500 * 1024
 // Line spacing multiplier so line-height scales with font-size (e.g. 1.25 = 125% of font size).
@@ -632,8 +632,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const scaleY = bbox.height / vb[3]
       const st = textOverlayRect(liveText)
       const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : (null as any)
-      const fontFamily = (cs?.fontFamily || "").trim() || st.ff
-      const fontWeight = (cs?.fontWeight || "").trim() || st.fw
 
       const getLeafTspans = (textEl: SVGElement) => {
         const all = Array.from(textEl.querySelectorAll("tspan")) as SVGElement[]
@@ -655,28 +653,49 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const isMultiline = leafTspans.length >= 1
       const lines = leafTspans.map((t) => t.textContent || "")
       const txt = isMultiline ? lines.join("\n") : (lines[0] || liveText.textContent || "")
-      const screenX = (st.rx - vb[0]) * scaleX
-      const screenY = (st.ry - vb[1]) * scaleY
-      const screenW = st.rw * scaleX
-      const screenH = st.rh * scaleY
       // Match the effective font-size of the visible SVG text.
       // Many Inkscape templates define font-size on leaf <tspan>s, so parent <text> can differ.
       const firstLeaf = leafTspans[0]
       const leafCs = typeof window !== "undefined" && firstLeaf ? window.getComputedStyle(firstLeaf as any) : null
+      const fontFamily = (leafCs?.fontFamily || cs?.fontFamily || "").trim() || st.ff
+      const fontWeight = (leafCs?.fontWeight || cs?.fontWeight || "").trim() || st.fw
+      const fontStyle = (leafCs?.fontStyle || cs?.fontStyle || "").trim() || "normal"
       const leafFontSizePx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
       // `getComputedStyle(...).fontSize` for SVG text often represents the SVG user-unit size.
       // We need to convert it to CSS pixels using the same scale factors we use for overlay positioning.
       const baseSvgFontSize = parseFloat(cs?.fontSize || "") || st.fs
       const svgFontSizeForOverlay = Number.isFinite(leafFontSizePx) && leafFontSizePx > 0 ? leafFontSizePx : baseSvgFontSize
       const screenFs = svgFontSizeForOverlay * scaleX
+      const getOverlayLineHeight = (textEl: SVGElement, leafStyle: CSSStyleDeclaration | null, textStyle: CSSStyleDeclaration | null) => {
+        const raw = (leafStyle?.lineHeight || textStyle?.lineHeight || "").trim()
+        if (raw && raw !== "normal") return raw
+        const leaves = getLeafTspans(textEl)
+        if (leaves.length >= 2) {
+          const y0 = parseFloat(leaves[0].getAttribute("y") || "")
+          const y1 = parseFloat(leaves[1].getAttribute("y") || "")
+          if (Number.isFinite(y0) && Number.isFinite(y1)) {
+            const dy = Math.abs(y1 - y0)
+            if (dy > 0) return dy * scaleY + "px"
+          }
+        }
+        return Math.max(screenFs * 1.25, 1) + "px"
+      }
+
+      const normalizeEditableValue = (value: string) => {
+        const hasVisibleContent = value
+          .split("\n")
+          .some((line) => line.trim().length > 0)
+        return hasVisibleContent ? value : "text here"
+      }
 
       const applyTextToTextEl = (target: SVGElement, val: string) => {
+        const normalizedVal = normalizeEditableValue(val)
         const leaf = getLeafTspans(target)
-        const parts = val.split("\n")
+        const parts = normalizedVal.split("\n")
         if (parts.length > 1) {
           // If we have multiline input but no leaf tspans exist, fall back to plain textContent.
           if (leaf.length === 0) {
-            target.textContent = val
+            target.textContent = normalizedVal
             return
           }
 
@@ -686,16 +705,28 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
             const lastTemplate = leaf[leaf.length - 1]
 
-            // Font-based line step: prefer computed lineHeight if numeric, else derive from font-size.
-            const cstyle = typeof window !== "undefined" ? window.getComputedStyle(target as any) : null
-            const lineHeightStr = cstyle?.lineHeight || ""
-            const lineHeightPx = Number.parseFloat(lineHeightStr)
-            const fontSizePx =
-              Number.parseFloat(cstyle?.fontSize || "") ||
-              parseFloat(target.getAttribute("font-size") || "") ||
-              screenFs
-
-            const stepY = Number.isFinite(lineHeightPx) && lineHeightPx > 0 ? lineHeightPx : fontSizePx * 1.25
+            // Compute line step in SVG units (not screen px) to avoid oversized gaps.
+            let stepY = 0
+            if (leaf.length >= 2) {
+              const yPrev = parseFloat(leaf[leaf.length - 2].getAttribute("y") || "")
+              const yLast = parseFloat(leaf[leaf.length - 1].getAttribute("y") || "")
+              const dy = Math.abs(yLast - yPrev)
+              if (Number.isFinite(dy) && dy > 0) stepY = dy
+            }
+            if (!(stepY > 0)) {
+              const leafFontSizeSvg = parseFloat(leaf[0].getAttribute("font-size") || "")
+              const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
+              const stFontSizeSvg = Number.isFinite(st.fs) && st.fs > 0 ? st.fs : NaN
+              const fallbackFontSvg =
+                Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
+                  ? leafFontSizeSvg
+                  : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
+                    ? targetFontSizeSvg
+                    : Number.isFinite(stFontSizeSvg) && stFontSizeSvg > 0
+                      ? stFontSizeSvg
+                      : 14
+              stepY = fallbackFontSvg * 1.25
+            }
 
             for (let i = leaf.length; i < parts.length; i++) {
               const newLeaf = lastTemplate.cloneNode(false) as SVGElement
@@ -710,17 +741,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
           const leaf2 = getLeafTspans(target)
           leaf2.forEach((t, i) => {
-            t.textContent = parts[i] ?? ""
+            if (i < parts.length) {
+              t.textContent = parts[i] ?? ""
+            } else {
+              t.parentNode?.removeChild(t)
+            }
           })
         } else {
           if (leaf.length > 0) {
-            // Collapse to a single visible line: keep first leaf text, clear stale extra lines.
-            leaf[0].textContent = val
-            for (let i = 1; i < leaf.length; i++) leaf[i].textContent = ""
+            // Collapse to a single visible line and remove stale extra lines.
+            leaf[0].textContent = normalizedVal
+            for (let i = 1; i < leaf.length; i++) leaf[i].parentNode?.removeChild(leaf[i])
           } else {
             const t = target.querySelector("tspan")
-            if (t) t.textContent = val
-            else target.textContent = val
+            if (t) t.textContent = normalizedVal
+            else target.textContent = normalizedVal
           }
         }
       }
@@ -728,10 +763,34 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const editorEl = document.createElement(isMultiline ? "textarea" : "input")
       if (!isMultiline) (editorEl as HTMLInputElement).type = "text"
       editorEl.value = txt
+      const liveRect = liveText.getBoundingClientRect()
+      const overlayLineHeight = getOverlayLineHeight(liveText, leafCs, cs)
+      const csLetterSpacing = cs?.letterSpacing || "normal"
+      const csTextAlign = cs?.textAlign || "start"
+
+      const updateEditorRect = () => {
+        const r = liveText.getBoundingClientRect()
+        editorEl.style.left = r.left + "px"
+        editorEl.style.top = r.top + "px"
+        editorEl.style.width = Math.max(r.width, 40) + "px"
+        const baseHeight = Math.max(r.height, 1)
+        if (isMultiline && editorEl instanceof HTMLTextAreaElement) {
+          // Keep caret alignment correct when user adds an empty new line:
+          // SVG bbox can remain one-line until glyphs exist on next line.
+          editorEl.style.height = "auto"
+          const contentHeight = Math.max(editorEl.scrollHeight, 1)
+          editorEl.style.height = Math.max(baseHeight, contentHeight) + "px"
+        } else {
+          editorEl.style.height = baseHeight + "px"
+        }
+      }
+
+      const onContainerScroll = () => updateEditorRect()
+      if (container) container.addEventListener("scroll", onContainerScroll, { passive: true })
       if (isMultiline) {
-        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};${INLINE_TEXT_EDITOR_CHROME};border:1.5px solid #378ADD;border-radius:2px;padding:2px 4px;outline:none;z-index:100;resize:none;overflow:auto;white-space:pre;line-height:normal;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${csTextAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       } else {
-        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};${INLINE_TEXT_EDITOR_CHROME};border:1.5px solid #378ADD;border-radius:2px;padding:0 4px;outline:none;z-index:100;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${csTextAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       }
 
       editorEl.addEventListener("input", () => {
@@ -739,9 +798,24 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           textHistoryApiRef.current.pushPastBeforeMutation()
           inlineHistoryPushed = true
         }
-        const val = editorEl.value
+        const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
         if (docEl2) applyTextToTextEl(docEl2, val)
+        // Keep the visible SVG text updated while typing (textarea text is transparent).
+        applyTextToTextEl(liveText, val)
+        // Keep editor bounds and selection rect in sync with live text growth/shrink.
+        updateEditorRect()
+        if (ov) {
+          const r = textOverlayRect(liveText)
+          const editorRect = editorEl.getBoundingClientRect()
+          const editorHeightSvg = editorRect.height / Math.max(scaleY, 0.0001)
+          const nextHeight = Math.max(r.rh, editorHeightSvg)
+          ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
+          ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
+          ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
+          ;(ov as SVGRectElement).setAttribute("height", String(nextHeight))
+          renderTextHandles(tid)
+        }
         setTextValues((prev) => ({ ...prev, [tid]: val }))
         const panel = panelInputRefs.current[tid]
         if (panel) panel.value = val
@@ -753,8 +827,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       overlayDiv.appendChild(editorEl)
       const commit = () => {
         if (suppressEditorCommitRef.current) return
+        if (container) container.removeEventListener("scroll", onContainerScroll)
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
-        const val = editorEl.value
+        const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
         if (docEl2) applyTextToTextEl(docEl2, val)
         setTextValues((prev) => ({ ...prev, [tid]: val }))
@@ -791,12 +866,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
       })
       editorEl.addEventListener("blur", () => setTimeout(commit, 80))
-      liveText.style.display = "none"
-      if (ov) (ov as HTMLElement).style.display = "none"
+      // Show the SVG text; the editor is caret-only and has transparent text.
+      liveText.style.display = ""
+      if (ov) (ov as HTMLElement).style.display = ""
       if (container) container.appendChild(overlayDiv)
       editorEl.style.pointerEvents = "auto"
       editorEl.focus()
-      if (!isMultiline) (editorEl as HTMLInputElement).select()
     }
 
     const onMouseDown = (e: MouseEvent) => {
@@ -1267,15 +1342,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           const liveText = svgEl.querySelector(idSelector(tid)) as SVGElement | null
           if (liveText) {
             const st = textOverlayRect(liveText)
+            const liveRect = liveText.getBoundingClientRect()
             const svgRect = svgEl.getBoundingClientRect()
             const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
             const scaleX = svgRect.width / vb[2]
             const scaleY = svgRect.height / vb[3]
-
-            const screenX = (st.rx - vb[0]) * scaleX
-            const screenY = (st.ry - vb[1]) * scaleY
-            const screenW = st.rw * scaleX
-            const screenH = st.rh * scaleY
 
             const editorEl = hiddenTextEditorOverlay.querySelector("textarea,input") as
               | HTMLInputElement
@@ -1283,16 +1354,44 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               | null
 
             if (editorEl) {
-              editorEl.style.left = screenX + "px"
-              editorEl.style.top = screenY + "px"
-              editorEl.style.width = Math.max(screenW, 40) + "px"
-              editorEl.style.height = screenH + "px"
+              editorEl.style.left = liveRect.left + "px"
+              editorEl.style.top = liveRect.top + "px"
+              editorEl.style.width = Math.max(liveRect.width, 40) + "px"
+              editorEl.style.height = Math.max(liveRect.height, 1) + "px"
 
-              // Keep textarea font-size aligned with visible SVG text.
+              // Keep editor font-size aligned with visible SVG text.
+              const cs2 = window.getComputedStyle(liveText as any)
+              const baseSvgFontSize = parseFloat(cs2?.fontSize || "") || st.fs
               const leaf = liveText.querySelector("tspan") as SVGElement | null
               const leafCs = leaf ? window.getComputedStyle(leaf as any) : null
-              const leafFont = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
-              if (Number.isFinite(leafFont) && leafFont > 0) editorEl.style.fontSize = leafFont + "px"
+              const leafFontPx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
+              const svgFontSizeForOverlay =
+                Number.isFinite(leafFontPx) && leafFontPx > 0 ? leafFontPx : baseSvgFontSize
+              const screenFs2 = svgFontSizeForOverlay * scaleX
+
+              editorEl.style.fontFamily = leafCs?.fontFamily || cs2?.fontFamily || ""
+              editorEl.style.fontWeight = leafCs?.fontWeight || cs2?.fontWeight || ""
+              editorEl.style.fontStyle = leafCs?.fontStyle || cs2?.fontStyle || "normal"
+              const rawLineHeight = (leafCs?.lineHeight || cs2?.lineHeight || "").trim()
+              if (rawLineHeight && rawLineHeight !== "normal") {
+                editorEl.style.lineHeight = rawLineHeight
+              } else {
+                const leaves = Array.from(liveText.querySelectorAll("tspan")).filter(
+                  (t) => t.querySelectorAll("tspan").length === 0
+                ) as SVGElement[]
+                if (leaves.length >= 2) {
+                  const y0 = parseFloat(leaves[0].getAttribute("y") || "")
+                  const y1 = parseFloat(leaves[1].getAttribute("y") || "")
+                  const dy = Math.abs(y1 - y0)
+                  editorEl.style.lineHeight =
+                    Number.isFinite(dy) && dy > 0 ? dy * scaleY + "px" : Math.max(screenFs2 * 1.25, 1) + "px"
+                } else {
+                  editorEl.style.lineHeight = Math.max(screenFs2 * 1.25, 1) + "px"
+                }
+              }
+              editorEl.style.letterSpacing = cs2?.letterSpacing || ""
+              editorEl.style.textAlign = cs2?.textAlign || ""
+              editorEl.style.fontSize = screenFs2 + "px"
             }
           }
           hiddenTextEditorOverlay.style.display = ""

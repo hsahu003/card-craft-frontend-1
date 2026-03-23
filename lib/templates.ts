@@ -22,8 +22,8 @@ export const allTemplates: Template[] = [
   { id: "6", name: "Baby Shower", category: "Birthday", price: 89, colors: ["#E0E7FF", "#6366F1"], emoji: "👶", svg: "/assets/greeting-card-6.svg" },
   { id: "7", name: "Romantic Anniversary", category: "Wedding", price: 119, colors: ["#FECDD3", "#F43F5E"], emoji: "💕", svg: "/assets/greeting-card-7.svg" },
   { id: "8", name: "Graduation Day", category: "Birthday", price: 99, colors: ["#FEF3C7", "#D97706"], emoji: "🎓", svg: "/assets/greeting-card-8.svg" },
-  { id: "9", name: "New Year Wishes", category: "Holiday", price: 89, colors: ["#E0F2FE", "#0284C7"], emoji: "🎉", svg: "/assets/greeting-card.svg" },
-  { id: "10", name: "Professional Note", category: "Corporate", price: 109, colors: ["#F1F5F9", "#475569"], emoji: "📝", svg: "/assets/greeting-card.svg" },
+  { id: "9", name: "New Year Wishes", category: "Holiday", price: 89, colors: ["#E0F2FE", "#0284C7"], emoji: "🎉", svg: "/assets/greeting-card-9.svg" },
+  { id: "10", name: "Professional Note", category: "Corporate", price: 109, colors: ["#F1F5F9", "#475569"], emoji: "📝", svg: "/assets/greeting-card-10.svg" },
   { id: "11", name: "Mother's Day Love", category: "Thank You", price: 99, colors: ["#FCE7F3", "#DB2777"], emoji: "🌸", svg: "/assets/greeting-card.svg" },
   { id: "12", name: "Winter Wonderland", category: "Holiday", price: 99, colors: ["#F0F9FF", "#38BDF8"], emoji: "❄️", svg: "/assets/greeting-card.svg" },
 ]
