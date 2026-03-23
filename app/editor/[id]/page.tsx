@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById } from "@/lib/templates"
-import { ShoppingCart } from "lucide-react"
+import { Redo2, ShoppingCart, Undo2 } from "lucide-react"
 import { getSVGSize, getSVGElementSize, getTextMetrics, textOverlayRect, getClipBounds, applySnap, hideGuides, createGuideLine } from "@/lib/editor-svg-utils"
+import type { ImageZoneState } from "@/lib/editor-types"
+import {
+  MAX_EDITOR_HISTORY,
+  cloneZoneStates,
+  type EditorHistoryEntry,
+} from "@/lib/editor-text-history"
 import { toast } from "sonner"
 
 const EDITABLE_PREFIX = "editable_"
@@ -70,20 +76,9 @@ function idSelector(id: string) {
   return "[id=\"" + id + "\"]"
 }
 
-export interface ImageZoneState {
-  b64: string
-  scale: number
-  offsetX: number
-  offsetY: number
-  imgW: number
-  imgH: number
-  zoneX: number
-  zoneY: number
-  zoneW: number
-  zoneH: number
-  hasClip: boolean
-  existingClipId?: string | null
-}
+/** Fixed chrome for the overlay text editor: soft dark gray on white (not harsh black). */
+const INLINE_TEXT_EDITOR_CHROME =
+  "color:#475569;background:#ffffff;caret-color:#475569"
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -100,6 +95,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   // This flag suppresses commit during an active resize.
   const suppressEditorCommitRef = useRef(false)
 
+  /** Undo/redo: full SVG + zoneStates (text + image zones). */
+  const isApplyingHistoryRef = useRef(false)
+  const historyPastRef = useRef<EditorHistoryEntry[]>([])
+  const historyFutureRef = useRef<EditorHistoryEntry[]>([])
+  const panelTextHistoryPushedRef = useRef<Record<string, boolean>>({})
+  /** One undo step per zoom slider gesture (cleared on pointer up). */
+  const panelImageZoomPushedRef = useRef<Record<string, boolean>>({})
+  const textHistoryApiRef = useRef({
+    captureHistoryEntry: (): EditorHistoryEntry => ({ svg: "", zoneStates: {} }),
+    pushPastBeforeMutation: () => {},
+    pushPastSnapshot: (_e: EditorHistoryEntry) => {},
+    pendingDragSnapshot: null as EditorHistoryEntry | null,
+  })
+  const [historyTick, setHistoryTick] = useState(0)
+
   const [previewVersion, setPreviewVersion] = useState(0)
   const [textFields, setTextFields] = useState<{ id: string; label: string }[]>([])
   const [imageZones, setImageZones] = useState<
@@ -107,6 +117,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   >([])
   const [textValues, setTextValues] = useState<Record<string, string>>({})
   const [zoneStates, setZoneStates] = useState<Record<string, ImageZoneState>>({})
+  const zoneStatesRef = useRef(zoneStates)
+  zoneStatesRef.current = zoneStates
   const [zoneBusy, setZoneBusy] = useState<Record<string, boolean>>({})
   const [isExporting, setIsExporting] = useState(false)
   const [svgLoaded, setSvgLoaded] = useState(false)
@@ -177,11 +189,107 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         })
         setImageZones(zones)
         setZoneStates(zStates)
+        historyPastRef.current = []
+        historyFutureRef.current = []
         setPreviewVersion((v) => v + 1)
         setSvgLoaded(true)
+        setHistoryTick((t) => t + 1)
       })
       .catch(() => setSvgLoaded(false))
   }, [template.svg])
+
+  const captureHistoryEntry = useCallback((): EditorHistoryEntry => {
+    const doc = svgDocRef.current
+    if (!doc) return { svg: "", zoneStates: {} }
+    return {
+      svg: new XMLSerializer().serializeToString(doc),
+      zoneStates: cloneZoneStates(zoneStatesRef.current),
+    }
+  }, [])
+
+  const pushPastBeforeMutation = useCallback(() => {
+    if (isApplyingHistoryRef.current) return
+    const entry = captureHistoryEntry()
+    historyPastRef.current.push(entry)
+    if (historyPastRef.current.length > MAX_EDITOR_HISTORY) historyPastRef.current.shift()
+    historyFutureRef.current = []
+    setHistoryTick((t) => t + 1)
+  }, [captureHistoryEntry])
+
+  const pushPastSnapshot = useCallback((entry: EditorHistoryEntry) => {
+    if (isApplyingHistoryRef.current) return
+    historyPastRef.current.push(entry)
+    if (historyPastRef.current.length > MAX_EDITOR_HISTORY) historyPastRef.current.shift()
+    historyFutureRef.current = []
+    setHistoryTick((t) => t + 1)
+  }, [])
+
+  const applyHistoryEntry = useCallback((entry: EditorHistoryEntry) => {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(entry.svg, "image/svg+xml")
+    svgDocRef.current = doc
+    setZoneStates(cloneZoneStates(entry.zoneStates))
+    const textVals: Record<string, string> = {}
+    doc.querySelectorAll<SVGElement>(`[id^="${EDITABLE_PREFIX}"]`).forEach((el) => {
+      const id = el.getAttribute("id")
+      if (id) textVals[id] = el.textContent?.trim() ?? ""
+    })
+    setTextValues(textVals)
+    setPreviewVersion((v) => v + 1)
+  }, [])
+
+  const undo = useCallback(() => {
+    if (isApplyingHistoryRef.current) return
+    if (historyPastRef.current.length === 0) return
+    const current = captureHistoryEntry()
+    const previous = historyPastRef.current.pop()!
+    historyFutureRef.current.push(current)
+    isApplyingHistoryRef.current = true
+    try {
+      previewContainerRef.current?.querySelector("#txt-editor-overlay")?.remove()
+      applyHistoryEntry(previous)
+    } finally {
+      isApplyingHistoryRef.current = false
+    }
+    setHistoryTick((t) => t + 1)
+  }, [captureHistoryEntry, applyHistoryEntry])
+
+  const redo = useCallback(() => {
+    if (isApplyingHistoryRef.current) return
+    if (historyFutureRef.current.length === 0) return
+    const current = captureHistoryEntry()
+    const next = historyFutureRef.current.pop()!
+    historyPastRef.current.push(current)
+    isApplyingHistoryRef.current = true
+    try {
+      previewContainerRef.current?.querySelector("#txt-editor-overlay")?.remove()
+      applyHistoryEntry(next)
+    } finally {
+      isApplyingHistoryRef.current = false
+    }
+    setHistoryTick((t) => t + 1)
+  }, [captureHistoryEntry, applyHistoryEntry])
+
+  useEffect(() => {
+    textHistoryApiRef.current.captureHistoryEntry = captureHistoryEntry
+    textHistoryApiRef.current.pushPastBeforeMutation = pushPastBeforeMutation
+    textHistoryApiRef.current.pushPastSnapshot = pushPastSnapshot
+  }, [captureHistoryEntry, pushPastBeforeMutation, pushPastSnapshot])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (!el) return
+      if (el.closest("input, textarea, [contenteditable='true']")) return
+      // Shift+Z reports key "Z" in many browsers; use case-insensitive check.
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return
+      e.preventDefault()
+      if (e.shiftKey) redo()
+      else undo()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [undo, redo])
 
   // Apply image zone data into svgDoc (so serialized preview shows images)
   useEffect(() => {
@@ -463,6 +571,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startY: number
           startOX?: number
           startOY?: number
+          startImgX?: number
+          startImgY?: number
           moved: boolean
         }
       | {
@@ -510,6 +620,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     function openEditor(tid: string) {
+      let inlineHistoryPushed = false
       const docEl = svgDocRef.current?.querySelector(idSelector(tid))
       if (!docEl) return
       const liveText = svgEl.querySelector(idSelector(tid)) as SVGElement
@@ -521,7 +632,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const scaleY = bbox.height / vb[3]
       const st = textOverlayRect(liveText)
       const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : (null as any)
-      const fillColor = (cs?.getPropertyValue("fill") || "").trim() || liveText.getAttribute("fill") || "#111"
       const fontFamily = (cs?.fontFamily || "").trim() || st.ff
       const fontWeight = (cs?.fontWeight || "").trim() || st.fw
 
@@ -619,12 +729,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!isMultiline) (editorEl as HTMLInputElement).type = "text"
       editorEl.value = txt
       if (isMultiline) {
-        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};color:${fillColor};background:rgba(255,255,255,0.93);border:1.5px solid #378ADD;border-radius:2px;padding:2px 4px;outline:none;z-index:100;resize:none;overflow:auto;white-space:pre;line-height:normal;`
+        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};${INLINE_TEXT_EDITOR_CHROME};border:1.5px solid #378ADD;border-radius:2px;padding:2px 4px;outline:none;z-index:100;resize:none;overflow:auto;white-space:pre;line-height:normal;`
       } else {
-        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};color:${fillColor};background:rgba(255,255,255,0.93);border:1.5px solid #378ADD;border-radius:2px;padding:0 4px;outline:none;z-index:100;`
+        editorEl.style.cssText = `position:absolute;left:${bbox.left + screenX}px;top:${bbox.top + screenY}px;width:${Math.max(screenW, 40)}px;height:${screenH}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};${INLINE_TEXT_EDITOR_CHROME};border:1.5px solid #378ADD;border-radius:2px;padding:0 4px;outline:none;z-index:100;`
       }
 
       editorEl.addEventListener("input", () => {
+        if (!inlineHistoryPushed) {
+          textHistoryApiRef.current.pushPastBeforeMutation()
+          inlineHistoryPushed = true
+        }
         const val = editorEl.value
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
         if (docEl2) applyTextToTextEl(docEl2, val)
@@ -790,6 +904,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startFirstTspanY,
           moved: false,
         }
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         ;(handle as unknown as HTMLElement).style.cursor = getComputedStyle(handle).cursor || "nwse-resize"
         return
       }
@@ -797,6 +912,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const zoneId = imgOv.getAttribute("data-img-zone")!
         const st = zoneStates[zoneId]
         if (!st?.b64) return
+        const liveImage = svgEl.querySelector(idSelector(zoneId)) as SVGImageElement | null
+        const startImgX = parseFloat(liveImage?.getAttribute("x") || "0")
+        const startImgY = parseFloat(liveImage?.getAttribute("y") || "0")
         drag = {
           type: "img",
           id: zoneId,
@@ -807,8 +925,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startY: e.clientY,
           startOX: st.offsetX,
           startOY: st.offsetY,
+          startImgX,
+          startImgY,
           moved: false,
         }
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         ;(imgOv as HTMLElement).style.cursor = "grabbing"
       }
       if (txtOv) {
@@ -831,6 +952,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startTY,
           moved: false,
         }
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         ;(txtOv as HTMLElement).style.cursor = "grabbing"
       }
     }
@@ -850,19 +972,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const startOY = drag.startOY ?? 0
         const sx = drag.sx
         const sy = drag.sy
-        setZoneStates((prev) => {
-          const st = prev[dragId]
-          if (!st) return prev
-          return {
-            ...prev,
-            [dragId]: {
-              ...st,
-              offsetX: startOX + dx * sx * IMAGE_DRAG_SPEED,
-              offsetY: startOY + dy * sy * IMAGE_DRAG_SPEED,
-            },
-          }
-        })
-        setPreviewVersion((v) => v + 1)
+        const newOX = startOX + dx * sx * IMAGE_DRAG_SPEED
+        const newOY = startOY + dy * sy * IMAGE_DRAG_SPEED
+        const liveImage = svgEl.querySelector(idSelector(dragId)) as SVGImageElement | null
+        if (liveImage) {
+          const sx0 = drag.startImgX ?? parseFloat(liveImage.getAttribute("x") || "0")
+          const sy0 = drag.startImgY ?? parseFloat(liveImage.getAttribute("y") || "0")
+          liveImage.setAttribute("x", String(sx0 + (newOX - startOX)))
+          liveImage.setAttribute("y", String(sy0 + (newOY - startOY)))
+        }
       }
       if (drag.type === "txt") {
         const rawX = (drag.startTX ?? 0) + dx * drag.sx
@@ -1112,13 +1230,36 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
     }
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (!drag) return
       const wasDrag = drag.moved
       const type = drag.type
       const tid = drag.id
       ;(drag.overlay as HTMLElement).style.cursor = "grab"
       if (type === "txt") hideGuides(svgEl)
+
+      if (wasDrag && (type === "txt" || type === "resize" || type === "img")) {
+        const snap = textHistoryApiRef.current.pendingDragSnapshot
+        if (snap) textHistoryApiRef.current.pushPastSnapshot(snap)
+      }
+      textHistoryApiRef.current.pendingDragSnapshot = null
+
+      if (type === "img" && wasDrag) {
+        const dx = e.clientX - drag.startX
+        const dy = e.clientY - drag.startY
+        const finalOX = (drag.startOX ?? 0) + dx * drag.sx * IMAGE_DRAG_SPEED
+        const finalOY = (drag.startOY ?? 0) + dy * drag.sy * IMAGE_DRAG_SPEED
+        setZoneStates((prev) => {
+          const st = prev[tid]
+          if (!st) return prev
+          return {
+            ...prev,
+            [tid]: { ...st, offsetX: finalOX, offsetY: finalOY },
+          }
+        })
+        setPreviewVersion((v) => v + 1)
+      }
+
       drag = null
       if (type === "resize") {
         // Restore hidden typing overlay and align it to resized text.
@@ -1265,7 +1406,33 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         {/* Top bar */}
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h1 className="text-[15px] font-medium text-foreground">SVG Field Editor</h1>
-          <span className="text-xs text-muted-foreground">{template.name}</span>
+          <div className="flex items-center gap-2" data-history-tick={historyTick}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+              disabled={historyPastRef.current.length === 0}
+              onClick={() => undo()}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+              <span className="text-xs">Undo</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+              disabled={historyFutureRef.current.length === 0}
+              onClick={() => redo()}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="h-3.5 w-3.5" />
+              <span className="text-xs">Redo</span>
+            </Button>
+            <span className="text-xs text-muted-foreground">{template.name}</span>
+          </div>
         </div>
 
         {/* Main: left + right */}
@@ -1301,11 +1468,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               className="min-h-[52px] w-full resize-y rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground"
                               value={textValues[id] ?? ""}
                               onChange={(e) => {
+                                if (!panelTextHistoryPushedRef.current[id]) {
+                                  pushPastBeforeMutation()
+                                  panelTextHistoryPushedRef.current[id] = true
+                                }
                                 const v = e.target.value
                                 const docEl = svgDocRef.current?.querySelector(idSelector(id))
                                 if (docEl) docEl.textContent = v
                                 setTextValues((prev) => ({ ...prev, [id]: v }))
                                 setPreviewVersion((x) => x + 1)
+                              }}
+                              onBlur={() => {
+                                delete panelTextHistoryPushedRef.current[id]
                               }}
                             />
                           ) : (
@@ -1316,11 +1490,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               className="rounded-md border-border px-2.5 py-1.5 text-[13px]"
                               value={textValues[id] ?? ""}
                               onChange={(e) => {
+                                if (!panelTextHistoryPushedRef.current[id]) {
+                                  pushPastBeforeMutation()
+                                  panelTextHistoryPushedRef.current[id] = true
+                                }
                                 const v = e.target.value
                                 const docEl = svgDocRef.current?.querySelector(idSelector(id))
                                 if (docEl) docEl.textContent = v
                                 setTextValues((prev) => ({ ...prev, [id]: v }))
                                 setPreviewVersion((x) => x + 1)
+                              }}
+                              onBlur={() => {
+                                delete panelTextHistoryPushedRef.current[id]
                               }}
                             />
                           )}
@@ -1351,6 +1532,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               onChange={async (e) => {
                                 const file = e.target.files?.[0]
                                 if (!file) return
+                                pushPastBeforeMutation()
                                 setZoneBusy((prev) => ({ ...prev, [zone.id]: true }))
                                 try {
                                   let b64 = ""
@@ -1439,6 +1621,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                   type="button"
                                   className="mt-1 w-full rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                                   onClick={() => {
+                                    pushPastBeforeMutation()
                                     setZoneStates((prev) => ({
                                       ...prev,
                                       [zone.id]: {
@@ -1474,12 +1657,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                     max="300"
                                     value={Math.round((st.scale || 1) * 100)}
                                     onChange={(e) => {
+                                      if (!panelImageZoomPushedRef.current[zone.id]) {
+                                        pushPastBeforeMutation()
+                                        panelImageZoomPushedRef.current[zone.id] = true
+                                      }
                                       const scale = Number(e.target.value) / 100
                                       setZoneStates((prev) => ({
                                         ...prev,
                                         [zone.id]: { ...prev[zone.id], scale },
                                       }))
                                       setPreviewVersion((v) => v + 1)
+                                    }}
+                                    onPointerUp={() => {
+                                      delete panelImageZoomPushedRef.current[zone.id]
+                                    }}
+                                    onPointerCancel={() => {
+                                      delete panelImageZoomPushedRef.current[zone.id]
                                     }}
                                     className="h-0.5 flex-1"
                                   />
