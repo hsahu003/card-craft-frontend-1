@@ -206,9 +206,8 @@ export function applySnap(svgEl: SVGElement, cx: number, cy: number, txtW: numbe
   // Right edge: text right side flush with canvas right → cx = frameX + frameW - txtW/2
   const rightEdge = frameX + frameW - txtW / 2;
   const diffRight = Math.abs(cx - rightEdge);
-  console.log("cx", cx, "diffRight", diffRight, "rightTarget", rightEdge);
 
-  console.log("cx", cx, "cx + txtW", cx + txtW, "frameW", frameW)
+  console.log("cx", cx, "cy", cy);
 
   if (Math.abs(cx - (frameX + frameW - txtW / 2)) < SNAP) {
     nx = frameX + frameW - txtW / 2

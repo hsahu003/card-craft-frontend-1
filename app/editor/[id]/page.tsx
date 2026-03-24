@@ -585,6 +585,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startY: number
           startTX?: number
           startTY?: number
+          startOverlayX?: number
+          startOverlayY?: number
+          startOverlayW?: number
+          startOverlayH?: number
           moved: boolean
         }
       | {
@@ -1015,6 +1019,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const firstTspan = (docEl as SVGElement).querySelector("tspan") as SVGElement | null
         const startTX = parseFloat(firstTspan?.getAttribute("x") || docEl.getAttribute("x") || "0")
         const startTY = parseFloat(firstTspan?.getAttribute("y") || docEl.getAttribute("y") || "0")
+        const startOverlayX = parseFloat((txtOv as SVGRectElement).getAttribute("x") || "0")
+        const startOverlayY = parseFloat((txtOv as SVGRectElement).getAttribute("y") || "0")
+        const startOverlayW = parseFloat((txtOv as SVGRectElement).getAttribute("width") || "0")
+        const startOverlayH = parseFloat((txtOv as SVGRectElement).getAttribute("height") || "0")
         drag = {
           type: "txt",
           id: tid,
@@ -1025,6 +1033,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startY: e.clientY,
           startTX,
           startTY,
+          startOverlayX,
+          startOverlayY,
+          startOverlayW,
+          startOverlayH,
           moved: false,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
@@ -1058,34 +1070,24 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
       }
       if (drag.type === "txt") {
-        const rawX = (drag.startTX ?? 0) + dx * drag.sx
-        const rawY = (drag.startTY ?? 0) + dy * drag.sy
         const liveText = svgEl.querySelector(idSelector(drag.id)) as SVGElement
-        const st = textOverlayRect(liveText)
-        // Use rendered bbox for snap geometry, especially for multiline tspans.
-        let bb: { x: number; y: number; width: number; height: number } | null = null
-        try {
-          const b = (liveText as unknown as SVGGraphicsElement).getBBox?.()
-          if (b && b.width > 0 && b.height > 0) bb = { x: b.x, y: b.y, width: b.width, height: b.height }
-        } catch {}
-        const txtW = bb?.width ?? st.width
-        const txtH = bb?.height ?? st.ascent + st.descent
-        const anchor = st.anchor
-        // Predict bbox center from drag baseline (first tspan x/y) to keep snap aligned visually.
-        const firstTspanLive = liveText.querySelector("tspan") as SVGElement | null
-        const firstXCur = parseFloat(firstTspanLive?.getAttribute("x") || liveText.getAttribute("x") || "0")
-        const firstYCur = parseFloat(firstTspanLive?.getAttribute("y") || liveText.getAttribute("y") || "0")
-        const offsetX = bb ? firstXCur - bb.x : 0
-        const offsetY = bb ? firstYCur - bb.y : txtH / 2
-        const predictedLeft = rawX - offsetX
-        const predictedTop = rawY - offsetY
-        const cx = predictedLeft + txtW / 2
-        const cy = predictedTop
+        const startW = Math.max(drag.startOverlayW ?? 0, 1)
+        const startH = Math.max(drag.startOverlayH ?? 0, 1)
+        const rawLeft = (drag.startOverlayX ?? 0) + dx * drag.sx
+        const rawTop = (drag.startOverlayY ?? 0) + dy * drag.sy
+        const cx = rawLeft + startW / 2
+        const cy = rawTop
 
-        const { nx, ny, guides, frameX, frameY, frameW, frameH } = applySnap(svgEl as unknown as SVGElement, cx, cy, txtW, txtH)
-
+        const { nx, ny, guides, frameX, frameY, frameW, frameH } = applySnap(
+          svgEl as unknown as SVGElement,
+          cx,
+          cy,
+          startW,
+          startH
+        )
         hideGuides(svgEl as unknown as SVGElement)
         guides.forEach((g) => {
+
           if (g === "left") createGuideLine(svgEl as unknown as SVGElement, "guide-left", frameX, frameY, frameX, frameY + frameH)
           if (g === "right")
             createGuideLine(
@@ -1126,47 +1128,43 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             )
         })
 
-        let finalX: number
-        if (anchor === "middle") finalX = nx
-        else if (anchor === "end") finalX = nx + txtW / 2
-        else finalX = nx - txtW / 2
-        const finalY = ny + txtH / 2
+        const targetLeft = nx - startW / 2
+        const targetTop = ny
+        const currentRect = textOverlayRect(liveText)
+        const shiftX = targetLeft - currentRect.rx
+        const shiftY = targetTop - currentRect.ry
         const docEl = svgDocRef.current?.querySelector(idSelector(drag.id)) as SVGElement | null
         if (docEl) {
           // Move tspans by preserving their relative line offsets to avoid mixing lines
           const tspans = Array.from(docEl.querySelectorAll("tspan")) as SVGElement[]
           if (tspans.length) {
-            const firstY = parseFloat(tspans[0].getAttribute("y") || docEl.getAttribute("y") || String(finalY))
-            const firstX = parseFloat(tspans[0].getAttribute("x") || docEl.getAttribute("x") || String(finalX))
-            const dy = finalY - firstY
-            const dx = finalX - firstX
             tspans.forEach((t) => {
-              const oldY = parseFloat(t.getAttribute("y") || String(firstY))
-              const oldX = parseFloat(t.getAttribute("x") || String(firstX))
-              t.setAttribute("y", String(oldY + dy))
-              t.setAttribute("x", String(oldX + dx))
+              const oldY = parseFloat(t.getAttribute("y") || "0")
+              const oldX = parseFloat(t.getAttribute("x") || "0")
+              t.setAttribute("y", String(oldY + shiftY))
+              t.setAttribute("x", String(oldX + shiftX))
             })
           } else {
-            docEl.setAttribute("x", String(finalX))
-            docEl.setAttribute("y", String(finalY))
+            const oldX = parseFloat(docEl.getAttribute("x") || "0")
+            const oldY = parseFloat(docEl.getAttribute("y") || "0")
+            docEl.setAttribute("x", String(oldX + shiftX))
+            docEl.setAttribute("y", String(oldY + shiftY))
           }
         }
         if (liveText) {
           const tspansLive = Array.from(liveText.querySelectorAll("tspan")) as SVGElement[]
           if (tspansLive.length) {
-            const firstY = parseFloat(tspansLive[0].getAttribute("y") || liveText.getAttribute("y") || String(finalY))
-            const firstX = parseFloat(tspansLive[0].getAttribute("x") || liveText.getAttribute("x") || String(finalX))
-            const dy = finalY - firstY
-            const dx = finalX - firstX
             tspansLive.forEach((t) => {
-              const oldY = parseFloat(t.getAttribute("y") || String(firstY))
-              const oldX = parseFloat(t.getAttribute("x") || String(firstX))
-              t.setAttribute("y", String(oldY + dy))
-              t.setAttribute("x", String(oldX + dx))
+              const oldY = parseFloat(t.getAttribute("y") || "0")
+              const oldX = parseFloat(t.getAttribute("x") || "0")
+              t.setAttribute("y", String(oldY + shiftY))
+              t.setAttribute("x", String(oldX + shiftX))
             })
           } else {
-            liveText.setAttribute("x", String(finalX))
-            liveText.setAttribute("y", String(finalY))
+            const oldX = parseFloat(liveText.getAttribute("x") || "0")
+            const oldY = parseFloat(liveText.getAttribute("y") || "0")
+            liveText.setAttribute("x", String(oldX + shiftX))
+            liveText.setAttribute("y", String(oldY + shiftY))
           }
           const r = textOverlayRect(liveText)
           const ov = svgEl.querySelector("#overlay_" + drag.id)
