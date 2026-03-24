@@ -791,6 +791,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       const onContainerScroll = () => updateEditorRect()
       if (container) container.addEventListener("scroll", onContainerScroll, { passive: true })
+      const onGlobalScrollOrResize = () => updateEditorRect()
+      window.addEventListener("scroll", onGlobalScrollOrResize, { passive: true, capture: true })
+      window.addEventListener("resize", onGlobalScrollOrResize)
+      document.addEventListener("scroll", onGlobalScrollOrResize, { passive: true, capture: true })
+      const scrollParents: Element[] = []
+      let parentEl: Element | null = container?.parentElement || null
+      while (parentEl) {
+        const ps = window.getComputedStyle(parentEl)
+        const isScrollable = /(auto|scroll|overlay)/.test(ps.overflowY) || /(auto|scroll|overlay)/.test(ps.overflowX)
+        if (isScrollable) {
+          parentEl.addEventListener("scroll", onGlobalScrollOrResize, { passive: true })
+          scrollParents.push(parentEl)
+        }
+        parentEl = parentEl.parentElement
+      }
       if (isMultiline) {
         editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${csTextAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       } else {
@@ -832,6 +847,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const commit = () => {
         if (suppressEditorCommitRef.current) return
         if (container) container.removeEventListener("scroll", onContainerScroll)
+        window.removeEventListener("scroll", onGlobalScrollOrResize, true)
+        window.removeEventListener("resize", onGlobalScrollOrResize)
+        document.removeEventListener("scroll", onGlobalScrollOrResize, true)
+        scrollParents.forEach((el) => el.removeEventListener("scroll", onGlobalScrollOrResize))
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
         const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
