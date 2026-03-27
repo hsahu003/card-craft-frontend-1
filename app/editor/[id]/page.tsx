@@ -661,10 +661,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       // Many Inkscape templates define font-size on leaf <tspan>s, so parent <text> can differ.
       const firstLeaf = leafTspans[0]
       const leafCs = typeof window !== "undefined" && firstLeaf ? window.getComputedStyle(firstLeaf as any) : null
+      console.log("leafCs", leafCs)
       const fontFamily = (leafCs?.fontFamily || cs?.fontFamily || "").trim() || st.ff
       const fontWeight = (leafCs?.fontWeight || cs?.fontWeight || "").trim() || st.fw
       const fontStyle = (leafCs?.fontStyle || cs?.fontStyle || "").trim() || "normal"
       const leafFontSizePx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
+      const textAlign = leafCs?.textAlign || cs?.textAlign || "start"
       // `getComputedStyle(...).fontSize` for SVG text often represents the SVG user-unit size.
       // We need to convert it to CSS pixels using the same scale factors we use for overlay positioning.
       const baseSvgFontSize = parseFloat(cs?.fontSize || "") || st.fs
@@ -770,7 +772,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const liveRect = liveText.getBoundingClientRect()
       const overlayLineHeight = getOverlayLineHeight(liveText, leafCs, cs)
       const csLetterSpacing = cs?.letterSpacing || "normal"
-      const csTextAlign = cs?.textAlign || "start"
 
       const updateEditorRect = () => {
         const r = liveText.getBoundingClientRect()
@@ -807,9 +808,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         parentEl = parentEl.parentElement
       }
       if (isMultiline) {
-        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${csTextAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       } else {
-        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${csTextAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       }
 
       editorEl.addEventListener("input", () => {
