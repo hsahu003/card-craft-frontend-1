@@ -36,7 +36,7 @@ Each history entry:
 - `svg: string` — `new XMLSerializer().serializeToString(svgDocRef.current)` (full document).
 - `zoneStates: Record<string, ImageZoneState>` — **deep clone** of current `[zoneStates](app/editor/[id]/page.tsx)` (e.g. `structuredClone` or `JSON` if acceptable for your targets; note `b64` strings are large).
 
-Keep `**past`** and `**future`** stacks (max depth ~20–30 to cap memory), plus an `**isApplyingHistoryRef**` flag to avoid recording history while applying undo/redo.
+Keep `**past`** and `**future`** stacks (max depth ~20–30 to cap memory), plus an `**isApplyingHistoryRef`** flag to avoid recording history while applying undo/redo.
 
 ## When to push a “before” snapshot onto `past` (and clear `future`)
 

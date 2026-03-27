@@ -20,6 +20,7 @@ import {
   type SnapPeerBox,
 } from "@/lib/editor-svg-utils"
 import type { ImageZoneState } from "@/lib/editor-types"
+import type { StickerCategory, StickerItem } from "@/lib/stickers"
 import {
   MAX_EDITOR_HISTORY,
   cloneZoneStates,
@@ -29,6 +30,7 @@ import { toast } from "sonner"
 
 const EDITABLE_PREFIX = "editable_"
 const IMAGE_ZONE_PREFIX = "image_zone_"
+const STICKER_PREFIX = "sticker_"
 // Multiplier to make image drag feel more responsive.
 // 1 = geometric mapping only, >1 = faster movement.
 const IMAGE_DRAG_SPEED = 1.25
@@ -132,6 +134,37 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [zoneBusy, setZoneBusy] = useState<Record<string, boolean>>({})
   const [isExporting, setIsExporting] = useState(false)
   const [svgLoaded, setSvgLoaded] = useState(false)
+  const [stickerCategories, setStickerCategories] = useState<StickerCategory[]>([])
+  const [selectedStickerCategory, setSelectedStickerCategory] = useState("")
+  const [selectedStickerIdState, setSelectedStickerIdState] = useState<string | null>(null)
+
+  const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/stickers")
+      .then((r) => r.json())
+      .then((payload: { defaultCategory: string; categories: StickerCategory[] }) => {
+        if (cancelled) return
+        const categories = Array.isArray(payload?.categories) ? payload.categories : []
+        setStickerCategories(categories)
+        if (categories.length === 0) {
+          setSelectedStickerCategory("")
+          return
+        }
+        const preferred = payload?.defaultCategory
+        const valid = categories.some((c) => c.name === preferred)
+        setSelectedStickerCategory(valid ? preferred : categories[0].name)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setStickerCategories([])
+        setSelectedStickerCategory("")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Load template SVG
   useEffect(() => {
@@ -232,6 +265,50 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     if (historyPastRef.current.length > MAX_EDITOR_HISTORY) historyPastRef.current.shift()
     historyFutureRef.current = []
     setHistoryTick((t) => t + 1)
+  }, [])
+
+  const addStickerToSvg = useCallback((sticker: StickerItem, at?: { x: number; y: number }) => {
+    const doc = svgDocRef.current
+    if (!doc) return
+    pushPastBeforeMutation()
+    const svgRoot = doc.documentElement
+    const ns = "http://www.w3.org/2000/svg"
+    const nextId = STICKER_PREFIX + Date.now() + "_" + Math.floor(Math.random() * 10000)
+    const { w: svgW, h: svgH } = getSVGSize(doc)
+    const side = Math.max(32, Math.min(svgW, svgH) * 0.14)
+    const x = (at?.x ?? svgW / 2) - side / 2
+    const y = (at?.y ?? svgH / 2) - side / 2
+    const img = doc.createElementNS(ns, "image")
+    img.setAttribute("id", nextId)
+    img.setAttribute("href", sticker.path)
+    img.setAttribute("xlink:href", sticker.path)
+    img.setAttribute("x", String(x))
+    img.setAttribute("y", String(y))
+    img.setAttribute("width", String(side))
+    img.setAttribute("height", String(side))
+    img.setAttribute("preserveAspectRatio", "xMidYMid meet")
+    svgRoot.appendChild(img)
+    setSelectedStickerIdState(nextId)
+    setPreviewVersion((v) => v + 1)
+  }, [pushPastBeforeMutation])
+
+  const getSvgDropPointFromClient = useCallback((clientX: number, clientY: number) => {
+    const container = previewContainerRef.current
+    if (!container) return null
+    const svgEl = container.querySelector("svg") as SVGSVGElement | null
+    if (!svgEl) return null
+    const rect = svgEl.getBoundingClientRect()
+    if (!rect.width || !rect.height) return null
+    const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
+    if (vb.length < 4 || !Number.isFinite(vb[2]) || !Number.isFinite(vb[3])) return null
+    const relX = (clientX - rect.left) / rect.width
+    const relY = (clientY - rect.top) / rect.height
+    const clampedX = Math.max(0, Math.min(1, relX))
+    const clampedY = Math.max(0, Math.min(1, relY))
+    return {
+      x: vb[0] + clampedX * vb[2],
+      y: vb[1] + clampedY * vb[3],
+    }
   }, [])
 
   const applyHistoryEntry = useCallback((entry: EditorHistoryEntry) => {
@@ -480,6 +557,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
     })
 
+    // Sticker overlays
+    Array.from(svgEl.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`)).forEach((stickerEl) => {
+      const sid = stickerEl.getAttribute("id")
+      if (!sid) return
+      const x = parseFloat(stickerEl.getAttribute("x") || "0")
+      const y = parseFloat(stickerEl.getAttribute("y") || "0")
+      const w = parseFloat(stickerEl.getAttribute("width") || "0")
+      const h = parseFloat(stickerEl.getAttribute("height") || "0")
+      if (!w || !h) return
+      const ov = previewDoc.createElementNS(ns, "rect")
+      ov.setAttribute("x", String(x))
+      ov.setAttribute("y", String(y))
+      ov.setAttribute("width", String(w))
+      ov.setAttribute("height", String(h))
+      ov.setAttribute("fill", "transparent")
+      ov.setAttribute("stroke", "#378ADD")
+      ov.setAttribute("stroke-width", "1")
+      ov.setAttribute("stroke-dasharray", "3 2")
+      ov.setAttribute("rx", "2")
+      ov.setAttribute("style", "cursor:grab")
+      ov.setAttribute("data-sticker-zone", sid)
+      ov.setAttribute("id", "sticker_overlay_" + sid)
+      svgEl.appendChild(ov)
+    })
+
     // Text zone overlays
     textFields.forEach(({ id: tid }) => {
       const tel = svgEl.querySelector(idSelector(tid)) as SVGElement | null
@@ -503,6 +605,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     // Selection state: which editable text is selected (shows bounding box + handles).
     let selectedTextId: string | null = null
+    let selectedStickerId: string | null = selectedStickerIdState
 
     const renderTextHandles = (tid: string | null) => {
       selectedTextId = tid
@@ -554,6 +657,50 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       svgEl.appendChild(g)
     }
 
+    const renderStickerHandles = (sid: string | null) => {
+      selectedStickerId = sid
+      setSelectedStickerIdState(sid)
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
+        g.parentNode?.removeChild(g)
+      })
+      if (!sid) return
+      const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
+      if (!ov) return
+      const x = parseFloat(ov.getAttribute("x") || "0")
+      const y = parseFloat(ov.getAttribute("y") || "0")
+      const w = parseFloat(ov.getAttribute("width") || "0")
+      const h = parseFloat(ov.getAttribute("height") || "0")
+      if (!w || !h) return
+      const g = previewDoc.createElementNS(ns, "g")
+      g.setAttribute("data-sticker-handles", "1")
+      g.setAttribute("pointer-events", "none")
+      const handleSize = Math.max(Math.min(Math.min(w, h) * 0.12, 12), 5)
+      const r = handleSize / 2
+      const corners: { key: "tl" | "tr" | "bl" | "br"; cx: number; cy: number; cursor: string }[] = [
+        { key: "tl", cx: x, cy: y, cursor: "nwse-resize" },
+        { key: "tr", cx: x + w, cy: y, cursor: "nesw-resize" },
+        { key: "bl", cx: x, cy: y + h, cursor: "nesw-resize" },
+        { key: "br", cx: x + w, cy: y + h, cursor: "nwse-resize" },
+      ]
+      corners.forEach(({ key, cx, cy, cursor }) => {
+        const handle = previewDoc.createElementNS(ns, "rect")
+        handle.setAttribute("x", String(cx - r))
+        handle.setAttribute("y", String(cy - r))
+        handle.setAttribute("width", String(handleSize))
+        handle.setAttribute("height", String(handleSize))
+        handle.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
+        handle.setAttribute("fill", "#ffffff")
+        handle.setAttribute("stroke", "#378ADD")
+        handle.setAttribute("stroke-width", "0.8")
+        handle.setAttribute("pointer-events", "all")
+        handle.setAttribute("data-sticker-handle", key)
+        handle.setAttribute("data-sticker-id", sid)
+        handle.setAttribute("style", "cursor:" + cursor)
+        g.appendChild(handle)
+      })
+      svgEl.appendChild(g)
+    }
+
     container.innerHTML = ""
     container.appendChild(svgEl)
 
@@ -569,6 +716,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("width", String(r.rw))
       ov.setAttribute("height", String(r.rh))
     })
+
+    // Keep latest selected sticker handles visible across preview rebuilds.
+    if (selectedStickerIdState && svgEl.querySelector("#sticker_overlay_" + selectedStickerIdState)) {
+      renderStickerHandles(selectedStickerIdState)
+    }
 
     type DragState =
       | {
@@ -620,6 +772,35 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startBBox: { x: number; y: number; width: number; height: number }
           startFirstTspanX: number
           startFirstTspanY: number
+          moved: boolean
+        }
+      | {
+          type: "sticker"
+          id: string
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          startStickerX: number
+          startStickerY: number
+          moved: boolean
+        }
+      | {
+          type: "stickerResize"
+          id: string
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          corner: "tl" | "tr" | "bl" | "br"
+          anchorX: number
+          anchorY: number
+          startCornerX: number
+          startCornerY: number
+          startW: number
+          startH: number
           moved: boolean
         }
 
@@ -914,20 +1095,67 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const onMouseDown = (e: MouseEvent) => {
       const target = e.target as Element
       const handle = target.closest("[data-text-handle]") as SVGElement | null
+      const stickerHandle = target.closest("[data-sticker-handle]") as SVGElement | null
       const imgOv = target.closest("[data-img-zone]")
       const txtOv = target.closest("[data-text-zone]")
+      const stickerOv = target.closest("[data-sticker-zone]")
       const up = target.closest("[data-upload-zone]")
       if (up) {
         const zoneId = up.getAttribute("data-upload-zone")
         if (zoneId && fileInputRefs.current[zoneId]) fileInputRefs.current[zoneId].click()
         return
       }
-      if (!imgOv && !txtOv && !handle) {
+      if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle) {
         renderTextHandles(null)
+        renderStickerHandles(null)
         return
       }
       e.preventDefault()
       const { sx, sy } = getScale()
+      if (stickerHandle) {
+        const sid = stickerHandle.getAttribute("data-sticker-id")
+        const corner = stickerHandle.getAttribute("data-sticker-handle") as "tl" | "tr" | "bl" | "br" | null
+        if (!sid || !corner) return
+        const stickerEl = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
+        const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
+        if (!stickerEl || !ov) return
+        const x = parseFloat(stickerEl.getAttribute("x") || "0")
+        const y = parseFloat(stickerEl.getAttribute("y") || "0")
+        const w = Math.max(parseFloat(stickerEl.getAttribute("width") || "0"), 1)
+        const h = Math.max(parseFloat(stickerEl.getAttribute("height") || "0"), 1)
+        const corners: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
+          tl: { x, y },
+          tr: { x: x + w, y },
+          bl: { x, y: y + h },
+          br: { x: x + w, y: y + h },
+        }
+        const opposite: Record<"tl" | "tr" | "bl" | "br", "br" | "bl" | "tr" | "tl"> = {
+          tl: "br",
+          tr: "bl",
+          bl: "tr",
+          br: "tl",
+        }
+        drag = {
+          type: "stickerResize",
+          id: sid,
+          overlay: ov,
+          sx,
+          sy,
+          startX: e.clientX,
+          startY: e.clientY,
+          corner,
+          anchorX: corners[opposite[corner]].x,
+          anchorY: corners[opposite[corner]].y,
+          startCornerX: corners[corner].x,
+          startCornerY: corners[corner].y,
+          startW: w,
+          startH: h,
+          moved: false,
+        }
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
+        renderStickerHandles(sid)
+        return
+      }
       if (handle) {
         const tid = handle.getAttribute("data-text-id")
         const cornerAttr = handle.getAttribute("data-text-handle") as "tl" | "tr" | "bl" | "br" | null
@@ -1021,6 +1249,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         return
       }
       if (imgOv) {
+        renderStickerHandles(null)
         const zoneId = imgOv.getAttribute("data-img-zone")!
         const st = zoneStates[zoneId]
         if (!st?.b64) return
@@ -1045,6 +1274,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         ;(imgOv as HTMLElement).style.cursor = "grabbing"
       }
       if (txtOv) {
+        renderStickerHandles(null)
         const tid = txtOv.getAttribute("data-text-zone")!
         renderTextHandles(tid)
         const docEl = svgDocRef.current?.querySelector(idSelector(tid))
@@ -1075,6 +1305,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         ;(txtOv as HTMLElement).style.cursor = "grabbing"
       }
+      if (stickerOv) {
+        renderTextHandles(null)
+        const sid = stickerOv.getAttribute("data-sticker-zone")!
+        const stickerEl = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
+        if (!stickerEl) return
+        drag = {
+          type: "sticker",
+          id: sid,
+          overlay: stickerOv,
+          sx,
+          sy,
+          startX: e.clientX,
+          startY: e.clientY,
+          startStickerX: parseFloat(stickerEl.getAttribute("x") || "0"),
+          startStickerY: parseFloat(stickerEl.getAttribute("y") || "0"),
+          moved: false,
+        }
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
+        ;(stickerOv as HTMLElement).style.cursor = "grabbing"
+        renderStickerHandles(sid)
+      }
     }
 
     const onMouseMove = (e: MouseEvent) => {
@@ -1101,6 +1352,126 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           liveImage.setAttribute("x", String(sx0 + (newOX - startOX)))
           liveImage.setAttribute("y", String(sy0 + (newOY - startOY)))
         }
+      }
+      if (drag.type === "sticker") {
+        const sid = drag.id
+        const live = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
+        const docEl = svgDocRef.current?.querySelector(idSelector(sid)) as SVGImageElement | null
+        const w = Math.max(parseFloat(live?.getAttribute("width") || docEl?.getAttribute("width") || "0"), 1)
+        const h = Math.max(parseFloat(live?.getAttribute("height") || docEl?.getAttribute("height") || "0"), 1)
+        const rawLeft = drag.startStickerX + dx * drag.sx
+        const rawTop = drag.startStickerY + dy * drag.sy
+        // applySnap uses: cx=centerX, cy=topY
+        const cx = rawLeft + w / 2
+        const cy = rawTop
+
+        const peerBoxes: SnapPeerBox[] = [
+          // Text overlays
+          ...textFields
+            .map((f) => {
+              const ovPeer = svgEl.querySelector("#overlay_" + f.id) as SVGRectElement | null
+              if (!ovPeer) return null
+              const x = parseFloat(ovPeer.getAttribute("x") || "")
+              const y = parseFloat(ovPeer.getAttribute("y") || "")
+              const w = parseFloat(ovPeer.getAttribute("width") || "")
+              const h = parseFloat(ovPeer.getAttribute("height") || "")
+              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+                return null
+              return { id: f.id, x, y, w, h }
+            })
+            .filter((b): b is SnapPeerBox => Boolean(b)),
+          // Other sticker overlays
+          ...Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-sticker-zone]"))
+            .map((ovPeer) => {
+              const pid = ovPeer.getAttribute("data-sticker-zone") || ovPeer.getAttribute("id") || ""
+              if (pid === sid) return null
+              const x = parseFloat(ovPeer.getAttribute("x") || "")
+              const y = parseFloat(ovPeer.getAttribute("y") || "")
+              const w = parseFloat(ovPeer.getAttribute("width") || "")
+              const h = parseFloat(ovPeer.getAttribute("height") || "")
+              if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+                return null
+              return { id: pid, x, y, w, h }
+            })
+            .filter((b): b is SnapPeerBox => Boolean(b)),
+        ]
+
+        const { nx, ny, guides, frameX, frameY, frameW, frameH, guideVx, guideHy } = applySnap(
+          svgEl as unknown as SVGElement,
+          cx,
+          cy,
+          w,
+          h,
+          peerBoxes
+        )
+
+        hideGuides(svgEl as unknown as SVGElement)
+        if (guideVx !== null) {
+          const id = guides.includes("cx") ? "guide-cx" : guides.includes("left") ? "guide-left" : "guide-right"
+          createGuideLine(svgEl as unknown as SVGElement, id, guideVx, frameY, guideVx, frameY + frameH)
+        }
+        if (guideHy !== null) {
+          const id = guides.includes("cy") ? "guide-cy" : guides.includes("top") ? "guide-top" : "guide-bottom"
+          createGuideLine(svgEl as unknown as SVGElement, id, frameX, guideHy, frameX + frameW, guideHy)
+        }
+
+        const left = nx - w / 2
+        const top = ny
+        if (live) {
+          live.setAttribute("x", String(left))
+          live.setAttribute("y", String(top))
+        }
+        if (docEl) {
+          docEl.setAttribute("x", String(left))
+          docEl.setAttribute("y", String(top))
+        }
+        const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
+        if (ov) {
+          ov.setAttribute("x", String(left))
+          ov.setAttribute("y", String(top))
+        }
+        renderStickerHandles(sid)
+      }
+      if (drag.type === "stickerResize") {
+        const sid = drag.id
+        const dxSvg = (e.clientX - drag.startX) * drag.sx
+        const dySvg = (e.clientY - drag.startY) * drag.sy
+        const newCornerX = drag.startCornerX + dxSvg
+        const newCornerY = drag.startCornerY + dySvg
+        const startDiag = Math.hypot(drag.startCornerX - drag.anchorX, drag.startCornerY - drag.anchorY)
+        if (!startDiag) return
+        let scale = Math.hypot(newCornerX - drag.anchorX, newCornerY - drag.anchorY) / startDiag
+        if (!Number.isFinite(scale) || scale <= 0) scale = 1
+        const nextW = Math.max(10, drag.startW * scale)
+        const nextH = Math.max(10, drag.startH * scale)
+        // Keep the opposite (anchor) corner fixed; compute top-left accordingly.
+        // draggedCorner -> fixedAnchorCorner
+        // br -> tl, bl -> tr, tr -> bl, tl -> br
+        const x =
+          drag.corner === "br" || drag.corner === "tr"
+            ? drag.anchorX
+            : drag.anchorX - nextW
+        const y =
+          drag.corner === "br" || drag.corner === "bl"
+            ? drag.anchorY
+            : drag.anchorY - nextH
+        const live = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
+        const docEl = svgDocRef.current?.querySelector(idSelector(sid)) as SVGImageElement | null
+        ;[live, docEl].forEach((el) => {
+          if (!el) return
+          el.setAttribute("x", String(x))
+          el.setAttribute("y", String(y))
+          el.setAttribute("width", String(nextW))
+          el.setAttribute("height", String(nextH))
+        })
+        const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
+        if (ov) {
+          ov.setAttribute("x", String(x))
+          ov.setAttribute("y", String(y))
+          ov.setAttribute("width", String(nextW))
+          ov.setAttribute("height", String(nextH))
+        }
+        renderStickerHandles(sid)
       }
       if (drag.type === "txt") {
         const dragId = drag.id
@@ -1325,9 +1696,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const type = drag.type
       const tid = drag.id
       ;(drag.overlay as HTMLElement).style.cursor = "grab"
-      if (type === "txt") hideGuides(svgEl)
+      if (type === "txt" || type === "sticker") hideGuides(svgEl)
 
-      if (wasDrag && (type === "txt" || type === "resize" || type === "img")) {
+      if (wasDrag && (type === "txt" || type === "resize" || type === "img" || type === "sticker" || type === "stickerResize")) {
         const snap = textHistoryApiRef.current.pendingDragSnapshot
         if (snap) textHistoryApiRef.current.pushPastSnapshot(snap)
       }
@@ -1350,6 +1721,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       drag = null
+      if ((type === "sticker" || type === "stickerResize") && wasDrag) {
+        setPreviewVersion((v) => v + 1)
+      }
       if (type === "resize") {
         // Restore hidden typing overlay and align it to resized text.
         if (hiddenTextEditorOverlay && hiddenTextEditorForTid === tid) {
@@ -1422,16 +1796,35 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!wasDrag && type === "txt") openEditor(tid)
     }
 
+    const onDeleteSticker = (e: KeyboardEvent) => {
+      if (!selectedStickerId) return
+      if (e.key !== "Delete" && e.key !== "Backspace") return
+      const target = e.target as HTMLElement | null
+      if (target?.closest("input, textarea, [contenteditable='true']")) return
+      e.preventDefault()
+      const sid = selectedStickerId
+      const liveEl = svgEl.querySelector(idSelector(sid))
+      const docEl = svgDocRef.current?.querySelector(idSelector(sid))
+      if (!liveEl && !docEl) return
+      pushPastBeforeMutation()
+      liveEl?.parentNode?.removeChild(liveEl)
+      docEl?.parentNode?.removeChild(docEl)
+      renderStickerHandles(null)
+      setPreviewVersion((v) => v + 1)
+    }
+
     svgEl.addEventListener("mousedown", onMouseDown)
     window.addEventListener("mousemove", onMouseMove)
     window.addEventListener("mouseup", onMouseUp)
+    window.addEventListener("keydown", onDeleteSticker)
 
     return () => {
       svgEl.removeEventListener("mousedown", onMouseDown)
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
+      window.removeEventListener("keydown", onDeleteSticker)
     }
-  }, [previewVersion, textFields, zoneStates])
+  }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation, selectedStickerIdState])
 
   const handleExportPDF = useCallback(async () => {
     const doc = svgDocRef.current
@@ -1439,13 +1832,36 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setIsExporting(true)
     try {
       const { jsPDF } = await import("jspdf")
-      const s = new XMLSerializer().serializeToString(doc)
+      // Build an export copy and inline sticker SVG assets so they are included
+      // when the SVG is rasterized via data URL.
+      const parser = new DOMParser()
+      const exportDoc = parser.parseFromString(new XMLSerializer().serializeToString(doc), "image/svg+xml")
+      const stickerEls = Array.from(exportDoc.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`))
+      await Promise.all(
+        stickerEls.map(async (el) => {
+          const href = (el.getAttribute("href") || el.getAttribute("xlink:href") || "").trim()
+          if (!href || href.startsWith("data:")) return
+          if (!href.toLowerCase().endsWith(".svg")) return
+          try {
+            const res = await fetch(href)
+            if (!res.ok) return
+            const stickerSvg = await res.text()
+            const stickerDataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(stickerSvg)))
+            el.setAttribute("href", stickerDataUrl)
+            el.setAttribute("xlink:href", stickerDataUrl)
+          } catch {
+            // Keep original href if inlining fails; export may still work in some browsers.
+          }
+        })
+      )
+
+      const s = new XMLSerializer().serializeToString(exportDoc)
       const dataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(s)))
       const { w, h } = getSVGSize(doc)
       // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
       // (jsPDF embeds the canvas as a raster image, so this directly impacts perceived sharpness.)
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
-      const scale = Math.max(3, Math.min(8, dpr * 3))
+      const scale = Math.max(4, Math.min(12, dpr * 4))
       const canvas = document.createElement("canvas")
       canvas.width = w * scale
       canvas.height = h * scale
@@ -1555,7 +1971,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             <div className="flex-1 overflow-y-auto px-3 pb-4 pt-2">
               {!svgLoaded ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
-              ) : textFields.length === 0 && imageZones.length === 0 ? (
+              ) : textFields.length === 0 && imageZones.length === 0 && stickerCategories.length === 0 ? (
                 <p className="py-6 text-center text-sm leading-relaxed text-muted-foreground">
                   No editable fields found.
                   <br />
@@ -1799,6 +2215,55 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                       })}
                     </>
                   )}
+
+                  <details className="mt-3 rounded-md border border-border/70 bg-muted/20 p-2" open>
+                    <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Stickers
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <label className="mb-1 block text-[11px] text-muted-foreground">Category</label>
+                        <select
+                          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground"
+                          value={selectedStickerCategory}
+                          onChange={(e) => setSelectedStickerCategory(e.target.value)}
+                          disabled={stickerCategories.length === 0}
+                        >
+                          {stickerCategories.map((cat) => (
+                            <option key={cat.name} value={cat.name}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {selectedCategoryStickers.length === 0 ? (
+                        <p className="rounded-md border border-dashed border-border px-2 py-2 text-[11px] text-muted-foreground">
+                          No stickers available
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedCategoryStickers.map((sticker) => (
+                            <button
+                              key={sticker.path}
+                              type="button"
+                              title={sticker.name}
+                              className="flex h-16 items-center justify-center rounded-md border border-border bg-background p-1 transition-colors hover:bg-muted"
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData("application/x-sticker", JSON.stringify(sticker))
+                                e.dataTransfer.effectAllowed = "copy"
+                              }}
+                              onClick={() => addStickerToSvg(sticker)}
+                            >
+                              <img src={sticker.path || "/placeholder.svg"} alt={sticker.name} className="max-h-full max-w-full object-contain" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">Click a sticker to add it centered. Drag, resize, or press Delete to remove.</p>
+                    </div>
+                  </details>
                 </>
               )}
             </div>
@@ -1832,6 +2297,26 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             <div
               ref={previewContainerRef}
               className="flex flex-1 items-center justify-center overflow-auto bg-muted/30 p-5"
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes("application/x-sticker")) {
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = "copy"
+                }
+              }}
+              onDrop={(e) => {
+                const raw = e.dataTransfer.getData("application/x-sticker")
+                if (!raw) return
+                e.preventDefault()
+                try {
+                  const sticker = JSON.parse(raw) as StickerItem
+                  if (!sticker?.path) return
+                  const pt = getSvgDropPointFromClient(e.clientX, e.clientY)
+                  if (pt) addStickerToSvg(sticker, pt)
+                  else addStickerToSvg(sticker)
+                } catch {
+                  // Ignore malformed drag payload.
+                }
+              }}
             >
               {!svgLoaded && (
                 <div className="flex flex-col items-center gap-2 text-[13px] text-muted-foreground">
