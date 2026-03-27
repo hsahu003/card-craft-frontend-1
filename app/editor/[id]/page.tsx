@@ -8,7 +8,17 @@ import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById } from "@/lib/templates"
 import { Redo2, ShoppingCart, Undo2 } from "lucide-react"
-import { getSVGSize, getSVGElementSize, getTextMetrics, textOverlayRect, getClipBounds, applySnap, hideGuides, createGuideLine } from "@/lib/editor-svg-utils"
+import {
+  getSVGSize,
+  getSVGElementSize,
+  getTextMetrics,
+  textOverlayRect,
+  getClipBounds,
+  applySnap,
+  hideGuides,
+  createGuideLine,
+  type SnapPeerBox,
+} from "@/lib/editor-svg-utils"
 import type { ImageZoneState } from "@/lib/editor-types"
 import {
   MAX_EDITOR_HISTORY,
@@ -665,6 +675,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const fontFamily = (leafCs?.fontFamily || cs?.fontFamily || "").trim() || st.ff
       const fontWeight = (leafCs?.fontWeight || cs?.fontWeight || "").trim() || st.fw
       const fontStyle = (leafCs?.fontStyle || cs?.fontStyle || "").trim() || "normal"
+      const caretColor = (leafCs?.fill || cs?.fill || leafCs?.color || cs?.color || "").trim() || "#000"
+      console.log("leafCs?.color", leafCs?.color)
       const leafFontSizePx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
       const textAlign = leafCs?.textAlign || cs?.textAlign || "start"
       // `getComputedStyle(...).fontSize` for SVG text often represents the SVG user-unit size.
@@ -807,10 +819,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         parentEl = parentEl.parentElement
       }
+      console.log("caretColor", caretColor)
       if (isMultiline) {
-        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:${caretColor};box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       } else {
-        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:#000;box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
+        editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:${caretColor};box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       }
 
       editorEl.addEventListener("input", () => {
@@ -1090,70 +1103,53 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
       }
       if (drag.type === "txt") {
-        const liveText = svgEl.querySelector(idSelector(drag.id)) as SVGElement
+        const dragId = drag.id
+        const liveText = svgEl.querySelector(idSelector(dragId)) as SVGElement
         const startW = Math.max(drag.startOverlayW ?? 0, 1)
         const startH = Math.max(drag.startOverlayH ?? 0, 1)
         const rawLeft = (drag.startOverlayX ?? 0) + dx * drag.sx
         const rawTop = (drag.startOverlayY ?? 0) + dy * drag.sy
         const cx = rawLeft + startW / 2
         const cy = rawTop
+        const peerBoxes: SnapPeerBox[] = textFields
+          .filter((f) => f.id !== dragId)
+          .map((f) => {
+            const ovPeer = svgEl.querySelector("#overlay_" + f.id) as SVGRectElement | null
+            if (!ovPeer) return null
+            const x = parseFloat(ovPeer.getAttribute("x") || "")
+            const y = parseFloat(ovPeer.getAttribute("y") || "")
+            const w = parseFloat(ovPeer.getAttribute("width") || "")
+            const h = parseFloat(ovPeer.getAttribute("height") || "")
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+              return null
+            return { id: f.id, x, y, w, h }
+          })
+          .filter((b): b is SnapPeerBox => Boolean(b))
 
-        const { nx, ny, guides, frameX, frameY, frameW, frameH } = applySnap(
+        const { nx, ny, guides, frameX, frameY, frameW, frameH, guideVx, guideHy } = applySnap(
           svgEl as unknown as SVGElement,
           cx,
           cy,
           startW,
-          startH
+          startH,
+          peerBoxes
         )
         hideGuides(svgEl as unknown as SVGElement)
-        guides.forEach((g) => {
-
-          if (g === "left") createGuideLine(svgEl as unknown as SVGElement, "guide-left", frameX, frameY, frameX, frameY + frameH)
-          if (g === "right")
-            createGuideLine(
-              svgEl as unknown as SVGElement,
-              "guide-right",
-              frameX + frameW,
-              frameY,
-              frameX + frameW,
-              frameY + frameH
-            )
-          if (g === "top") createGuideLine(svgEl as unknown as SVGElement, "guide-top", frameX, frameY, frameX + frameW, frameY)
-          if (g === "bottom")
-            createGuideLine(
-              svgEl as unknown as SVGElement,
-              "guide-bottom",
-              frameX,
-              frameY + frameH,
-              frameX + frameW,
-              frameY + frameH
-            )
-          if (g === "cx")
-            createGuideLine(
-              svgEl as unknown as SVGElement,
-              "guide-cx",
-              frameX + frameW / 2,
-              frameY,
-              frameX + frameW / 2,
-              frameY + frameH
-            )
-          if (g === "cy")
-            createGuideLine(
-              svgEl as unknown as SVGElement,
-              "guide-cy",
-              frameX,
-              frameY + frameH / 2,
-              frameX + frameW,
-              frameY + frameH / 2
-            )
-        })
+        if (guideVx !== null) {
+          const id = guides.includes("cx") ? "guide-cx" : guides.includes("left") ? "guide-left" : "guide-right"
+          createGuideLine(svgEl as unknown as SVGElement, id, guideVx, frameY, guideVx, frameY + frameH)
+        }
+        if (guideHy !== null) {
+          const id = guides.includes("cy") ? "guide-cy" : guides.includes("top") ? "guide-top" : "guide-bottom"
+          createGuideLine(svgEl as unknown as SVGElement, id, frameX, guideHy, frameX + frameW, guideHy)
+        }
 
         const targetLeft = nx - startW / 2
         const targetTop = ny
         const currentRect = textOverlayRect(liveText)
         const shiftX = targetLeft - currentRect.rx
         const shiftY = targetTop - currentRect.ry
-        const docEl = svgDocRef.current?.querySelector(idSelector(drag.id)) as SVGElement | null
+        const docEl = svgDocRef.current?.querySelector(idSelector(dragId)) as SVGElement | null
         if (docEl) {
           // Move tspans by preserving their relative line offsets to avoid mixing lines
           const tspans = Array.from(docEl.querySelectorAll("tspan")) as SVGElement[]
@@ -1187,14 +1183,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             liveText.setAttribute("y", String(oldY + shiftY))
           }
           const r = textOverlayRect(liveText)
-          const ov = svgEl.querySelector("#overlay_" + drag.id)
+          const ov = svgEl.querySelector("#overlay_" + dragId)
           if (ov) {
             ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
             ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
             ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
             ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
           }
-          renderTextHandles(drag.id)
+          renderTextHandles(dragId)
         }
         // Do not bump previewVersion during drag — we already update live DOM above; bumping would re-run the effect and rebuild the whole SVG every frame (jank)
       }

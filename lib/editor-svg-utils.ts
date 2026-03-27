@@ -153,6 +153,16 @@ export interface SnapResult {
   frameY: number
   frameW: number
   frameH: number
+  guideVx: number | null
+  guideHy: number | null
+}
+
+export interface SnapPeerBox {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
 }
 
 /**
@@ -165,7 +175,14 @@ export interface SnapResult {
  * lockedGuides: set of guide keys that were snapped on the previous frame.
  * Using a larger SNAP_OUT vs SNAP_IN prevents oscillation/flicker at edges.
  */
-export function applySnap(svgEl: SVGElement, cx: number, cy: number, txtW: number, txtH: number): SnapResult {
+export function applySnap(
+  svgEl: SVGElement,
+  cx: number,
+  cy: number,
+  txtW: number,
+  txtH: number,
+  peerBoxes: SnapPeerBox[] = []
+): SnapResult {
   // Use the SVG viewport size as the snapping frame.
   const { w: frameW, h: frameH } = getSVGElementSize(svgEl)
   const frameX = 0
@@ -174,56 +191,75 @@ export function applySnap(svgEl: SVGElement, cx: number, cy: number, txtW: numbe
   let nx = cx
   let ny = cy
   const guides: SnapResult["guides"] = []
+  let guideVx: number | null = null
+  let guideHy: number | null = null
 
-  // Horizontal center (vertical guide line through canvas center)
-  const centerX = frameX + frameW / 2
-  if (Math.abs(cx - centerX) < SNAP) {
-    nx = centerX
-    guides.push("cx")
+  type HorizontalCandidate = { key: "left" | "right" | "cx"; target: number; guideX: number }
+  type VerticalCandidate = { key: "top" | "bottom" | "cy"; target: number; guideY: number }
+  type BestHorizontal = HorizontalCandidate & { diff: number }
+  type BestVertical = VerticalCandidate & { diff: number }
+
+  const hCandidates: HorizontalCandidate[] = [
+    { key: "cx", target: frameX + frameW / 2, guideX: frameX + frameW / 2 },
+    { key: "left", target: frameX + txtW / 2, guideX: frameX },
+    { key: "right", target: frameX + frameW - txtW / 2, guideX: frameX + frameW },
+  ]
+
+  const vCandidates: VerticalCandidate[] = [
+    { key: "cy", target: frameY + frameH / 2 - txtH / 2, guideY: frameY + frameH / 2 },
+    { key: "top", target: frameY, guideY: frameY },
+    { key: "bottom", target: frameY + frameH - txtH, guideY: frameY + frameH },
+  ]
+
+  peerBoxes.forEach((p) => {
+    const left = p.x
+    const right = p.x + p.w
+    const cxPeer = p.x + p.w / 2
+    const top = p.y
+    const bottom = p.y + p.h
+    const cyPeer = p.y + p.h / 2
+    hCandidates.push(
+      { key: "left", target: left + txtW / 2, guideX: left },
+      { key: "right", target: right - txtW / 2, guideX: right },
+      { key: "cx", target: cxPeer, guideX: cxPeer }
+    )
+    vCandidates.push(
+      { key: "top", target: top, guideY: top },
+      { key: "bottom", target: bottom - txtH, guideY: bottom },
+      { key: "cy", target: cyPeer - txtH / 2, guideY: cyPeer }
+    )
+  })
+
+  const bestHSeed: BestHorizontal = {
+    key: hCandidates[0].key,
+    target: hCandidates[0].target,
+    diff: Math.abs(cx - hCandidates[0].target),
+    guideX: hCandidates[0].guideX,
+  }
+  const bestH = hCandidates.reduce<BestHorizontal>((best, c) => {
+    const diff = Math.abs(cx - c.target)
+    return diff < best.diff ? { key: c.key, target: c.target, diff, guideX: c.guideX } : best
+  }, bestHSeed)
+  if (bestH.diff < SNAP) {
+    nx = bestH.target
+    guides.push(bestH.key)
+    guideVx = bestH.guideX
   }
 
-  // Vertical center (horizontal guide line through canvas center)
-  // cy = top of text, so center of text = cy + txtH/2
-  // We want text center to align with canvas center → cy target = centerY - txtH/2
-  const centerY = frameY + frameH / 2
-  if (Math.abs(cy - (centerY - txtH / 2)) < SNAP) {
-    ny = centerY - txtH / 2
-    guides.push("cy")
+  const bestVSeed: BestVertical = {
+    key: vCandidates[0].key,
+    target: vCandidates[0].target,
+    diff: Math.abs(cy - vCandidates[0].target),
+    guideY: vCandidates[0].guideY,
   }
-
-  // Bug 2 fix: cy is TOP of text box (ty - ascent), so:
-  //   left/right edges snap cx (text horizontal center) — unchanged
-  //   top edge: cy should equal frameY (text top flush with canvas top)
-  //   bottom edge: cy should equal frameY + frameH - txtH (text bottom flush with canvas bottom)
-
-  // Left edge: text left side flush with canvas left → cx = frameX + txtW/2
-  
-  if (Math.abs(cx - (frameX + txtW / 2)) < SNAP) {
-    nx = frameX + txtW / 2
-    guides.push("left")
-  }
-
-  // Right edge: text right side flush with canvas right → cx = frameX + frameW - txtW/2
-  const rightEdge = frameX + frameW - txtW / 2;
-  const diffRight = Math.abs(cx - rightEdge);
-
-  console.log("cx", cx, "cy", cy);
-
-  if (Math.abs(cx - (frameX + frameW - txtW / 2)) < SNAP) {
-    nx = frameX + frameW - txtW / 2
-    guides.push("right")
-  }
-
-  // Top edge: text top flush with canvas top → cy = frameY
-  if (Math.abs(cy - frameY) < SNAP) {
-    ny = frameY
-    guides.push("top")
-  }
-
-  // Bottom edge: text bottom flush with canvas bottom → cy = frameY + frameH - txtH
-  if (Math.abs(cy - (frameY + frameH - txtH)) < SNAP) {
-    ny = frameY + frameH - txtH
-    guides.push("bottom")
+  const bestV = vCandidates.reduce<BestVertical>((best, c) => {
+    const diff = Math.abs(cy - c.target)
+    return diff < best.diff ? { key: c.key, target: c.target, diff, guideY: c.guideY } : best
+  }, bestVSeed)
+  if (bestV.diff < SNAP) {
+    ny = bestV.target
+    guides.push(bestV.key)
+    guideHy = bestV.guideY
   }
 
   return {
@@ -234,5 +270,7 @@ export function applySnap(svgEl: SVGElement, cx: number, cy: number, txtW: numbe
     frameY,
     frameW,
     frameH,
+    guideVx,
+    guideHy,
   }
 }
