@@ -137,6 +137,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [stickerCategories, setStickerCategories] = useState<StickerCategory[]>([])
   const [selectedStickerCategory, setSelectedStickerCategory] = useState("")
   const [selectedStickerIdState, setSelectedStickerIdState] = useState<string | null>(null)
+  const [selectedTextIdState, setSelectedTextIdState] = useState<string | null>(null)
+  const [isPreviewHovering, setIsPreviewHovering] = useState(false)
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
 
@@ -609,6 +611,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     const renderTextHandles = (tid: string | null) => {
       selectedTextId = tid
+      setSelectedTextIdState(tid)
       // Remove any existing handle groups
       Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
@@ -718,7 +721,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     })
 
     // Keep latest selected sticker handles visible across preview rebuilds.
-    if (selectedStickerIdState && svgEl.querySelector("#sticker_overlay_" + selectedStickerIdState)) {
+    if (selectedTextIdState && svgEl.querySelector("#overlay_" + selectedTextIdState)) {
+      renderTextHandles(selectedTextIdState)
+    } else if (selectedStickerIdState && svgEl.querySelector("#sticker_overlay_" + selectedStickerIdState)) {
       renderStickerHandles(selectedStickerIdState)
     }
 
@@ -772,6 +777,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startBBox: { x: number; y: number; width: number; height: number }
           startFirstTspanX: number
           startFirstTspanY: number
+          startOverlayX: number
+          startOverlayY: number
+          startOverlayW: number
+          startOverlayH: number
           moved: boolean
         }
       | {
@@ -807,6 +816,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     let drag: DragState | null = null
     let hiddenTextEditorOverlay: HTMLElement | null = null
     let hiddenTextEditorForTid: string | null = null
+    let activeInlineEditor: null | { tid: string; commit: (opts?: { bumpPreview?: boolean }) => void } = null
 
     function getScale() {
       const bbox = svgEl.getBoundingClientRect()
@@ -1039,8 +1049,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       overlayDiv.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:50;"
 
       overlayDiv.appendChild(editorEl)
-      const commit = () => {
+      let committed = false
+      const commit = (opts?: { bumpPreview?: boolean }) => {
         if (suppressEditorCommitRef.current) return
+        if (committed) return
+        committed = true
+        const bumpPreview = opts?.bumpPreview !== false
         if (container) container.removeEventListener("scroll", onContainerScroll)
         window.removeEventListener("scroll", onGlobalScrollOrResize, true)
         window.removeEventListener("resize", onGlobalScrollOrResize)
@@ -1065,8 +1079,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
           ;(ov as HTMLElement).style.display = ""
         }
-        setPreviewVersion((v) => v + 1)
+        if (bumpPreview) setPreviewVersion((v) => v + 1)
       }
+      activeInlineEditor = { tid, commit }
       editorEl.addEventListener("keydown", (e) => {
         const ke = e as unknown as KeyboardEvent
         if (ke.key === "Escape") {
@@ -1083,7 +1098,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           commit()
         }
       })
-      editorEl.addEventListener("blur", () => setTimeout(commit, 80))
+      editorEl.addEventListener("blur", () => setTimeout(() => commit(), 80))
       // Show the SVG text; the editor is caret-only and has transparent text.
       liveText.style.display = ""
       if (ov) (ov as HTMLElement).style.display = ""
@@ -1109,6 +1124,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         renderTextHandles(null)
         renderStickerHandles(null)
         return
+      }
+      // If user clicks a different text while inline editing, close current editor without rebuilding preview
+      // so the new editor stays focused (avoids caret/handles disappearing due to rebuild).
+      if (txtOv) {
+        const nextTid = txtOv.getAttribute("data-text-zone") || ""
+        if (activeInlineEditor && nextTid && activeInlineEditor.tid !== nextTid) {
+          activeInlineEditor.commit({ bumpPreview: false })
+          activeInlineEditor = null
+        }
       }
       e.preventDefault()
       const { sx, sy } = getScale()
@@ -1242,6 +1266,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startBBox: bbox,
           startFirstTspanX,
           startFirstTspanY,
+          startOverlayX: parseFloat(ov.getAttribute("x") || "0"),
+          startOverlayY: parseFloat(ov.getAttribute("y") || "0"),
+          startOverlayW: parseFloat(ov.getAttribute("width") || "0"),
+          startOverlayH: parseFloat(ov.getAttribute("height") || "0"),
           moved: false,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
@@ -1629,53 +1657,52 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         respaceTspansByFontSize(docEl)
         respaceTspansByFontSize(liveText)
 
-        const updatePosition = (el: SVGElement) => {
-          let bb: { x: number; y: number; width: number; height: number } | null = null
-          try {
-            const b = (el as unknown as SVGGraphicsElement).getBBox?.()
-            if (b && b.width > 0 && b.height > 0) {
-              bb = { x: b.x, y: b.y, width: b.width, height: b.height }
-            }
-          } catch {}
-          if (!bb) return
+        // Keep the opposite corner fixed using the visible overlay rect geometry (what the user sees),
+        // which is more stable than getBBox() for anchored/multiline text.
+        const desiredAnchor = (() => {
+          const x0 = resizeDrag.startOverlayX
+          const y0 = resizeDrag.startOverlayY
+          const w0 = resizeDrag.startOverlayW
+          const h0 = resizeDrag.startOverlayH
+          if (resizeDrag.corner === "tl") return { x: x0 + w0, y: y0 + h0 } // anchor br
+          if (resizeDrag.corner === "tr") return { x: x0, y: y0 + h0 } // anchor bl
+          if (resizeDrag.corner === "bl") return { x: x0 + w0, y: y0 } // anchor tr
+          return { x: x0, y: y0 } // corner br -> anchor tl
+        })()
 
-          const anchors: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
-            tl: { x: bb.x, y: bb.y },
-            tr: { x: bb.x + bb.width, y: bb.y },
-            bl: { x: bb.x, y: bb.y + bb.height },
-            br: { x: bb.x + bb.width, y: bb.y + bb.height },
-          }
-
-          const anchorKey = ((): "tl" | "tr" | "bl" | "br" => {
-            const c = resizeDrag.corner
-            if (c === "tl") return "br"
-            if (c === "tr") return "bl"
-            if (c === "bl") return "tr"
-            return "tl"
-          })()
-
-          const currentAnchor = anchors[anchorKey]
-          const dxAnchor = resizeDrag.anchorX - currentAnchor.x
-          const dyAnchor = resizeDrag.anchorY - currentAnchor.y
-
+        const shiftToMatchAnchor = (el: SVGElement, dx: number, dy: number) => {
           const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
           if (tspans.length) {
             tspans.forEach((t) => {
               const ox = parseFloat(t.getAttribute("x") || "0")
               const oy = parseFloat(t.getAttribute("y") || "0")
-              t.setAttribute("x", String(ox + dxAnchor))
-              t.setAttribute("y", String(oy + dyAnchor))
+              t.setAttribute("x", String(ox + dx))
+              t.setAttribute("y", String(oy + dy))
             })
           } else {
             const ox = parseFloat(el.getAttribute("x") || "0")
             const oy = parseFloat(el.getAttribute("y") || "0")
-            el.setAttribute("x", String(ox + dxAnchor))
-            el.setAttribute("y", String(oy + dyAnchor))
+            el.setAttribute("x", String(ox + dx))
+            el.setAttribute("y", String(oy + dy))
           }
         }
 
-        updatePosition(docEl)
-        updatePosition(liveText)
+        const current = textOverlayRect(liveText)
+        const currentAnchor = (() => {
+          const rx = current.rx
+          const ry = current.ry
+          const rw = current.rw
+          const rh = current.rh
+          if (resizeDrag.corner === "tl") return { x: rx + rw, y: ry + rh } // anchor br
+          if (resizeDrag.corner === "tr") return { x: rx, y: ry + rh } // anchor bl
+          if (resizeDrag.corner === "bl") return { x: rx + rw, y: ry } // anchor tr
+          return { x: rx, y: ry } // corner br -> anchor tl
+        })()
+
+        const dxAnchor = desiredAnchor.x - currentAnchor.x
+        const dyAnchor = desiredAnchor.y - currentAnchor.y
+        shiftToMatchAnchor(docEl, dxAnchor, dyAnchor)
+        shiftToMatchAnchor(liveText, dxAnchor, dyAnchor)
 
         const r = textOverlayRect(liveText)
         const ov = svgEl.querySelector("#overlay_" + resizeDrag.id) as SVGRectElement | null
@@ -1824,7 +1851,47 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       window.removeEventListener("mouseup", onMouseUp)
       window.removeEventListener("keydown", onDeleteSticker)
     }
-  }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation, selectedStickerIdState])
+  }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
+
+  // Show overlay rects only while pointer is over the preview <svg> (not the padded container alone).
+  useEffect(() => {
+    const svg = previewContainerRef.current?.querySelector("svg")
+    if (!svg) return
+    const show = isPreviewHovering
+    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone]")).forEach((r) => {
+      ;(r as unknown as HTMLElement).style.display = show ? "" : "none"
+    })
+    Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
+      ;(g as unknown as HTMLElement).style.display = show ? "" : "none"
+    })
+  }, [isPreviewHovering, previewVersion])
+
+  useEffect(() => {
+    const container = previewContainerRef.current
+    if (!container) return
+
+    const isPointInsideSvg = (clientX: number, clientY: number) => {
+      const svg = container.querySelector("svg")
+      if (!svg) return false
+      const r = svg.getBoundingClientRect()
+      return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom
+    }
+
+    const onMove = (e: MouseEvent) => {
+      // When editing text, an invisible textarea sits above the SVG and can trigger svg mouseleave.
+      // Using the SVG bounding box keeps hover state stable while the pointer is visually inside.
+      setIsPreviewHovering(isPointInsideSvg(e.clientX, e.clientY))
+    }
+
+    const onLeaveContainer = () => setIsPreviewHovering(false)
+
+    container.addEventListener("mousemove", onMove, { passive: true })
+    container.addEventListener("mouseleave", onLeaveContainer)
+    return () => {
+      container.removeEventListener("mousemove", onMove as any)
+      container.removeEventListener("mouseleave", onLeaveContainer)
+    }
+  }, [previewVersion])
 
   const handleExportPDF = useCallback(async () => {
     const doc = svgDocRef.current
