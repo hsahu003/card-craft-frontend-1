@@ -497,6 +497,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     // Image zone overlays
     Object.entries(zoneStates).forEach(([zoneId, st]) => {
       const clipBounds = st.hasClip && st.existingClipId ? getClipBounds(previewDoc, st.existingClipId) : null
+      console.log("clipBounds", clipBounds)
+      console.log("st", st)
       const zoneX = clipBounds ? clipBounds.x : st.zoneX
       const zoneY = clipBounds ? clipBounds.y : st.zoneY
       const zoneW = clipBounds ? clipBounds.w : st.zoneW
@@ -552,9 +554,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         rect.setAttribute("width", String(zoneW))
         rect.setAttribute("height", String(zoneH))
         rect.setAttribute("fill", "transparent")
+        // Selection box for image zones: draw around the effective clip bounds when clip-path exists.
+        rect.setAttribute("stroke", "red")
+        rect.setAttribute("stroke-width", "1")
+        rect.setAttribute("stroke-dasharray", "3 2")
+        rect.setAttribute("rx", "2")
         rect.setAttribute("data-img-zone", zoneId)
         rect.setAttribute("style", "cursor:grab")
-        if (st.hasClip && st.existingClipId) rect.setAttribute("clip-path", st.existingClipId)
         svgEl.appendChild(rect)
       }
     })
@@ -1858,7 +1864,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const svg = previewContainerRef.current?.querySelector("svg")
     if (!svg) return
     const show = isPreviewHovering
-    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone]")).forEach((r) => {
+    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
       ;(r as unknown as HTMLElement).style.display = show ? "" : "none"
     })
     Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {

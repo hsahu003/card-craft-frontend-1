@@ -101,19 +101,84 @@ export function textOverlayRect(tel: SVGElement): {
 }
 
 export function getClipBounds(doc: Document, clipAttr: string | null): { x: number; y: number; w: number; h: number } | null {
-  if (!clipAttr || !clipAttr.includes("url(#")) return null
-  const id = clipAttr.replace("url(#", "").replace(")", "").trim()
+  if (!clipAttr) return null
+  const m = clipAttr.match(/url\((['"]?)#([^'")\s]+)\1\)/)
+  if (!m) return null
+  const id = m[2]
   const clipEl = doc.getElementById(id)
   if (!clipEl) return null
+
   const rect = clipEl.querySelector("rect")
-  if (rect)
+  if (rect) {
     return {
       x: parseFloat(rect.getAttribute("x") || "0"),
       y: parseFloat(rect.getAttribute("y") || "0"),
       w: parseFloat(rect.getAttribute("width") || "100"),
       h: parseFloat(rect.getAttribute("height") || "100"),
     }
-  return null
+  }
+
+  const measureGraphic = (el: Element): { x: number; y: number; w: number; h: number } | null => {
+    // First try normal getBBox on the element itself.
+    try {
+      const bb = (el as unknown as SVGGraphicsElement).getBBox?.()
+      if (bb && Number.isFinite(bb.x) && Number.isFinite(bb.y) && bb.width > 0 && bb.height > 0) {
+        return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }
+      }
+    } catch {}
+
+    // Fallback: measure in a temporary hidden SVG attached to the document.
+    if (typeof document === "undefined") return null
+    try {
+      const ns = "http://www.w3.org/2000/svg"
+      const sandbox = document.createElementNS(ns, "svg")
+      sandbox.setAttribute("width", "1")
+      sandbox.setAttribute("height", "1")
+      sandbox.style.position = "fixed"
+      sandbox.style.left = "-10000px"
+      sandbox.style.top = "-10000px"
+      sandbox.style.opacity = "0"
+      sandbox.style.pointerEvents = "none"
+
+      const group = document.createElementNS(ns, "g")
+      const clipTransform = clipEl.getAttribute("transform")
+      if (clipTransform) group.setAttribute("transform", clipTransform)
+
+      const clone = el.cloneNode(true) as Element
+      group.appendChild(clone)
+      sandbox.appendChild(group)
+      document.body.appendChild(sandbox)
+
+      const bb = (clone as unknown as SVGGraphicsElement).getBBox?.()
+      sandbox.remove()
+      if (bb && Number.isFinite(bb.x) && Number.isFinite(bb.y) && bb.width > 0 && bb.height > 0) {
+        return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }
+      }
+    } catch {}
+    return null
+  }
+
+  const graphics = Array.from(clipEl.querySelectorAll("*")).filter((n) => typeof (n as any).getBBox === "function")
+  if (graphics.length === 0) return null
+
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+  let has = false
+
+  graphics.forEach((g) => {
+    const b = measureGraphic(g)
+    if (!b) return
+    has = true
+    minX = Math.min(minX, b.x)
+    minY = Math.min(minY, b.y)
+    maxX = Math.max(maxX, b.x + b.w)
+    maxY = Math.max(maxY, b.y + b.h)
+  })
+
+  if (!has) return null
+  return { x: minX, y: minY, w: Math.max(0, maxX - minX), h: Math.max(0, maxY - minY) }
 }
 
 // Snap threshold: how close (in SVG units) before snapping engages
