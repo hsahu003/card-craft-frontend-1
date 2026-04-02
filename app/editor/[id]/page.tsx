@@ -138,6 +138,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [selectedStickerCategory, setSelectedStickerCategory] = useState("")
   const [selectedStickerIdState, setSelectedStickerIdState] = useState<string | null>(null)
   const [selectedTextIdState, setSelectedTextIdState] = useState<string | null>(null)
+  const [selectedImageZoneIdState, setSelectedImageZoneIdState] = useState<string | null>(null)
   const [isPreviewHovering, setIsPreviewHovering] = useState(false)
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
@@ -614,10 +615,30 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     // Selection state: which editable text is selected (shows bounding box + handles).
     let selectedTextId: string | null = null
     let selectedStickerId: string | null = selectedStickerIdState
+    let selectedImageZoneId: string | null = selectedImageZoneIdState
+
+    const applySelectionStrokeStyle = (kind: "txt" | "sticker" | "img" | null, id: string | null) => {
+      Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
+        r.setAttribute("stroke-dasharray", "3 2")
+      })
+      if (!kind || !id) return
+      let selected: SVGRectElement | null = null
+      if (kind === "txt") selected = svgEl.querySelector("#overlay_" + id) as SVGRectElement | null
+      if (kind === "sticker") selected = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
+      if (kind === "img") selected = svgEl.querySelector(`[data-img-zone="${id}"]`) as SVGRectElement | null
+      if (selected) selected.setAttribute("stroke-dasharray", "none")
+    }
 
     const renderTextHandles = (tid: string | null) => {
       selectedTextId = tid
       setSelectedTextIdState(tid)
+      if (tid) {
+        selectedStickerId = null
+        selectedImageZoneId = null
+        setSelectedStickerIdState(null)
+        setSelectedImageZoneIdState(null)
+      }
+      applySelectionStrokeStyle(tid ? "txt" : null, tid)
       // Remove any existing handle groups
       Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
@@ -669,6 +690,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const renderStickerHandles = (sid: string | null) => {
       selectedStickerId = sid
       setSelectedStickerIdState(sid)
+      if (sid) {
+        selectedTextId = null
+        selectedImageZoneId = null
+        setSelectedTextIdState(null)
+        setSelectedImageZoneIdState(null)
+      }
+      applySelectionStrokeStyle(sid ? "sticker" : null, sid)
       Array.from(svgEl.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
       })
@@ -726,11 +754,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("height", String(r.rh))
     })
 
-    // Keep latest selected sticker handles visible across preview rebuilds.
+    // Keep latest selection visuals/handles visible across preview rebuilds.
     if (selectedTextIdState && svgEl.querySelector("#overlay_" + selectedTextIdState)) {
       renderTextHandles(selectedTextIdState)
     } else if (selectedStickerIdState && svgEl.querySelector("#sticker_overlay_" + selectedStickerIdState)) {
       renderStickerHandles(selectedStickerIdState)
+    } else if (selectedImageZoneIdState && svgEl.querySelector(`[data-img-zone="${selectedImageZoneIdState}"]`)) {
+      selectedImageZoneId = selectedImageZoneIdState
+      applySelectionStrokeStyle("img", selectedImageZoneIdState)
     }
 
     type DragState =
@@ -1127,8 +1158,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         return
       }
       if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle) {
+        // Clicked non-selectable area in SVG -> clear current selection.
+        if (activeInlineEditor) {
+          activeInlineEditor.commit({ bumpPreview: false })
+          activeInlineEditor = null
+        }
         renderTextHandles(null)
         renderStickerHandles(null)
+        selectedImageZoneId = null
+        setSelectedImageZoneIdState(null)
+        applySelectionStrokeStyle(null, null)
         return
       }
       // If user clicks a different text while inline editing, close current editor without rebuilding preview
@@ -1139,6 +1178,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           activeInlineEditor.commit({ bumpPreview: false })
           activeInlineEditor = null
         }
+      } else if (activeInlineEditor) {
+        // Selecting any non-text element should exit inline text editing immediately.
+        activeInlineEditor.commit({ bumpPreview: false })
+        activeInlineEditor = null
       }
       e.preventDefault()
       const { sx, sy } = getScale()
@@ -1285,6 +1328,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (imgOv) {
         renderStickerHandles(null)
         const zoneId = imgOv.getAttribute("data-img-zone")!
+        selectedImageZoneId = zoneId
+        setSelectedImageZoneIdState(zoneId)
+        selectedTextId = null
+        selectedStickerId = null
+        setSelectedTextIdState(null)
+        setSelectedStickerIdState(null)
+        applySelectionStrokeStyle("img", zoneId)
         const st = zoneStates[zoneId]
         if (!st?.b64) return
         const liveImage = svgEl.querySelector(idSelector(zoneId)) as SVGImageElement | null
@@ -1846,16 +1896,57 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setPreviewVersion((v) => v + 1)
     }
 
+    const onWindowMouseDown = (e: MouseEvent) => {
+      const target = e.target as Element | null
+      if (!target) return
+      // Ignore clicks that are inside the preview svg itself.
+      if (svgEl.contains(target)) return
+      // Ignore clicks in active inline editor overlay (textarea/input on top of svg).
+      if (target.closest("#txt-editor-overlay")) return
+      // Keep selected image-zone active while using its controls in the field editor panel
+      // (e.g. zoom slider / remove button / upload trigger).
+      if (
+        selectedImageZoneId &&
+        target.closest(`[data-image-zone-panel-id="${selectedImageZoneId}"]`)
+      )
+        return
+
+      // Close active inline text editor immediately to avoid blur-then-commit flicker.
+      if (activeInlineEditor) {
+        activeInlineEditor.commit({ bumpPreview: false })
+        activeInlineEditor = null
+      }
+
+      renderTextHandles(null)
+      renderStickerHandles(null)
+      selectedImageZoneId = null
+      setSelectedImageZoneIdState(null)
+      setSelectedTextIdState(null)
+      setSelectedStickerIdState(null)
+      applySelectionStrokeStyle(null, null)
+
+      // Outside-svg click means overlays should be hidden right away.
+      setIsPreviewHovering(false)
+      Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
+        ;(r as unknown as HTMLElement).style.display = "none"
+      })
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
+        ;(g as unknown as HTMLElement).style.display = "none"
+      })
+    }
+
     svgEl.addEventListener("mousedown", onMouseDown)
     window.addEventListener("mousemove", onMouseMove)
     window.addEventListener("mouseup", onMouseUp)
     window.addEventListener("keydown", onDeleteSticker)
+    window.addEventListener("mousedown", onWindowMouseDown)
 
     return () => {
       svgEl.removeEventListener("mousedown", onMouseDown)
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
       window.removeEventListener("keydown", onDeleteSticker)
+      window.removeEventListener("mousedown", onWindowMouseDown)
     }
   }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
 
@@ -1863,14 +1954,32 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     const svg = previewContainerRef.current?.querySelector("svg")
     if (!svg) return
-    const show = isPreviewHovering
-    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
-      ;(r as unknown as HTMLElement).style.display = show ? "" : "none"
+    const showAll = isPreviewHovering
+
+    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone]")).forEach((r) => {
+      const id = r.getAttribute("data-text-zone")
+      const keepSelected = !!id && id === selectedTextIdState
+      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
     })
-    Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
-      ;(g as unknown as HTMLElement).style.display = show ? "" : "none"
+    Array.from(svg.querySelectorAll<SVGRectElement>("[data-sticker-zone]")).forEach((r) => {
+      const id = r.getAttribute("data-sticker-zone")
+      const keepSelected = !!id && id === selectedStickerIdState
+      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
     })
-  }, [isPreviewHovering, previewVersion])
+    Array.from(svg.querySelectorAll<SVGRectElement>("[data-img-zone]")).forEach((r) => {
+      const id = r.getAttribute("data-img-zone")
+      const keepSelected = !!id && id === selectedImageZoneIdState
+      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
+    })
+
+    // Handle groups are single-selection per type in current flow.
+    Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
+      ;(g as unknown as HTMLElement).style.display = showAll || !!selectedTextIdState ? "" : "none"
+    })
+    Array.from(svg.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
+      ;(g as unknown as HTMLElement).style.display = showAll || !!selectedStickerIdState ? "" : "none"
+    })
+  }, [isPreviewHovering, previewVersion, selectedTextIdState, selectedStickerIdState, selectedImageZoneIdState])
 
   useEffect(() => {
     const container = previewContainerRef.current
@@ -2119,7 +2228,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                         const st = zoneStates[zone.id]!
                         const hasImage = !!st.b64
                         return (
-                          <div key={zone.id} className="mb-2.5">
+                          <div key={zone.id} className="mb-2.5" data-image-zone-panel-id={zone.id}>
                             <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
                               {zone.label}
                               <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">image</span>
@@ -2170,6 +2279,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                       offsetY: 0,
                                     },
                                   }))
+                                  setSelectedTextIdState(null)
+                                  setSelectedStickerIdState(null)
+                                  setSelectedImageZoneIdState(zone.id)
                                   setPreviewVersion((v) => v + 1)
                                 } catch {
                                   // Fallback: try original data URL path
@@ -2193,6 +2305,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                         offsetY: 0,
                                       },
                                     }))
+                                    setSelectedTextIdState(null)
+                                    setSelectedStickerIdState(null)
+                                    setSelectedImageZoneIdState(zone.id)
                                     setPreviewVersion((v) => v + 1)
                                   } catch {
                                     toast.error("Image upload failed")
