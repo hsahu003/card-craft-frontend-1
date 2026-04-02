@@ -19,13 +19,62 @@ export function getSVGSize(doc: Document): { w: number; h: number } {
   const root = doc.documentElement
   let w = parseFloat(root.getAttribute("width") || "0")
   let h = parseFloat(root.getAttribute("height") || "0")
-  console.log("w", w, "h", h);
   if (!w || !h) {
     const vb = (root.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
     w = vb[2] || 800
     h = vb[3] || 600
   }
   return { w: w || 800, h: h || 600 }
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg"
+
+/** Deep-clone an SVG document without serialize→parse (avoids parser errors on complex Inkscape SVGs). */
+export function cloneSvgDocument(doc: Document): Document | null {
+  if (typeof document === "undefined") return null
+  const srcRoot = doc.documentElement
+  if (!srcRoot || srcRoot.localName?.toLowerCase() !== "svg") return null
+  const out = document.implementation.createDocument(SVG_NS, "svg", null)
+  const imported = out.importNode(srcRoot, true) as unknown as SVGElement
+  out.replaceChild(imported, out.documentElement)
+  return out
+}
+
+/**
+ * Rasterize a sticker SVG string to a PNG data URL. Nested SVG-in-SVG (data URLs) often fails
+ * when the composite card is rasterized to canvas; PNG hrefs decode reliably.
+ */
+export async function rasterizeStickerSvgToPngDataUrl(
+  stickerSvgText: string,
+  targetW: number,
+  targetH: number
+): Promise<string> {
+  if (typeof document === "undefined") throw new Error("No document")
+  const encoded = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(stickerSvgText)
+  const img = new Image()
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error("Sticker SVG failed to decode"))
+    img.decoding = "async"
+    img.src = encoded
+  })
+  const tw = Math.max(1, targetW)
+  const th = Math.max(1, targetH)
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+  const crisp = Math.max(2, Math.min(8, Math.round(dpr * 4)))
+  const canvas = document.createElement("canvas")
+  canvas.width = Math.max(1, Math.round(tw * crisp))
+  canvas.height = Math.max(1, Math.round(th * crisp))
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("No canvas context")
+  const nw = img.naturalWidth
+  const nh = img.naturalHeight
+  if (nw > 0 && nh > 0) {
+    ctx.drawImage(img, 0, 0, nw, nh, 0, 0, canvas.width, canvas.height)
+  } else {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  }
+  return canvas.toDataURL("image/png")
 }
 
 

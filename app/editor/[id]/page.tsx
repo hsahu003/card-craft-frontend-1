@@ -17,6 +17,8 @@ import {
   applySnap,
   hideGuides,
   createGuideLine,
+  cloneSvgDocument,
+  rasterizeStickerSvgToPngDataUrl,
   type SnapPeerBox,
 } from "@/lib/editor-svg-utils"
 import type { ImageZoneState } from "@/lib/editor-types"
@@ -450,11 +452,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const doc = svgDocRef.current
     if (!container || !doc || previewVersion === 0) return
 
-    const s = new XMLSerializer().serializeToString(doc)
-    const parser = new DOMParser()
-    const previewDoc = parser.parseFromString(s, "image/svg+xml")
+    // Rotation is supported for stickers only; strip any saved transforms on editable text.
+    textFields.forEach(({ id }) => {
+      const el = doc.querySelector(idSelector(id)) as SVGElement | null
+      if (!el) return
+      el.removeAttribute("transform")
+      el.removeAttribute("data-rotation-angle")
+    })
+
+    const previewDoc = cloneSvgDocument(doc)
+    if (!previewDoc) return
     const svgEl = previewDoc.documentElement as unknown as SVGElement
-    svgEl.style.cssText = "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md)"
+    svgEl.setAttribute("style", "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md)")
     const { w: svgW, h: svgH } = getSVGElementSize(svgEl)
     // const { w: svgElW, h: svgElH } = getSVGElementSize(svgEl)
     if (!svgEl.getAttribute("viewBox")) {
@@ -462,6 +471,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     const ns = "http://www.w3.org/2000/svg"
+
+    const parseRotate = (transformAttr: string | null): { angle: number; px: number; py: number; raw: string } | null => {
+      if (!transformAttr) return null
+      const m = transformAttr.match(/rotate\(\s*([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s*\)/)
+      if (!m) return null
+      const angle = parseFloat(m[1] || "")
+      const px = parseFloat(m[2] || "")
+      const py = parseFloat(m[3] || "")
+      if (!Number.isFinite(angle) || !Number.isFinite(px) || !Number.isFinite(py)) return null
+      return { angle, px, py, raw: `rotate(${angle} ${px} ${py})` }
+    }
 
     // Center crosshair guide (thin cross through SVG center)
     const centerGuideVId = "center-guide-v"
@@ -588,6 +608,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("style", "cursor:grab")
       ov.setAttribute("data-sticker-zone", sid)
       ov.setAttribute("id", "sticker_overlay_" + sid)
+      const rot = parseRotate(stickerEl.getAttribute("transform"))
+      if (rot && Math.abs(rot.angle) > 0.0001) ov.setAttribute("transform", rot.raw)
       svgEl.appendChild(ov)
     })
 
@@ -708,7 +730,20 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const w = parseFloat(ov.getAttribute("width") || "0")
       const h = parseFloat(ov.getAttribute("height") || "0")
       if (!w || !h) return
+
+      const liveSticker = svgEl.querySelector(idSelector(sid)) as SVGElement | null
+      const pivotX = x + w / 2
+      const pivotY = y + h / 2
+      const angleDeg = liveSticker ? parseFloat(liveSticker.getAttribute("data-rotation-angle") || "") : NaN
+      const angle = Number.isFinite(angleDeg) ? angleDeg : 0
+      if (Math.abs(angle) > 0.0001) {
+        ov.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+      } else {
+        ov.removeAttribute("transform")
+      }
+
       const g = previewDoc.createElementNS(ns, "g")
+      g.setAttribute("id", "handles_sticker_" + sid)
       g.setAttribute("data-sticker-handles", "1")
       g.setAttribute("pointer-events", "none")
       const handleSize = Math.max(Math.min(Math.min(w, h) * 0.12, 12), 5)
@@ -735,6 +770,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         handle.setAttribute("style", "cursor:" + cursor)
         g.appendChild(handle)
       })
+
+      // Rotation handle (free rotation).
+      const ROT_SIZE = Math.max(Math.min(handleSize * 0.95, 14), 6)
+      const rotR = ROT_SIZE / 2
+      const rotCx = pivotX
+      const rotCy = y - ROT_SIZE * 0.7
+      const rot = previewDoc.createElementNS(ns, "rect")
+      rot.setAttribute("x", String(rotCx - rotR))
+      rot.setAttribute("y", String(rotCy - rotR))
+      rot.setAttribute("width", String(ROT_SIZE))
+      rot.setAttribute("height", String(ROT_SIZE))
+      rot.setAttribute("rx", String(Math.max(1, ROT_SIZE * 0.25)))
+      rot.setAttribute("fill", "#ffffff")
+      rot.setAttribute("stroke", "#378ADD")
+      rot.setAttribute("stroke-width", "0.8")
+      rot.setAttribute("pointer-events", "all")
+      rot.setAttribute("data-rotate-handle", "1")
+      rot.setAttribute("data-rotate-kind", "sticker")
+      rot.setAttribute("data-rotate-id", sid)
+      rot.setAttribute("style", "cursor:grab")
+      g.appendChild(rot)
+
+      if (Math.abs(angle) > 0.0001) {
+        g.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+      }
       svgEl.appendChild(g)
     }
 
@@ -748,6 +808,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
       if (!tel || !ov) return
       const r = textOverlayRect(tel)
+      ov.removeAttribute("transform")
       ov.setAttribute("x", String(r.rx))
       ov.setAttribute("y", String(r.ry))
       ov.setAttribute("width", String(r.rw))
@@ -847,6 +908,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startCornerY: number
           startW: number
           startH: number
+          moved: boolean
+        }
+      | {
+          type: "rotate-sticker"
+          id: string
+          overlay: Element
+          startX: number
+          startY: number
+          pivotX: number
+          pivotY: number
+          startAngleDeg: number
+          startMouseAngleRad: number
           moved: boolean
         }
 
@@ -1015,13 +1088,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       const updateEditorRect = () => {
         const r = liveText.getBoundingClientRect()
+        editorEl.style.transform = ""
+        editorEl.style.transformOrigin = ""
         editorEl.style.left = r.left + "px"
         editorEl.style.top = r.top + "px"
         editorEl.style.width = Math.max(r.width, 40) + "px"
         const baseHeight = Math.max(r.height, 1)
+
         if (isMultiline && editorEl instanceof HTMLTextAreaElement) {
-          // Keep caret alignment correct when user adds an empty new line:
-          // SVG bbox can remain one-line until glyphs exist on next line.
           editorEl.style.height = "auto"
           const contentHeight = Math.max(editorEl.scrollHeight, 1)
           editorEl.style.height = Math.max(baseHeight, contentHeight) + "px"
@@ -1054,6 +1128,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:${caretColor};box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       }
 
+      // Apply correct position immediately.
+      updateEditorRect()
+
       editorEl.addEventListener("input", () => {
         if (!inlineHistoryPushed) {
           textHistoryApiRef.current.pushPastBeforeMutation()
@@ -1064,12 +1141,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (docEl2) applyTextToTextEl(docEl2, val)
         // Keep the visible SVG text updated while typing (textarea text is transparent).
         applyTextToTextEl(liveText, val)
-        // Keep editor bounds and selection rect in sync with live text growth/shrink.
         updateEditorRect()
         if (ov) {
           const r = textOverlayRect(liveText)
-          const editorRect = editorEl.getBoundingClientRect()
-          const editorHeightSvg = editorRect.height / Math.max(scaleY, 0.0001)
+          const editorHeightPx = editorEl.getBoundingClientRect().height
+          const editorHeightSvg = editorHeightPx / Math.max(scaleY, 0.0001)
           const nextHeight = Math.max(r.rh, editorHeightSvg)
           ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
           ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
@@ -1148,6 +1224,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const target = e.target as Element
       const handle = target.closest("[data-text-handle]") as SVGElement | null
       const stickerHandle = target.closest("[data-sticker-handle]") as SVGElement | null
+      const rotateHandle = target.closest("[data-rotate-handle='1']") as SVGElement | null
       const imgOv = target.closest("[data-img-zone]")
       const txtOv = target.closest("[data-text-zone]")
       const stickerOv = target.closest("[data-sticker-zone]")
@@ -1155,6 +1232,51 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (up) {
         const zoneId = up.getAttribute("data-upload-zone")
         if (zoneId && fileInputRefs.current[zoneId]) fileInputRefs.current[zoneId].click()
+        return
+      }
+      if (rotateHandle) {
+        const kind = rotateHandle.getAttribute("data-rotate-kind")
+        const rid = rotateHandle.getAttribute("data-rotate-id") || ""
+        if (!kind || !rid || kind !== "sticker") return
+
+        const ov = svgEl.querySelector("#sticker_overlay_" + rid) as SVGRectElement | null
+        if (!ov) return
+        const x = parseFloat(ov.getAttribute("x") || "0")
+        const y = parseFloat(ov.getAttribute("y") || "0")
+        const w = parseFloat(ov.getAttribute("width") || "0")
+        const h = parseFloat(ov.getAttribute("height") || "0")
+        if (!w || !h) return
+
+        const pivotX = x + w / 2
+        const pivotY = y + h / 2
+
+        const liveEl = svgEl.querySelector(idSelector(rid)) as SVGElement | null
+        const startAngleDegRaw = liveEl ? parseFloat(liveEl.getAttribute("data-rotation-angle") || "") : NaN
+        const startAngleDeg = Number.isFinite(startAngleDegRaw) ? startAngleDegRaw : 0
+
+        const svgRect = svgEl.getBoundingClientRect()
+        const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
+        const relX = (e.clientX - svgRect.left) / svgRect.width
+        const relY = (e.clientY - svgRect.top) / svgRect.height
+        const mouseSvgX = vb[0] + relX * vb[2]
+        const mouseSvgY = vb[1] + relY * vb[3]
+        const startMouseAngleRad = Math.atan2(mouseSvgY - pivotY, mouseSvgX - pivotX)
+
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
+        ;(rotateHandle as unknown as HTMLElement).style.cursor = "grabbing"
+
+        drag = {
+          type: "rotate-sticker",
+          id: rid,
+          overlay: rotateHandle,
+          startX: e.clientX,
+          startY: e.clientY,
+          pivotX,
+          pivotY,
+          startAngleDeg,
+          startMouseAngleRad,
+          moved: false,
+        }
         return
       }
       if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle) {
@@ -1420,6 +1542,34 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true
       if (!drag.moved) return
 
+      if (drag.type === "rotate-sticker") {
+        const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
+        const svgRect = svgEl.getBoundingClientRect()
+        const relX = (e.clientX - svgRect.left) / svgRect.width
+        const relY = (e.clientY - svgRect.top) / svgRect.height
+        const mouseSvgX = vb[0] + relX * vb[2]
+        const mouseSvgY = vb[1] + relY * vb[3]
+
+        const currMouseAngleRad = Math.atan2(mouseSvgY - drag.pivotY, mouseSvgX - drag.pivotX)
+        const nextAngleDeg = drag.startAngleDeg + ((currMouseAngleRad - drag.startMouseAngleRad) * 180) / Math.PI
+        const rot = `rotate(${nextAngleDeg} ${drag.pivotX} ${drag.pivotY})`
+
+        const el = svgEl.querySelector(idSelector(drag.id)) as SVGElement | null
+        const docEl = svgDocRef.current?.querySelector(idSelector(drag.id)) as SVGElement | null
+        ;[el, docEl].forEach((target) => {
+          if (!target) return
+          target.setAttribute("data-rotation-angle", String(nextAngleDeg))
+          target.setAttribute("transform", rot)
+        })
+
+        const ov = svgEl.querySelector("#sticker_overlay_" + drag.id) as SVGRectElement | null
+        ov?.setAttribute("transform", rot)
+
+        const handles = svgEl.querySelector("#handles_sticker_" + drag.id) as SVGGElement | null
+        handles?.setAttribute("transform", rot)
+        return
+      }
+
       if (drag.type === "img") {
         // Capture drag fields; React may run state updaters after drag is cleared.
         const dragId = drag.id
@@ -1514,6 +1664,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           ov.setAttribute("x", String(left))
           ov.setAttribute("y", String(top))
         }
+
+        // Keep rotation pivot synced after sticker drag (prevents drift).
+        const angleRaw = live?.getAttribute("data-rotation-angle") || docEl?.getAttribute("data-rotation-angle") || ""
+        const angle = parseFloat(angleRaw)
+        if (Number.isFinite(angle) && Math.abs(angle) > 0.0001) {
+          const pivotX = left + w / 2
+          const pivotY = top + h / 2
+          const rot = `rotate(${angle} ${pivotX} ${pivotY})`
+          live?.setAttribute("transform", rot)
+          docEl?.setAttribute("transform", rot)
+        }
+
         renderStickerHandles(sid)
       }
       if (drag.type === "stickerResize") {
@@ -1555,6 +1717,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           ov.setAttribute("width", String(nextW))
           ov.setAttribute("height", String(nextH))
         }
+
+        // Keep rotation pivot synced after sticker resize.
+        const angleRaw = live?.getAttribute("data-rotation-angle") || docEl?.getAttribute("data-rotation-angle") || ""
+        const angle = parseFloat(angleRaw)
+        if (Number.isFinite(angle) && Math.abs(angle) > 0.0001) {
+          const pivotX = x + nextW / 2
+          const pivotY = y + nextH / 2
+          const rot = `rotate(${angle} ${pivotX} ${pivotY})`
+          live?.setAttribute("transform", rot)
+          docEl?.setAttribute("transform", rot)
+        }
+
         renderStickerHandles(sid)
       }
       if (drag.type === "txt") {
@@ -1645,6 +1819,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
             ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
           }
+
           renderTextHandles(dragId)
         }
         // Do not bump previewVersion during drag — we already update live DOM above; bumping would re-run the effect and rebuild the whole SVG every frame (jank)
@@ -1781,7 +1956,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ;(drag.overlay as HTMLElement).style.cursor = "grab"
       if (type === "txt" || type === "sticker") hideGuides(svgEl)
 
-      if (wasDrag && (type === "txt" || type === "resize" || type === "img" || type === "sticker" || type === "stickerResize")) {
+      if (wasDrag && (type === "txt" || type === "resize" || type === "img" || type === "sticker" || type === "stickerResize" || type === "rotate-sticker")) {
         const snap = textHistoryApiRef.current.pendingDragSnapshot
         if (snap) textHistoryApiRef.current.pushPastSnapshot(snap)
       }
@@ -1804,7 +1979,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       drag = null
-      if ((type === "sticker" || type === "stickerResize") && wasDrag) {
+      if ((type === "sticker" || type === "stickerResize" || type === "rotate-sticker") && wasDrag) {
         setPreviewVersion((v) => v + 1)
       }
       if (type === "resize") {
@@ -1917,14 +2092,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         activeInlineEditor = null
       }
 
-      renderTextHandles(null)
-      renderStickerHandles(null)
-      selectedImageZoneId = null
-      setSelectedImageZoneIdState(null)
-      setSelectedTextIdState(null)
-      setSelectedStickerIdState(null)
-      applySelectionStrokeStyle(null, null)
-
       // Outside-svg click means overlays should be hidden right away.
       setIsPreviewHovering(false)
       Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
@@ -1933,6 +2100,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
         ;(g as unknown as HTMLElement).style.display = "none"
       })
+
+      // After we hide overlays, clear selection state (prevents the dashed/dotted stroke
+      // from flashing before the overlay disappears).
+      renderTextHandles(null)
+      renderStickerHandles(null)
+      selectedImageZoneId = null
+      setSelectedImageZoneIdState(null)
+      setSelectedTextIdState(null)
+      setSelectedStickerIdState(null)
+      applySelectionStrokeStyle(null, null)
     }
 
     svgEl.addEventListener("mousedown", onMouseDown)
@@ -2015,9 +2192,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     try {
       const { jsPDF } = await import("jspdf")
       // Build an export copy and inline sticker SVG assets so they are included
-      // when the SVG is rasterized via data URL.
-      const parser = new DOMParser()
-      const exportDoc = parser.parseFromString(new XMLSerializer().serializeToString(doc), "image/svg+xml")
+      // when the SVG is rasterized via data URL. Clone without serialize→parse so
+      // complex templates (Inkscape, emoji, etc.) do not break re-parse like preview/export.
+      const exportDoc = cloneSvgDocument(doc)
+      if (!exportDoc) throw new Error("Could not clone SVG for export")
       const stickerEls = Array.from(exportDoc.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`))
       await Promise.all(
         stickerEls.map(async (el) => {
@@ -2028,9 +2206,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             const res = await fetch(href)
             if (!res.ok) return
             const stickerSvg = await res.text()
-            const stickerDataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(stickerSvg)))
-            el.setAttribute("href", stickerDataUrl)
-            el.setAttribute("xlink:href", stickerDataUrl)
+            const tw = Math.max(1, parseFloat(el.getAttribute("width") || "32"))
+            const th = Math.max(1, parseFloat(el.getAttribute("height") || "32"))
+            const pngDataUrl = await rasterizeStickerSvgToPngDataUrl(stickerSvg, tw, th)
+            el.setAttribute("href", pngDataUrl)
+            el.removeAttribute("xlink:href")
           } catch {
             // Keep original href if inlining fails; export may still work in some browsers.
           }
@@ -2038,7 +2218,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       )
 
       const s = new XMLSerializer().serializeToString(exportDoc)
-      const dataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(s)))
       const { w, h } = getSVGSize(doc)
       // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
       // (jsPDF embeds the canvas as a raster image, so this directly impacts perceived sharpness.)
@@ -2051,14 +2230,20 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!ctx) throw new Error("No canvas context")
       ctx.scale(scale, scale)
       const img = new Image()
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, w, h)
-          resolve()
-        }
-        img.onerror = reject
-        img.src = dataUrl
-      })
+      const svgBlob = new Blob([s], { type: "image/svg+xml;charset=utf-8" })
+      const svgObjectUrl = URL.createObjectURL(svgBlob)
+      try {
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, w, h)
+            resolve()
+          }
+          img.onerror = () => reject(new Error("Composite SVG failed to rasterize"))
+          img.src = svgObjectUrl
+        })
+      } finally {
+        URL.revokeObjectURL(svgObjectUrl)
+      }
       const imgData = canvas.toDataURL("image/png")
       const pxToMm = (px: number) => (px * 25.4) / 96
       const pw = pxToMm(w)
