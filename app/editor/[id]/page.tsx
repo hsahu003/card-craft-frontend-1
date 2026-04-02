@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById } from "@/lib/templates"
-import { Redo2, ShoppingCart, Undo2 } from "lucide-react"
+import { Copy, Redo2, ShoppingCart, Trash2, Undo2 } from "lucide-react"
 import {
   getSVGSize,
   getSVGElementSize,
@@ -264,6 +264,156 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setHistoryTick((t) => t + 1)
   }, [captureHistoryEntry])
 
+  const duplicateSelected = useCallback(() => {
+    const doc = svgDocRef.current
+    if (!doc) return
+
+    const container = previewContainerRef.current
+    const svgLive = container?.querySelector("svg") as SVGSVGElement | null
+
+    const selectedTid = selectedTextIdState
+    const selectedSid = selectedStickerIdState
+    if (!selectedTid && !selectedSid) return
+
+    pushPastBeforeMutation()
+
+    const nextIdSuffix = Date.now() + "_" + Math.floor(Math.random() * 10000)
+
+    const getOffsetFromLiveOverlay = (selector: string, fallbackW: number, fallbackH: number) => {
+      const ov = svgLive?.querySelector(selector) as SVGRectElement | null
+      const w = Math.max(1, parseFloat(ov?.getAttribute("width") || "") || fallbackW || 32)
+      const h = Math.max(1, parseFloat(ov?.getAttribute("height") || "") || fallbackH || 32)
+      const dx = Math.max(4, w * 0.18)
+      const dy = Math.max(4, h * 0.18)
+      return { dx, dy }
+    }
+
+    const shiftTextEl = (el: SVGElement, dx: number, dy: number) => {
+      const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+      if (tspans.length) {
+        tspans.forEach((t) => {
+          const ox = parseFloat(t.getAttribute("x") || "0")
+          const oy = parseFloat(t.getAttribute("y") || "0")
+          t.setAttribute("x", String(ox + dx))
+          t.setAttribute("y", String(oy + dy))
+        })
+      } else {
+        const ox = parseFloat(el.getAttribute("x") || "0")
+        const oy = parseFloat(el.getAttribute("y") || "0")
+        el.setAttribute("x", String(ox + dx))
+        el.setAttribute("y", String(oy + dy))
+      }
+    }
+
+    if (selectedSid) {
+      const src = doc.querySelector(idSelector(selectedSid)) as SVGImageElement | null
+      if (!src) return
+      const clone = src.cloneNode(true) as SVGImageElement
+      const newId = STICKER_PREFIX + nextIdSuffix
+      clone.setAttribute("id", newId)
+
+      const w = Math.max(1, parseFloat(src.getAttribute("width") || "0") || 32)
+      const h = Math.max(1, parseFloat(src.getAttribute("height") || "0") || 32)
+      const { dx, dy } = getOffsetFromLiveOverlay("#sticker_overlay_" + selectedSid, w, h)
+      const x = (parseFloat(src.getAttribute("x") || "0") || 0) + dx
+      const y = (parseFloat(src.getAttribute("y") || "0") || 0) + dy
+      clone.setAttribute("x", String(x))
+      clone.setAttribute("y", String(y))
+
+      const angle = parseFloat(src.getAttribute("data-rotation-angle") || "")
+      if (Number.isFinite(angle) && Math.abs(angle) > 0.0001) {
+        const pivotX = x + w / 2
+        const pivotY = y + h / 2
+        clone.setAttribute("data-rotation-angle", String(angle))
+        clone.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+      } else {
+        clone.removeAttribute("data-rotation-angle")
+        clone.removeAttribute("transform")
+      }
+
+      src.parentNode?.appendChild(clone)
+      setSelectedTextIdState(null)
+      setSelectedImageZoneIdState(null)
+      setSelectedStickerIdState(newId)
+      setPreviewVersion((v) => v + 1)
+      return
+    }
+
+    if (selectedTid) {
+      const src = doc.querySelector(idSelector(selectedTid)) as SVGElement | null
+      if (!src) return
+      const clone = src.cloneNode(true) as SVGElement
+      const newId = EDITABLE_PREFIX + "copy_" + nextIdSuffix
+      clone.setAttribute("id", newId)
+      clone.removeAttribute("transform")
+      clone.removeAttribute("data-rotation-angle")
+
+      const ov = svgLive?.querySelector("#overlay_" + selectedTid) as SVGRectElement | null
+      const fallbackW = Math.max(1, parseFloat(ov?.getAttribute("width") || "") || 120)
+      const fallbackH = Math.max(1, parseFloat(ov?.getAttribute("height") || "") || 32)
+      const { dx, dy } = getOffsetFromLiveOverlay("#overlay_" + selectedTid, fallbackW, fallbackH)
+      shiftTextEl(clone, dx, dy)
+
+      src.parentNode?.appendChild(clone)
+
+      const val = (textValues[selectedTid] ?? src.textContent ?? "").toString()
+      setTextFields((prev) => [...prev, { id: newId, label: "copy" }])
+      setTextValues((prev) => ({ ...prev, [newId]: val }))
+      setSelectedStickerIdState(null)
+      setSelectedImageZoneIdState(null)
+      setSelectedTextIdState(newId)
+      setPreviewVersion((v) => v + 1)
+    }
+  }, [pushPastBeforeMutation, selectedStickerIdState, selectedTextIdState, textValues])
+
+  const deleteSelected = useCallback(() => {
+    const doc = svgDocRef.current
+    if (!doc) return
+    const sid = selectedStickerIdState
+    const tid = selectedTextIdState
+    if (!sid && !tid) return
+
+    if (sid) {
+      const el = doc.querySelector(idSelector(sid))
+      if (!el?.parentNode) return
+      pushPastBeforeMutation()
+      el.parentNode.removeChild(el)
+      setSelectedStickerIdState(null)
+      setPreviewVersion((v) => v + 1)
+      return
+    }
+
+    if (tid) {
+      const el = doc.querySelector(idSelector(tid))
+      if (!el?.parentNode) return
+      pushPastBeforeMutation()
+      el.parentNode.removeChild(el)
+      delete panelInputRefs.current[tid]
+      delete panelTextHistoryPushedRef.current[tid]
+      setTextFields((prev) => prev.filter((f) => f.id !== tid))
+      setTextValues((prev) => {
+        const next = { ...prev }
+        delete next[tid]
+        return next
+      })
+      setSelectedTextIdState(null)
+      setPreviewVersion((v) => v + 1)
+    }
+  }, [pushPastBeforeMutation, selectedStickerIdState, selectedTextIdState])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Delete" && e.key !== "Backspace") return
+      const target = e.target as HTMLElement | null
+      if (target?.closest("input, textarea, [contenteditable='true']")) return
+      if (!selectedStickerIdState && !selectedTextIdState) return
+      e.preventDefault()
+      deleteSelected()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [deleteSelected, selectedStickerIdState, selectedTextIdState])
+
   const pushPastSnapshot = useCallback((entry: EditorHistoryEntry) => {
     if (isApplyingHistoryRef.current) return
     historyPastRef.current.push(entry)
@@ -321,8 +471,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const doc = parser.parseFromString(entry.svg, "image/svg+xml")
     svgDocRef.current = doc
     setZoneStates(cloneZoneStates(entry.zoneStates))
+    const textEls = Array.from(doc.querySelectorAll<SVGElement>(`[id^="${EDITABLE_PREFIX}"]`))
+    setTextFields(
+      textEls.map((el) => ({
+        id: el.getAttribute("id")!,
+        label: (el.getAttribute("id") || "").replace(EDITABLE_PREFIX, "").replace(/_/g, " "),
+      }))
+    )
     const textVals: Record<string, string> = {}
-    doc.querySelectorAll<SVGElement>(`[id^="${EDITABLE_PREFIX}"]`).forEach((el) => {
+    textEls.forEach((el) => {
       const id = el.getAttribute("id")
       if (id) textVals[id] = el.textContent?.trim() ?? ""
     })
@@ -855,6 +1012,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startOverlayW?: number
           startOverlayH?: number
           moved: boolean
+          /** True when this text was already selected before mousedown (second click opens caret). */
+          openEditorOnClick: boolean
         }
       | {
           type: "resize"
@@ -1482,6 +1641,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (txtOv) {
         renderStickerHandles(null)
         const tid = txtOv.getAttribute("data-text-zone")!
+        const prevSelected = selectedTextId
         renderTextHandles(tid)
         const docEl = svgDocRef.current?.querySelector(idSelector(tid))
         if (!docEl) return
@@ -1507,6 +1667,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startOverlayW,
           startOverlayH,
           moved: false,
+          openEditorOnClick: prevSelected === tid,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         ;(txtOv as HTMLElement).style.cursor = "grabbing"
@@ -1953,6 +2114,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const wasDrag = drag.moved
       const type = drag.type
       const tid = drag.id
+      const openEditorOnClick = type === "txt" && drag.type === "txt" ? drag.openEditorOnClick : false
       ;(drag.overlay as HTMLElement).style.cursor = "grab"
       if (type === "txt" || type === "sticker") hideGuides(svgEl)
 
@@ -2051,24 +2213,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       if (wasDrag && type === "txt") setPreviewVersion((v) => v + 1)
-      if (!wasDrag && type === "txt") openEditor(tid)
-    }
-
-    const onDeleteSticker = (e: KeyboardEvent) => {
-      if (!selectedStickerId) return
-      if (e.key !== "Delete" && e.key !== "Backspace") return
-      const target = e.target as HTMLElement | null
-      if (target?.closest("input, textarea, [contenteditable='true']")) return
-      e.preventDefault()
-      const sid = selectedStickerId
-      const liveEl = svgEl.querySelector(idSelector(sid))
-      const docEl = svgDocRef.current?.querySelector(idSelector(sid))
-      if (!liveEl && !docEl) return
-      pushPastBeforeMutation()
-      liveEl?.parentNode?.removeChild(liveEl)
-      docEl?.parentNode?.removeChild(docEl)
-      renderStickerHandles(null)
-      setPreviewVersion((v) => v + 1)
+      if (!wasDrag && type === "txt" && openEditorOnClick) openEditor(tid)
     }
 
     const onWindowMouseDown = (e: MouseEvent) => {
@@ -2085,6 +2230,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         target.closest(`[data-image-zone-panel-id="${selectedImageZoneId}"]`)
       )
         return
+
+      // Left panel (Duplicate, text inputs, stickers): mousedown must not clear selection before click.
+      if (target.closest("#editor-left-panel")) return
 
       // Close active inline text editor immediately to avoid blur-then-commit flicker.
       if (activeInlineEditor) {
@@ -2115,14 +2263,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     svgEl.addEventListener("mousedown", onMouseDown)
     window.addEventListener("mousemove", onMouseMove)
     window.addEventListener("mouseup", onMouseUp)
-    window.addEventListener("keydown", onDeleteSticker)
     window.addEventListener("mousedown", onWindowMouseDown)
 
     return () => {
       svgEl.removeEventListener("mousedown", onMouseDown)
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("mouseup", onMouseUp)
-      window.removeEventListener("keydown", onDeleteSticker)
       window.removeEventListener("mousedown", onWindowMouseDown)
     }
   }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
@@ -2331,10 +2477,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
 
-        {/* Main: left + right */}
-        <div className="flex min-h-[570px] flex-1">
+        {/* Main: left + right — items-start so the preview column height does not track the
+            left panel (each duplicated text adds rows there). Otherwise flex stretch + centered
+            preview makes the SVG look like it "moves down" as the center shifts. */}
+        <div className="flex min-h-[570px] flex-1 items-start">
           {/* Left panel */}
-          <div className="flex w-[290px] min-w-[250px] flex-col border-r border-border">
+          <div id="editor-left-panel" className="flex w-[290px] min-w-[250px] flex-col border-r border-border">
             <div className="flex-1 overflow-y-auto px-3 pb-4 pt-2">
               {!svgLoaded ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
@@ -2346,10 +2494,41 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 </p>
               ) : (
                 <>
+                  {(selectedTextIdState || selectedStickerIdState) && (
+                    <div className="mb-2 mt-1 flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
+                      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selection</div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1.5 px-2 text-xs"
+                          onClick={duplicateSelected}
+                          title="Duplicate selected element"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          Duplicate
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={deleteSelected}
+                          title="Delete selected text or sticker"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {textFields.length > 0 && (
                     <>
                       <p className="mb-1 mt-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Text fields</p>
-                      <p className="mb-2 text-[11px] text-muted-foreground">Click to edit inline • Drag to move • Snaps to center & edges</p>
+                      <p className="mb-2 text-[11px] text-muted-foreground">
+                        Click to select • Click again to edit • Drag to move • Delete/Backspace removes selection when not typing
+                      </p>
                       {textFields.map(({ id, label }) => (
                         <div key={id} className="mb-2.5">
                           <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
@@ -2634,7 +2813,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                           ))}
                         </div>
                       )}
-                      <p className="text-[11px] text-muted-foreground">Click a sticker to add it centered. Drag, resize, or press Delete to remove.</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Click a sticker to add it centered. Drag, resize, or press Delete / Backspace (or use Delete in Selection) to remove a sticker or selected text.
+                      </p>
                     </div>
                   </details>
                 </>
@@ -2653,8 +2834,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Right panel */}
-          <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Right panel: min height so preview stays usable; width still flex-1 */}
+          <div className="flex min-h-[570px] min-w-0 flex-1 flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Live Preview</span>
               <Button
@@ -2669,7 +2850,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
             <div
               ref={previewContainerRef}
-              className="flex flex-1 items-center justify-center overflow-auto bg-muted/30 p-5"
+              className="flex flex-1 items-start justify-center overflow-auto bg-muted/30 p-5"
               onDragOver={(e) => {
                 if (e.dataTransfer.types.includes("application/x-sticker")) {
                   e.preventDefault()
