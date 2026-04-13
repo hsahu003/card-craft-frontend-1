@@ -744,14 +744,29 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     })
 
     // Sticker overlays
-    Array.from(svgEl.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`)).forEach((stickerEl) => {
+    Array.from(svgEl.querySelectorAll<SVGElement>(`[id^="${STICKER_PREFIX}"]`)).forEach((stickerEl) => {
       const sid = stickerEl.getAttribute("id")
       if (!sid) return
-      const x = parseFloat(stickerEl.getAttribute("x") || "0")
-      const y = parseFloat(stickerEl.getAttribute("y") || "0")
-      const w = parseFloat(stickerEl.getAttribute("width") || "0")
-      const h = parseFloat(stickerEl.getAttribute("height") || "0")
-      if (!w || !h) return
+      let x = parseFloat(stickerEl.getAttribute("x") || "0")
+      let y = parseFloat(stickerEl.getAttribute("y") || "0")
+      let w = parseFloat(stickerEl.getAttribute("width") || "0")
+      let h = parseFloat(stickerEl.getAttribute("height") || "0")
+      if (!(w > 0 && h > 0)) {
+        try {
+          const b = (stickerEl as unknown as SVGGraphicsElement).getBBox?.()
+          if (b && b.width > 0 && b.height > 0) {
+            x = b.x
+            y = b.y
+            w = b.width
+            h = b.height
+          }
+        } catch {}
+      }
+      if (!(w > 0 && h > 0)) {
+        // Keep an overlay node so bounds can be fixed after DOM insertion via getBBox.
+        w = 1
+        h = 1
+      }
       const ov = previewDoc.createElementNS(ns, "rect")
       ov.setAttribute("x", String(x))
       ov.setAttribute("y", String(y))
@@ -970,6 +985,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("y", String(r.ry))
       ov.setAttribute("width", String(r.rw))
       ov.setAttribute("height", String(r.rh))
+    })
+
+    // Recompute sticker overlays from rendered bounds so template stickers that are groups/paths
+    // (without x/y/width/height attrs on the root element) still get a correct selector box.
+    Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-sticker-zone]")).forEach((ov) => {
+      const sid = ov.getAttribute("data-sticker-zone")
+      if (!sid) return
+      const sel = svgEl.querySelector(idSelector(sid)) as SVGGraphicsElement | null
+      if (!sel || typeof sel.getBBox !== "function") return
+      try {
+        const b = sel.getBBox()
+        if (b.width <= 0 || b.height <= 0) return
+        ov.setAttribute("x", String(b.x))
+        ov.setAttribute("y", String(b.y))
+        ov.setAttribute("width", String(b.width))
+        ov.setAttribute("height", String(b.height))
+      } catch {}
     })
 
     // Keep latest selection visuals/handles visible across preview rebuilds.
