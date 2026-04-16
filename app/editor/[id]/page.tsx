@@ -105,7 +105,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const svgDocRef = useRef<Document | null>(null)
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement>>({})
-  const panelInputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement>>({})
+  const panelInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
   // When starting a resize from resize handles, the inline editor overlay blurs.
   // Its blur handler calls `commit()`, which rebuilds the preview and interrupts resize dragging.
   // This flag suppresses commit during an active resize.
@@ -115,7 +115,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const isApplyingHistoryRef = useRef(false)
   const historyPastRef = useRef<EditorHistoryEntry[]>([])
   const historyFutureRef = useRef<EditorHistoryEntry[]>([])
-  const panelTextHistoryPushedRef = useRef<Record<string, boolean>>({})
+  const panelTextHistoryPushedRef = useRef(false)
   /** One undo step per zoom slider gesture (cleared on pointer up). */
   const panelImageZoomPushedRef = useRef<Record<string, boolean>>({})
   const textHistoryApiRef = useRef({
@@ -146,6 +146,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [isPreviewHovering, setIsPreviewHovering] = useState(false)
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
+  const selectedTextField = selectedTextIdState ? textFields.find((field) => field.id === selectedTextIdState) ?? null : null
+  const selectedTextValue = selectedTextIdState ? (textValues[selectedTextIdState] ?? "") : ""
+  const isSelectedTextMultiline = selectedTextValue.includes("\n") || selectedTextValue.length > 60
+
+  useEffect(() => {
+    panelTextHistoryPushedRef.current = false
+  }, [selectedTextIdState])
 
   useEffect(() => {
     let cancelled = false
@@ -390,8 +397,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!el?.parentNode) return
       pushPastBeforeMutation()
       el.parentNode.removeChild(el)
-      delete panelInputRefs.current[tid]
-      delete panelTextHistoryPushedRef.current[tid]
+      panelInputRef.current = null
+      panelTextHistoryPushedRef.current = false
       setTextFields((prev) => prev.filter((f) => f.id !== tid))
       setTextValues((prev) => {
         const next = { ...prev }
@@ -1441,8 +1448,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           renderTextHandles(tid)
         }
         setTextValues((prev) => ({ ...prev, [tid]: val }))
-        const panel = panelInputRefs.current[tid]
-        if (panel) panel.value = val
+        const panel = panelInputRef.current
+        if (panel && selectedTextIdState === tid) panel.value = val
       })
       const overlayDiv = document.createElement("div")
       overlayDiv.id = "txt-editor-overlay"
@@ -1465,8 +1472,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
         if (docEl2) applyTextToTextEl(docEl2, val)
         setTextValues((prev) => ({ ...prev, [tid]: val }))
-        const panel = panelInputRefs.current[tid]
-        if (panel) panel.value = val
+        const panel = panelInputRef.current
+        if (panel && selectedTextIdState === tid) panel.value = val
         if (liveText) {
           applyTextToTextEl(liveText, val)
           liveText.style.display = ""
@@ -2673,59 +2680,65 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                       <p className="mb-2 text-[11px] text-muted-foreground">
                         Click to select • Click again to edit • Drag to move • Delete/Backspace removes selection when not typing
                       </p>
-                      {textFields.map(({ id, label }) => (
-                        <div key={id} className="mb-2.5">
+                      {selectedTextField ? (
+                        <div className="mb-2.5">
                           <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                            {label}
+                            {selectedTextField.label}
                             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">text</span>
                           </div>
-                          {((textValues[id] || "").includes("\n") || (textValues[id] || "").length > 60) ? (
+                          {isSelectedTextMultiline ? (
                             <textarea
                               ref={(el) => {
-                                if (el) panelInputRefs.current[id] = el
+                                panelInputRef.current = el
                               }}
                               className="min-h-[52px] w-full resize-y rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground"
-                              value={textValues[id] ?? ""}
+                              value={selectedTextValue}
                               onChange={(e) => {
-                                if (!panelTextHistoryPushedRef.current[id]) {
+                                if (!selectedTextIdState) return
+                                if (!panelTextHistoryPushedRef.current) {
                                   pushPastBeforeMutation()
-                                  panelTextHistoryPushedRef.current[id] = true
+                                  panelTextHistoryPushedRef.current = true
                                 }
                                 const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(id))
+                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState))
                                 if (docEl) docEl.textContent = v
-                                setTextValues((prev) => ({ ...prev, [id]: v }))
+                                setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
                                 setPreviewVersion((x) => x + 1)
                               }}
                               onBlur={() => {
-                                delete panelTextHistoryPushedRef.current[id]
+                                panelTextHistoryPushedRef.current = false
                               }}
                             />
                           ) : (
                             <Input
                               ref={(el) => {
-                                if (el) panelInputRefs.current[id] = el
+                                panelInputRef.current = el
                               }}
                               className="rounded-md border-border px-2.5 py-1.5 text-[13px]"
-                              value={textValues[id] ?? ""}
+                              value={selectedTextValue}
                               onChange={(e) => {
-                                if (!panelTextHistoryPushedRef.current[id]) {
+                                if (!selectedTextIdState) return
+                                if (!panelTextHistoryPushedRef.current) {
                                   pushPastBeforeMutation()
-                                  panelTextHistoryPushedRef.current[id] = true
+                                  panelTextHistoryPushedRef.current = true
                                 }
                                 const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(id))
+                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState))
                                 if (docEl) docEl.textContent = v
-                                setTextValues((prev) => ({ ...prev, [id]: v }))
+                                setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
                                 setPreviewVersion((x) => x + 1)
                               }}
                               onBlur={() => {
-                                delete panelTextHistoryPushedRef.current[id]
+                                panelTextHistoryPushedRef.current = false
                               }}
                             />
                           )}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="mb-2.5 rounded-md border border-dashed border-border bg-muted/20 px-2.5 py-3 text-[12px] text-muted-foreground">
+                          Select a text element in the preview to edit it here.
+                        </div>
+                      )}
                     </>
                   )}
 
