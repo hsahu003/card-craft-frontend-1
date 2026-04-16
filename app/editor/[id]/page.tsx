@@ -401,6 +401,83 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }, [pushPastBeforeMutation, selectedStickerIdState, selectedTextIdState])
 
+  const nudgeSelected = useCallback((dx: number, dy: number) => {
+    const doc = svgDocRef.current
+    if (!doc) return
+    const sid = selectedStickerIdState
+    const tid = selectedTextIdState
+    const zid = selectedImageZoneIdState
+    if (!sid && !tid && !zid) return
+
+    const shiftTextEl = (el: SVGElement, ddx: number, ddy: number) => {
+      const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+      if (tspans.length) {
+        tspans.forEach((t) => {
+          const ox = parseFloat(t.getAttribute("x") || "0")
+          const oy = parseFloat(t.getAttribute("y") || "0")
+          t.setAttribute("x", String(ox + ddx))
+          t.setAttribute("y", String(oy + ddy))
+        })
+      } else {
+        const ox = parseFloat(el.getAttribute("x") || "0")
+        const oy = parseFloat(el.getAttribute("y") || "0")
+        el.setAttribute("x", String(ox + ddx))
+        el.setAttribute("y", String(oy + ddy))
+      }
+    }
+
+    if (sid) {
+      const el = doc.querySelector(idSelector(sid)) as SVGElement | null
+      if (!el) return
+      pushPastBeforeMutation()
+      const x = parseFloat(el.getAttribute("x") || "0")
+      const y = parseFloat(el.getAttribute("y") || "0")
+      const nx = x + dx
+      const ny = y + dy
+      el.setAttribute("x", String(nx))
+      el.setAttribute("y", String(ny))
+      const w = Math.max(parseFloat(el.getAttribute("width") || "0"), 0)
+      const h = Math.max(parseFloat(el.getAttribute("height") || "0"), 0)
+      const angle = parseFloat(el.getAttribute("data-rotation-angle") || "")
+      if (w > 0 && h > 0 && Number.isFinite(angle) && Math.abs(angle) > 0.0001) {
+        const pivotX = nx + w / 2
+        const pivotY = ny + h / 2
+        el.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+      }
+      setPreviewVersion((v) => v + 1)
+      return
+    }
+
+    if (tid) {
+      const el = doc.querySelector(idSelector(tid)) as SVGElement | null
+      if (!el) return
+      pushPastBeforeMutation()
+      shiftTextEl(el, dx, dy)
+      setPreviewVersion((v) => v + 1)
+      return
+    }
+
+    if (zid) {
+      const st = zoneStatesRef.current[zid]
+      if (!st?.b64) return
+      pushPastBeforeMutation()
+      const nextOX = (st.offsetX || 0) + dx
+      const nextOY = (st.offsetY || 0) + dy
+      setZoneStates((prev) => ({
+        ...prev,
+        [zid]: { ...prev[zid], offsetX: nextOX, offsetY: nextOY },
+      }))
+      const imgEl = doc.querySelector(idSelector(zid)) as SVGImageElement | null
+      if (imgEl) {
+        const x = parseFloat(imgEl.getAttribute("x") || "0")
+        const y = parseFloat(imgEl.getAttribute("y") || "0")
+        imgEl.setAttribute("x", String(x + dx))
+        imgEl.setAttribute("y", String(y + dy))
+      }
+      setPreviewVersion((v) => v + 1)
+    }
+  }, [pushPastBeforeMutation, selectedStickerIdState, selectedTextIdState, selectedImageZoneIdState])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Delete" && e.key !== "Backspace") return
@@ -413,6 +490,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [deleteSelected, selectedStickerIdState, selectedTextIdState])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
+      const target = e.target as HTMLElement | null
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return
+      if (!selectedStickerIdState && !selectedTextIdState && !selectedImageZoneIdState) return
+      e.preventDefault()
+      const step = e.shiftKey ? 10 : 0.5
+      if (e.key === "ArrowUp") nudgeSelected(0, -step)
+      if (e.key === "ArrowDown") nudgeSelected(0, step)
+      if (e.key === "ArrowLeft") nudgeSelected(-step, 0)
+      if (e.key === "ArrowRight") nudgeSelected(step, 0)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [nudgeSelected, selectedStickerIdState, selectedTextIdState, selectedImageZoneIdState])
 
   const pushPastSnapshot = useCallback((entry: EditorHistoryEntry) => {
     if (isApplyingHistoryRef.current) return
