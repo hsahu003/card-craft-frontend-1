@@ -38,6 +38,8 @@ const STICKER_PREFIX = "sticker_"
 const IMAGE_DRAG_SPEED = 1.25
 const IMAGE_COMPRESS_QUALITY = 0.75
 const IMAGE_COMPRESS_SKIP_BELOW_BYTES = 500 * 1024
+const ROTATE_SNAP_THRESHOLD_DEG = 5
+const ROTATE_SNAP_TARGETS_DEG = [0, 90, 180, 270, 360] as const
 // Line spacing multiplier so line-height scales with font-size (e.g. 1.25 = 125% of font size).
 const LINE_HEIGHT_RATIO = 1.25
 
@@ -1830,6 +1832,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!drag.moved) return
 
       if (drag.type === "rotate-sticker") {
+        const normalizeAngle = (a: number) => ((a % 360) + 360) % 360
+        const shortestDeltaDeg = (fromDeg: number, toDeg: number) => (((toDeg - fromDeg + 540) % 360) - 180)
+
         const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
         const svgRect = svgEl.getBoundingClientRect()
         const relX = (e.clientX - svgRect.left) / svgRect.width
@@ -1838,7 +1843,20 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const mouseSvgY = vb[1] + relY * vb[3]
 
         const currMouseAngleRad = Math.atan2(mouseSvgY - drag.pivotY, mouseSvgX - drag.pivotX)
-        const nextAngleDeg = drag.startAngleDeg + ((currMouseAngleRad - drag.startMouseAngleRad) * 180) / Math.PI
+        const rawAngleDeg = drag.startAngleDeg + ((currMouseAngleRad - drag.startMouseAngleRad) * 180) / Math.PI
+        const normalizedRaw = normalizeAngle(rawAngleDeg)
+        const targets = ROTATE_SNAP_TARGETS_DEG.map((t) => (t === 360 ? 0 : t))
+        let nearestTarget = targets[0]
+        let nearestDiff = Math.abs(shortestDeltaDeg(normalizedRaw, nearestTarget))
+        targets.forEach((t) => {
+          const d = Math.abs(shortestDeltaDeg(normalizedRaw, t))
+          if (d < nearestDiff) {
+            nearestDiff = d
+            nearestTarget = t
+          }
+        })
+        const snapped = nearestDiff <= ROTATE_SNAP_THRESHOLD_DEG
+        const nextAngleDeg = snapped ? rawAngleDeg + shortestDeltaDeg(normalizedRaw, nearestTarget) : rawAngleDeg
         const rot = `rotate(${nextAngleDeg} ${drag.pivotX} ${drag.pivotY})`
 
         const el = svgEl.querySelector(idSelector(drag.id)) as SVGElement | null
