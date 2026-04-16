@@ -96,6 +96,88 @@ function idSelector(id: string) {
 const INLINE_TEXT_EDITOR_CHROME =
   "color:#475569;background:#ffffff;caret-color:#475569"
 
+function getLeafTspans(textEl: SVGElement) {
+  const all = Array.from(textEl.querySelectorAll("tspan")) as SVGElement[]
+  const leaf = all.filter((t) => t.querySelectorAll("tspan").length === 0)
+  leaf.sort((a, b) => {
+    const ay = parseFloat(a.getAttribute("y") || "0")
+    const by = parseFloat(b.getAttribute("y") || "0")
+    if (ay !== by) return ay - by
+    const ax = parseFloat(a.getAttribute("x") || "0")
+    const bx = parseFloat(b.getAttribute("x") || "0")
+    return ax - bx
+  })
+  return leaf
+}
+
+function normalizeEditableValue(value: string) {
+  const hasVisibleContent = value
+    .split("\n")
+    .some((line) => line.trim().length > 0)
+  return hasVisibleContent ? value : "text here"
+}
+
+function applyEditableValueToTextEl(target: SVGElement, value: string) {
+  const normalizedVal = normalizeEditableValue(value)
+  const leaf = getLeafTspans(target)
+  const parts = normalizedVal.split("\n")
+  if (parts.length > 1) {
+    if (leaf.length === 0) {
+      target.textContent = normalizedVal
+      return
+    }
+
+    if (parts.length > leaf.length) {
+      const firstX = parseFloat(leaf[0].getAttribute("x") || "0")
+      const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
+      const lastTemplate = leaf[leaf.length - 1]
+
+      let stepY = 0
+      if (leaf.length >= 2) {
+        const yPrev = parseFloat(leaf[leaf.length - 2].getAttribute("y") || "")
+        const yLast = parseFloat(leaf[leaf.length - 1].getAttribute("y") || "")
+        const dy = Math.abs(yLast - yPrev)
+        if (Number.isFinite(dy) && dy > 0) stepY = dy
+      }
+      if (!(stepY > 0)) {
+        const leafFontSizeSvg = parseFloat(leaf[0].getAttribute("font-size") || "")
+        const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
+        const fallbackFontSvg =
+          Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
+            ? leafFontSizeSvg
+            : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
+              ? targetFontSizeSvg
+              : 14
+        stepY = fallbackFontSvg * 1.25
+      }
+
+      for (let i = leaf.length; i < parts.length; i++) {
+        const newLeaf = lastTemplate.cloneNode(false) as SVGElement
+        newLeaf.removeAttribute("id")
+        newLeaf.setAttribute("x", String(firstX))
+        newLeaf.setAttribute("y", String(firstY + i * stepY))
+        newLeaf.textContent = parts[i] ?? ""
+        target.appendChild(newLeaf)
+      }
+    }
+
+    const leaf2 = getLeafTspans(target)
+    leaf2.forEach((t, i) => {
+      if (i < parts.length) t.textContent = parts[i] ?? ""
+      else t.parentNode?.removeChild(t)
+    })
+  } else {
+    if (leaf.length > 0) {
+      leaf[0].textContent = normalizedVal
+      for (let i = 1; i < leaf.length; i++) leaf[i].parentNode?.removeChild(leaf[i])
+    } else {
+      const t = target.querySelector("tspan")
+      if (t) t.textContent = normalizedVal
+      else target.textContent = normalizedVal
+    }
+  }
+}
+
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
@@ -144,6 +226,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [selectedTextIdState, setSelectedTextIdState] = useState<string | null>(null)
   const [selectedImageZoneIdState, setSelectedImageZoneIdState] = useState<string | null>(null)
   const [isPreviewHovering, setIsPreviewHovering] = useState(false)
+  const [selectedTextFontSizeUi, setSelectedTextFontSizeUi] = useState<number>(16)
+  const selectedTextIdRef = useRef<string | null>(null)
+  selectedTextIdRef.current = selectedTextIdState
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
   const selectedTextField = selectedTextIdState ? textFields.find((field) => field.id === selectedTextIdState) ?? null : null
@@ -272,6 +357,76 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     historyFutureRef.current = []
     setHistoryTick((t) => t + 1)
   }, [captureHistoryEntry])
+
+  const getSelectedTextFontSize = useCallback(() => {
+    const tid = selectedTextIdState
+    if (!tid) return null
+
+    // Prefer the source SVG doc first so UI updates immediately when the user changes size
+    // (the live preview may lag until the next rebuild).
+    const doc = svgDocRef.current
+    if (!doc) return null
+    const el = doc.querySelector(idSelector(tid)) as SVGElement | null
+    if (!el) return null
+    const leaf = getLeafTspans(el)
+    const fromLeafAttr = leaf[0] ? parseFloat(leaf[0].getAttribute("font-size") || "") : NaN
+    if (Number.isFinite(fromLeafAttr) && fromLeafAttr > 0) return fromLeafAttr
+    const fromElAttr = parseFloat(el.getAttribute("font-size") || "")
+    if (Number.isFinite(fromElAttr) && fromElAttr > 0) return fromElAttr
+
+    // Fall back to the live preview element's computed style (templates may define font on tspans via CSS).
+    const liveSvg = previewContainerRef.current?.querySelector("svg") as SVGSVGElement | null
+    const liveEl = liveSvg?.querySelector(idSelector(tid)) as SVGElement | null
+    const leafLive = liveEl ? getLeafTspans(liveEl) : []
+    const liveTarget = (leafLive[0] as any) ?? liveEl
+    const liveCs = typeof window !== "undefined" && liveTarget ? window.getComputedStyle(liveTarget as any) : null
+    const fromComputed = liveCs ? parseFloat(liveCs.fontSize || "") : NaN
+    if (Number.isFinite(fromComputed) && fromComputed > 0) return fromComputed
+    return null
+  }, [selectedTextIdState])
+
+  const setSelectedTextFontSize = useCallback((nextFontSize: number) => {
+    const tid = selectedTextIdState
+    const doc = svgDocRef.current
+    if (!tid || !doc) return
+    const el = doc.querySelector(idSelector(tid)) as SVGElement | null
+    if (!el) return
+
+    const newFont = Math.max(4, Math.min(200, nextFontSize))
+
+    const applyFontSize = (target: SVGElement) => {
+      target.setAttribute("font-size", String(newFont))
+      ;(target as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+      const tspans = Array.from(target.querySelectorAll("tspan")) as SVGElement[]
+      tspans.forEach((t) => {
+        if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(newFont))
+        ;(t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+        const style = t.getAttribute("style")
+        if (style && style.includes("font-size")) {
+          const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
+          t.setAttribute("style", withoutSize ? `${withoutSize}font-size:${newFont}px;` : `font-size:${newFont}px;`)
+        }
+      })
+    }
+
+    pushPastBeforeMutation()
+    applyFontSize(el)
+    setPreviewVersion((v) => v + 1)
+    setSelectedTextFontSizeUi(newFont)
+  }, [pushPastBeforeMutation, selectedTextIdState])
+
+  const nudgeSelectedTextFontSize = useCallback((delta: number) => {
+    const current = getSelectedTextFontSize()
+    const base = Number.isFinite(current ?? NaN) && (current ?? 0) > 0 ? (current as number) : 16
+    setSelectedTextFontSize(base + delta)
+  }, [getSelectedTextFontSize, setSelectedTextFontSize])
+
+  useEffect(() => {
+    const fs = getSelectedTextFontSize()
+    if (Number.isFinite(fs ?? NaN) && (fs ?? 0) > 0) setSelectedTextFontSizeUi(fs as number)
+    else setSelectedTextFontSizeUi(16)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTextIdState, previewVersion])
 
   const duplicateSelected = useCallback(() => {
     const doc = svgDocRef.current
@@ -1242,21 +1397,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const st = textOverlayRect(liveText)
       const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : (null as any)
 
-      const getLeafTspans = (textEl: SVGElement) => {
-        const all = Array.from(textEl.querySelectorAll("tspan")) as SVGElement[]
-        // "Leaf" tspans: tspans that do not contain other tspans. This matches Inkscape multiline templates.
-        const leaf = all.filter((t) => t.querySelectorAll("tspan").length === 0)
-        leaf.sort((a, b) => {
-          const ay = parseFloat(a.getAttribute("y") || "0")
-          const by = parseFloat(b.getAttribute("y") || "0")
-          if (ay !== by) return ay - by
-          const ax = parseFloat(a.getAttribute("x") || "0")
-          const bx = parseFloat(b.getAttribute("x") || "0")
-          return ax - bx
-        })
-        return leaf
-      }
-
       const leafTspans = getLeafTspans(liveText)
       // If a template has at least one leaf <tspan>, open a multiline editor so the user can add more lines.
       const isMultiline = leafTspans.length >= 1
@@ -1292,85 +1432,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           }
         }
         return Math.max(screenFs * 1.25, 1) + "px"
-      }
-
-      const normalizeEditableValue = (value: string) => {
-        const hasVisibleContent = value
-          .split("\n")
-          .some((line) => line.trim().length > 0)
-        return hasVisibleContent ? value : "text here"
-      }
-
-      const applyTextToTextEl = (target: SVGElement, val: string) => {
-        const normalizedVal = normalizeEditableValue(val)
-        const leaf = getLeafTspans(target)
-        const parts = normalizedVal.split("\n")
-        if (parts.length > 1) {
-          // If we have multiline input but no leaf tspans exist, fall back to plain textContent.
-          if (leaf.length === 0) {
-            target.textContent = normalizedVal
-            return
-          }
-
-          // If user typed more lines than existing leaf <tspan>s, create new leaf tspans.
-          if (parts.length > leaf.length) {
-            const firstX = parseFloat(leaf[0].getAttribute("x") || "0")
-            const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
-            const lastTemplate = leaf[leaf.length - 1]
-
-            // Compute line step in SVG units (not screen px) to avoid oversized gaps.
-            let stepY = 0
-            if (leaf.length >= 2) {
-              const yPrev = parseFloat(leaf[leaf.length - 2].getAttribute("y") || "")
-              const yLast = parseFloat(leaf[leaf.length - 1].getAttribute("y") || "")
-              const dy = Math.abs(yLast - yPrev)
-              if (Number.isFinite(dy) && dy > 0) stepY = dy
-            }
-            if (!(stepY > 0)) {
-              const leafFontSizeSvg = parseFloat(leaf[0].getAttribute("font-size") || "")
-              const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
-              const stFontSizeSvg = Number.isFinite(st.fs) && st.fs > 0 ? st.fs : NaN
-              const fallbackFontSvg =
-                Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
-                  ? leafFontSizeSvg
-                  : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
-                    ? targetFontSizeSvg
-                    : Number.isFinite(stFontSizeSvg) && stFontSizeSvg > 0
-                      ? stFontSizeSvg
-                      : 14
-              stepY = fallbackFontSvg * 1.25
-            }
-
-            for (let i = leaf.length; i < parts.length; i++) {
-              const newLeaf = lastTemplate.cloneNode(false) as SVGElement
-              // Avoid duplicate IDs; these are not needed for our logic.
-              newLeaf.removeAttribute("id")
-              newLeaf.setAttribute("x", String(firstX))
-              newLeaf.setAttribute("y", String(firstY + i * stepY))
-              newLeaf.textContent = parts[i] ?? ""
-              target.appendChild(newLeaf)
-            }
-          }
-
-          const leaf2 = getLeafTspans(target)
-          leaf2.forEach((t, i) => {
-            if (i < parts.length) {
-              t.textContent = parts[i] ?? ""
-            } else {
-              t.parentNode?.removeChild(t)
-            }
-          })
-        } else {
-          if (leaf.length > 0) {
-            // Collapse to a single visible line and remove stale extra lines.
-            leaf[0].textContent = normalizedVal
-            for (let i = 1; i < leaf.length; i++) leaf[i].parentNode?.removeChild(leaf[i])
-          } else {
-            const t = target.querySelector("tspan")
-            if (t) t.textContent = normalizedVal
-            else target.textContent = normalizedVal
-          }
-        }
       }
 
       const editorEl = document.createElement(isMultiline ? "textarea" : "input")
@@ -1432,9 +1493,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
-        if (docEl2) applyTextToTextEl(docEl2, val)
+        if (docEl2) applyEditableValueToTextEl(docEl2, val)
         // Keep the visible SVG text updated while typing (textarea text is transparent).
-        applyTextToTextEl(liveText, val)
+        applyEditableValueToTextEl(liveText, val)
         updateEditorRect()
         if (ov) {
           const r = textOverlayRect(liveText)
@@ -1470,12 +1531,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
         const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
-        if (docEl2) applyTextToTextEl(docEl2, val)
+        if (docEl2) applyEditableValueToTextEl(docEl2, val)
         setTextValues((prev) => ({ ...prev, [tid]: val }))
         const panel = panelInputRef.current
         if (panel && selectedTextIdState === tid) panel.value = val
         if (liveText) {
-          applyTextToTextEl(liveText, val)
+          applyEditableValueToTextEl(liveText, val)
           liveText.style.display = ""
         }
         if (ov && liveText) {
@@ -2179,6 +2240,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         applyFontSize(docEl)
         applyFontSize(liveText)
 
+        if (selectedTextIdRef.current === resizeDrag.id) setSelectedTextFontSizeUi(newFont)
+
         const respaceTspansByFontSize = (el: SVGElement) => {
           const all = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
           const leaf = all.filter((t) => t.querySelectorAll("tspan").length === 0)
@@ -2686,6 +2749,30 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                             {selectedTextField.label}
                             <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">text</span>
                           </div>
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className="w-9 shrink-0 text-[11px] text-muted-foreground">Size</div>
+                            <div className="flex flex-1 items-center justify-between rounded-md border border-border bg-background px-2 py-1.5">
+                              <button
+                                type="button"
+                                className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+                                onClick={() => nudgeSelectedTextFontSize(-1)}
+                                title="Decrease font size"
+                              >
+                                -
+                              </button>
+                              <div className="min-w-10 text-center text-[12px] text-foreground">
+                                {Math.round(selectedTextFontSizeUi || 16)}
+                              </div>
+                              <button
+                                type="button"
+                                className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
+                                onClick={() => nudgeSelectedTextFontSize(1)}
+                                title="Increase font size"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
                           {isSelectedTextMultiline ? (
                             <textarea
                               ref={(el) => {
@@ -2700,8 +2787,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                   panelTextHistoryPushedRef.current = true
                                 }
                                 const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState))
-                                if (docEl) docEl.textContent = v
+                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState)) as SVGElement | null
+                                if (docEl) applyEditableValueToTextEl(docEl, v)
                                 setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
                                 setPreviewVersion((x) => x + 1)
                               }}
@@ -2723,8 +2810,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                   panelTextHistoryPushedRef.current = true
                                 }
                                 const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState))
-                                if (docEl) docEl.textContent = v
+                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState)) as SVGElement | null
+                                if (docEl) applyEditableValueToTextEl(docEl, v)
                                 setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
                                 setPreviewVersion((x) => x + 1)
                               }}
