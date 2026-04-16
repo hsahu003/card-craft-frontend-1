@@ -234,6 +234,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const selectedTextField = selectedTextIdState ? textFields.find((field) => field.id === selectedTextIdState) ?? null : null
   const selectedTextValue = selectedTextIdState ? (textValues[selectedTextIdState] ?? "") : ""
   const isSelectedTextMultiline = selectedTextValue.includes("\n") || selectedTextValue.length > 60
+  const selectedImageZone = selectedImageZoneIdState ? imageZones.find((zone) => zone.id === selectedImageZoneIdState) ?? null : null
+  const selectedImageState = selectedImageZone ? zoneStates[selectedImageZone.id] ?? null : null
+  const selectedImageHasImage = !!selectedImageState?.b64
 
   useEffect(() => {
     panelTextHistoryPushedRef.current = false
@@ -703,6 +706,107 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     svgRoot.appendChild(img)
     setSelectedStickerIdState(nextId)
     setPreviewVersion((v) => v + 1)
+  }, [pushPastBeforeMutation])
+
+  const applyImageToZone = useCallback(async (zoneId: string, file: File) => {
+    pushPastBeforeMutation()
+    setZoneBusy((prev) => ({ ...prev, [zoneId]: true }))
+    try {
+      let b64 = ""
+      let iw = 0
+      let ih = 0
+
+      if (file.size >= IMAGE_COMPRESS_SKIP_BELOW_BYTES) {
+        const c = await compressImageFileToJpegDataUrl(file)
+        b64 = c.dataUrl
+        iw = c.w
+        ih = c.h
+      } else {
+        b64 = await fileToDataUrl(file)
+        const img = new Image()
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve()
+          img.onerror = () => reject(new Error("Image load failed"))
+          img.src = b64
+        })
+        iw = img.naturalWidth
+        ih = img.naturalHeight
+      }
+
+      setZoneStates((prev) => ({
+        ...prev,
+        [zoneId]: {
+          ...prev[zoneId],
+          b64,
+          imgW: iw,
+          imgH: ih,
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      }))
+      setSelectedTextIdState(null)
+      setSelectedStickerIdState(null)
+      setSelectedImageZoneIdState(zoneId)
+      setPreviewVersion((v) => v + 1)
+    } catch {
+      try {
+        const b64 = await fileToDataUrl(file)
+        const img = new Image()
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve()
+          img.onerror = () => reject(new Error("Image load failed"))
+          img.src = b64
+        })
+        setZoneStates((prev) => ({
+          ...prev,
+          [zoneId]: {
+            ...prev[zoneId],
+            b64,
+            imgW: img.naturalWidth,
+            imgH: img.naturalHeight,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+          },
+        }))
+        setSelectedTextIdState(null)
+        setSelectedStickerIdState(null)
+        setSelectedImageZoneIdState(zoneId)
+        setPreviewVersion((v) => v + 1)
+      } catch {
+        toast.error("Image upload failed")
+      }
+    } finally {
+      setZoneBusy((prev) => ({ ...prev, [zoneId]: false }))
+    }
+  }, [pushPastBeforeMutation])
+
+  const removeImageFromZone = useCallback((zone: { id: string; zoneX: number; zoneY: number; zoneW: number; zoneH: number }) => {
+    pushPastBeforeMutation()
+    setZoneStates((prev) => ({
+      ...prev,
+      [zone.id]: {
+        ...prev[zone.id],
+        b64: "",
+        imgW: 0,
+        imgH: 0,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+      },
+    }))
+    const el = svgDocRef.current?.querySelector(idSelector(zone.id)) as SVGImageElement | null
+    if (el) {
+      el.removeAttribute("href")
+      el.removeAttribute("xlink:href")
+      el.setAttribute("x", String(zone.zoneX))
+      el.setAttribute("y", String(zone.zoneY))
+      el.setAttribute("width", String(zone.zoneW))
+      el.setAttribute("height", String(zone.zoneH))
+    }
+    setPreviewVersion((v) => v + 1)
+    toast.success("Image removed")
   }, [pushPastBeforeMutation])
 
   const getSvgDropPointFromClient = useCallback((clientX: number, clientY: number) => {
@@ -2832,183 +2936,92 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   {imageZones.length > 0 && (
                     <>
                       <p className="mb-1 mt-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Image zones</p>
-                      {imageZones.map((zone) => {
-                        const st = zoneStates[zone.id]!
-                        const hasImage = !!st.b64
-                        return (
-                          <div key={zone.id} className="mb-2.5" data-image-zone-panel-id={zone.id}>
-                            <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                              {zone.label}
-                              <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">image</span>
-                            </div>
-                            <input
-                              ref={(el) => {
-                                if (el) fileInputRefs.current[zone.id] = el
-                              }}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0]
-                                if (!file) return
-                                pushPastBeforeMutation()
-                                setZoneBusy((prev) => ({ ...prev, [zone.id]: true }))
-                                try {
-                                  let b64 = ""
-                                  let iw = 0
-                                  let ih = 0
-
-                                  if (file.size >= IMAGE_COMPRESS_SKIP_BELOW_BYTES) {
-                                    const c = await compressImageFileToJpegDataUrl(file)
-                                    b64 = c.dataUrl
-                                    iw = c.w
-                                    ih = c.h
-                                  } else {
-                                    b64 = await fileToDataUrl(file)
-                                    const img = new Image()
-                                    await new Promise<void>((resolve, reject) => {
-                                      img.onload = () => resolve()
-                                      img.onerror = () => reject(new Error("Image load failed"))
-                                      img.src = b64
-                                    })
-                                    iw = img.naturalWidth
-                                    ih = img.naturalHeight
-                                  }
-
-                                  setZoneStates((prev) => ({
-                                    ...prev,
-                                    [zone.id]: {
-                                      ...prev[zone.id],
-                                      b64,
-                                      imgW: iw,
-                                      imgH: ih,
-                                      scale: 1,
-                                      offsetX: 0,
-                                      offsetY: 0,
-                                    },
-                                  }))
-                                  setSelectedTextIdState(null)
-                                  setSelectedStickerIdState(null)
-                                  setSelectedImageZoneIdState(zone.id)
-                                  setPreviewVersion((v) => v + 1)
-                                } catch {
-                                  // Fallback: try original data URL path
-                                  try {
-                                    const b64 = await fileToDataUrl(file)
-                                    const img = new Image()
-                                    await new Promise<void>((resolve, reject) => {
-                                      img.onload = () => resolve()
-                                      img.onerror = () => reject(new Error("Image load failed"))
-                                      img.src = b64
-                                    })
-                                    setZoneStates((prev) => ({
-                                      ...prev,
-                                      [zone.id]: {
-                                        ...prev[zone.id],
-                                        b64,
-                                        imgW: img.naturalWidth,
-                                        imgH: img.naturalHeight,
-                                        scale: 1,
-                                        offsetX: 0,
-                                        offsetY: 0,
-                                      },
-                                    }))
-                                    setSelectedTextIdState(null)
-                                    setSelectedStickerIdState(null)
-                                    setSelectedImageZoneIdState(zone.id)
-                                    setPreviewVersion((v) => v + 1)
-                                  } catch {
-                                    toast.error("Image upload failed")
-                                  }
-                                } finally {
-                                  setZoneBusy((prev) => ({ ...prev, [zone.id]: false }))
-                                }
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
-                              disabled={!!zoneBusy[zone.id]}
-                              onClick={() => fileInputRefs.current[zone.id]?.click()}
-                            >
-                              <span className="text-sm">+</span>
-                              <span>
-                                {zoneBusy[zone.id]
-                                  ? "Compressing…"
-                                  : hasImage
-                                    ? fileInputRefs.current[zone.id]?.files?.[0]?.name?.slice(0, 20) || "Image"
-                                    : "Choose image"}
-                              </span>
-                            </button>
-                            {hasImage && (
-                              <>
-                                <button
-                                  type="button"
-                                  className="mt-1 w-full rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                  onClick={() => {
-                                    pushPastBeforeMutation()
-                                    setZoneStates((prev) => ({
-                                      ...prev,
-                                      [zone.id]: {
-                                        ...prev[zone.id],
-                                        b64: "",
-                                        imgW: 0,
-                                        imgH: 0,
-                                        scale: 1,
-                                        offsetX: 0,
-                                        offsetY: 0,
-                                      },
-                                    }))
-                                    const el = svgDocRef.current?.querySelector(idSelector(zone.id)) as SVGImageElement
-                                    if (el) {
-                                      el.removeAttribute("href")
-                                      el.removeAttribute("xlink:href")
-                                      el.setAttribute("x", String(zone.zoneX))
-                                      el.setAttribute("y", String(zone.zoneY))
-                                      el.setAttribute("width", String(zone.zoneW))
-                                      el.setAttribute("height", String(zone.zoneH))
-                                    }
-                                    setPreviewVersion((v) => v + 1)
-                                    toast.success("Image removed")
-                                  }}
-                                >
-                                  Remove image
-                                </button>
-                                <div className="mt-1 flex items-center gap-2">
-                                  <label className="w-7 shrink-0 text-[11px] text-muted-foreground">Zoom</label>
-                                  <input
-                                    type="range"
-                                    min="50"
-                                    max="300"
-                                    value={Math.round((st.scale || 1) * 100)}
-                                    onChange={(e) => {
-                                      if (!panelImageZoomPushedRef.current[zone.id]) {
-                                        pushPastBeforeMutation()
-                                        panelImageZoomPushedRef.current[zone.id] = true
-                                      }
-                                      const scale = Number(e.target.value) / 100
-                                      setZoneStates((prev) => ({
-                                        ...prev,
-                                        [zone.id]: { ...prev[zone.id], scale },
-                                      }))
-                                      setPreviewVersion((v) => v + 1)
-                                    }}
-                                    onPointerUp={() => {
-                                      delete panelImageZoomPushedRef.current[zone.id]
-                                    }}
-                                    onPointerCancel={() => {
-                                      delete panelImageZoomPushedRef.current[zone.id]
-                                    }}
-                                    className="h-0.5 flex-1"
-                                  />
-                                  <span className="min-w-8 text-right text-[11px] text-foreground">{Math.round((st.scale || 1) * 100)}%</span>
-                                </div>
-                                <p className="mt-1 text-[11px] text-muted-foreground">Drag image in preview to reposition</p>
-                              </>
-                            )}
+                      {imageZones.map((zone) => (
+                        <input
+                          key={zone.id}
+                          ref={(el) => {
+                            if (el) fileInputRefs.current[zone.id] = el
+                          }}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            await applyImageToZone(zone.id, file)
+                          }}
+                        />
+                      ))}
+                      {selectedImageZone ? (
+                        <div className="mb-2.5" data-image-zone-panel-id={selectedImageZone.id}>
+                          <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
+                            {selectedImageZone.label}
+                            <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">image</span>
                           </div>
-                        )
-                      })}
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                            disabled={!!zoneBusy[selectedImageZone.id]}
+                            onClick={() => fileInputRefs.current[selectedImageZone.id]?.click()}
+                          >
+                            <span className="text-sm">+</span>
+                            <span>
+                              {zoneBusy[selectedImageZone.id]
+                                ? "Compressing…"
+                                : selectedImageHasImage
+                                  ? fileInputRefs.current[selectedImageZone.id]?.files?.[0]?.name?.slice(0, 20) || "Image"
+                                  : "Choose image"}
+                            </span>
+                          </button>
+                          {selectedImageHasImage && selectedImageState && (
+                            <>
+                              <button
+                                type="button"
+                                className="mt-1 w-full rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                onClick={() => removeImageFromZone(selectedImageZone)}
+                              >
+                                Remove image
+                              </button>
+                              <div className="mt-1 flex items-center gap-2">
+                                <label className="w-7 shrink-0 text-[11px] text-muted-foreground">Zoom</label>
+                                <input
+                                  type="range"
+                                  min="50"
+                                  max="300"
+                                  value={Math.round((selectedImageState.scale || 1) * 100)}
+                                  onChange={(e) => {
+                                    if (!panelImageZoomPushedRef.current[selectedImageZone.id]) {
+                                      pushPastBeforeMutation()
+                                      panelImageZoomPushedRef.current[selectedImageZone.id] = true
+                                    }
+                                    const scale = Number(e.target.value) / 100
+                                    setZoneStates((prev) => ({
+                                      ...prev,
+                                      [selectedImageZone.id]: { ...prev[selectedImageZone.id], scale },
+                                    }))
+                                    setPreviewVersion((v) => v + 1)
+                                  }}
+                                  onPointerUp={() => {
+                                    delete panelImageZoomPushedRef.current[selectedImageZone.id]
+                                  }}
+                                  onPointerCancel={() => {
+                                    delete panelImageZoomPushedRef.current[selectedImageZone.id]
+                                  }}
+                                  className="h-0.5 flex-1"
+                                />
+                                <span className="min-w-8 text-right text-[11px] text-foreground">
+                                  {Math.round((selectedImageState.scale || 1) * 100)}%
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-muted-foreground">Drag image in preview to reposition</p>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mb-2.5 rounded-md border border-dashed border-border bg-muted/20 px-2.5 py-3 text-[12px] text-muted-foreground">
+                          Select an image zone in the preview to control it here.
+                        </div>
+                      )}
                     </>
                   )}
 
