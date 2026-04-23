@@ -110,6 +110,12 @@ function getLeafTspans(textEl: SVGElement) {
   return leaf
 }
 
+function getLeafTspansInDomOrder(textEl: SVGElement) {
+  return (Array.from(textEl.querySelectorAll("tspan")) as SVGElement[]).filter(
+    (t) => t.querySelectorAll("tspan").length === 0
+  )
+}
+
 function normalizeEditableValue(value: string) {
   const hasVisibleContent = value
     .split("\n")
@@ -119,63 +125,65 @@ function normalizeEditableValue(value: string) {
 
 function applyEditableValueToTextEl(target: SVGElement, value: string) {
   const normalizedVal = normalizeEditableValue(value)
-  const leaf = getLeafTspans(target)
+  const leaf = getLeafTspansInDomOrder(target)
   const parts = normalizedVal.split("\n")
-  if (parts.length > 1) {
-    if (leaf.length === 0) {
-      target.textContent = normalizedVal
-      return
-    }
+  const hasLineBreaks = parts.length > 1
+  if (!hasLineBreaks && leaf.length === 0) {
+    const t = target.querySelector("tspan")
+    if (t) t.textContent = normalizedVal
+    else target.textContent = normalizedVal
+    return
+  }
 
-    if (parts.length > leaf.length) {
-      const firstX = parseFloat(leaf[0].getAttribute("x") || "0")
-      const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
-      const lastTemplate = leaf[leaf.length - 1]
+  // Rebuild leaf tspans deterministically in DOM order.
+  // This avoids index drift when users insert empty lines repeatedly in the middle.
+  const templateLeaf = leaf[0] || (target.querySelector("tspan") as SVGElement | null)
+  if (!templateLeaf) {
+    target.textContent = normalizedVal
+    return
+  }
+  const firstLeafX = parseFloat(templateLeaf.getAttribute("x") || "")
+  const firstLeafY = parseFloat(templateLeaf.getAttribute("y") || "")
+  const baseX = Number.isFinite(firstLeafX) ? firstLeafX : parseFloat(target.getAttribute("x") || "0")
+  const baseY = Number.isFinite(firstLeafY) ? firstLeafY : parseFloat(target.getAttribute("y") || "0")
 
-      let stepY = 0
-      if (leaf.length >= 2) {
-        const yPrev = parseFloat(leaf[leaf.length - 2].getAttribute("y") || "")
-        const yLast = parseFloat(leaf[leaf.length - 1].getAttribute("y") || "")
-        const dy = Math.abs(yLast - yPrev)
-        if (Number.isFinite(dy) && dy > 0) stepY = dy
+  let stepY = 0
+  if (leaf.length >= 2) {
+    for (let i = 1; i < leaf.length; i++) {
+      const prevY = parseFloat(leaf[i - 1]?.getAttribute("y") || "")
+      const nextY = parseFloat(leaf[i]?.getAttribute("y") || "")
+      const dy = Math.abs(nextY - prevY)
+      if (Number.isFinite(dy) && dy > 0) {
+        stepY = dy
+        break
       }
-      if (!(stepY > 0)) {
-        const leafFontSizeSvg = parseFloat(leaf[0].getAttribute("font-size") || "")
-        const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
-        const fallbackFontSvg =
-          Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
-            ? leafFontSizeSvg
-            : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
-              ? targetFontSizeSvg
-              : 14
-        stepY = fallbackFontSvg * 1.25
-      }
-
-      for (let i = leaf.length; i < parts.length; i++) {
-        const newLeaf = lastTemplate.cloneNode(false) as SVGElement
-        newLeaf.removeAttribute("id")
-        newLeaf.setAttribute("x", String(firstX))
-        newLeaf.setAttribute("y", String(firstY + i * stepY))
-        newLeaf.textContent = parts[i] ?? ""
-        target.appendChild(newLeaf)
-      }
-    }
-
-    const leaf2 = getLeafTspans(target)
-    leaf2.forEach((t, i) => {
-      if (i < parts.length) t.textContent = parts[i] ?? ""
-      else t.parentNode?.removeChild(t)
-    })
-  } else {
-    if (leaf.length > 0) {
-      leaf[0].textContent = normalizedVal
-      for (let i = 1; i < leaf.length; i++) leaf[i].parentNode?.removeChild(leaf[i])
-    } else {
-      const t = target.querySelector("tspan")
-      if (t) t.textContent = normalizedVal
-      else target.textContent = normalizedVal
     }
   }
+  if (!(stepY > 0)) {
+    const leafFontSizeSvg = parseFloat(templateLeaf.getAttribute("font-size") || "")
+    const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
+    const fallbackFontSvg =
+      Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
+        ? leafFontSizeSvg
+        : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
+          ? targetFontSizeSvg
+          : 14
+    stepY = fallbackFontSvg * 1.25
+  }
+
+  Array.from(target.querySelectorAll("tspan")).forEach((node) => {
+    node.parentNode?.removeChild(node)
+  })
+  target.textContent = ""
+
+  parts.forEach((line, i) => {
+    const newLeaf = templateLeaf.cloneNode(false) as SVGElement
+    newLeaf.removeAttribute("id")
+    newLeaf.setAttribute("x", String(baseX))
+    newLeaf.setAttribute("y", String(baseY + i * stepY))
+    newLeaf.textContent = line
+    target.appendChild(newLeaf)
+  })
 }
 
 function getCurrentWordRange(value: string, caretIndex: number) {
