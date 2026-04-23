@@ -6,7 +6,7 @@ import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
-import { allTemplates, getTemplateById } from "@/lib/templates"
+import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
 import { Copy, Redo2, ShoppingCart, Trash2, Undo2 } from "lucide-react"
 import {
   getSVGSize,
@@ -178,11 +178,26 @@ function applyEditableValueToTextEl(target: SVGElement, value: string) {
   }
 }
 
+function getCurrentWordRange(value: string, caretIndex: number) {
+  const safeCaret = Math.max(0, Math.min(caretIndex, value.length))
+  let start = safeCaret
+  while (start > 0 && !/\s/.test(value[start - 1] || "")) start -= 1
+  let end = safeCaret
+  while (end < value.length && !/\s/.test(value[end] || "")) end += 1
+  return { start, end, word: value.slice(start, safeCaret) }
+}
+
+function resolveTransliterationLanguage(language: TemplateLanguage): "hindi" | "marathi" | null {
+  if (language === "hindi" || language === "marathi") return language
+  return null
+}
+
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
   const { add: addToCart } = useCart()
   const template = getTemplateById(resolvedParams.id) ?? allTemplates[0]
+  const transliterationLanguage = resolveTransliterationLanguage(template.language)
 
   const svgDocRef = useRef<Document | null>(null)
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -1784,9 +1799,132 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const editorEl = document.createElement(isMultiline ? "textarea" : "input")
       if (!isMultiline) (editorEl as HTMLInputElement).type = "text"
       editorEl.value = txt
+      const supportsTransliteration = transliterationLanguage !== null
+      let suggestionItems: string[] = []
+      let activeSuggestionIndex = 0
+      let transliterationWordRange = { start: 0, end: 0, word: "" }
+      let isApplyingSuggestion = false
+      let suggestionDebounce: number | null = null
+      let suggestionRequestId = 0
+      const suggestionsEl = document.createElement("div")
+      suggestionsEl.style.cssText =
+        "position:fixed;display:none;max-width:420px;padding:8px;background:rgba(255,255,255,0.98);border:1px solid rgb(203 213 225);border-radius:10px;box-shadow:0 8px 20px rgba(15,23,42,0.16);pointer-events:auto;z-index:120;gap:6px;flex-wrap:wrap;align-items:center"
       const liveRect = liveText.getBoundingClientRect()
       const overlayLineHeight = getOverlayLineHeight(liveText, leafCs, cs)
       const csLetterSpacing = cs?.letterSpacing || "normal"
+
+      const closeSuggestions = () => {
+        suggestionItems = []
+        activeSuggestionIndex = 0
+        suggestionsEl.style.display = "none"
+        suggestionsEl.replaceChildren()
+      }
+
+      const syncSuggestionsRect = () => {
+        if (suggestionsEl.style.display === "none") return
+        const r = editorEl.getBoundingClientRect()
+        suggestionsEl.style.left = r.left + "px"
+        suggestionsEl.style.top = r.bottom + 6 + "px"
+      }
+
+      const syncModelFromEditor = () => {
+        if (!inlineHistoryPushed) {
+          textHistoryApiRef.current.pushPastBeforeMutation()
+          inlineHistoryPushed = true
+        }
+        const val = normalizeEditableValue(editorEl.value)
+        const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
+        if (docEl2) applyEditableValueToTextEl(docEl2, val)
+        applyEditableValueToTextEl(liveText, val)
+        updateEditorRect()
+        syncSuggestionsRect()
+        if (ov) {
+          const r = textOverlayRect(liveText)
+          const editorHeightPx = editorEl.getBoundingClientRect().height
+          const editorHeightSvg = editorHeightPx / Math.max(scaleY, 0.0001)
+          const nextHeight = Math.max(r.rh, editorHeightSvg)
+          ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
+          ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
+          ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
+          ;(ov as SVGRectElement).setAttribute("height", String(nextHeight))
+          renderTextHandles(tid)
+        }
+        setTextValues((prev) => ({ ...prev, [tid]: val }))
+        const panel = panelInputRef.current
+        if (panel && selectedTextIdState === tid) panel.value = val
+      }
+
+      const applySuggestion = (index: number) => {
+        const suggestion = suggestionItems[index]
+        if (!suggestion) return
+        const value = editorEl.value
+        const nextValue = value.slice(0, transliterationWordRange.start) + suggestion + value.slice(transliterationWordRange.end)
+        const nextCaret = transliterationWordRange.start + suggestion.length
+        isApplyingSuggestion = true
+        editorEl.value = nextValue
+        editorEl.setSelectionRange(nextCaret, nextCaret)
+        closeSuggestions()
+        syncModelFromEditor()
+      }
+
+      const renderSuggestions = () => {
+        if (!supportsTransliteration || suggestionItems.length === 0) {
+          closeSuggestions()
+          return
+        }
+        suggestionsEl.replaceChildren()
+        suggestionItems.forEach((item, idx) => {
+          const chip = document.createElement("button")
+          chip.type = "button"
+          chip.textContent = item
+          chip.className =
+            "rounded-full border px-2.5 py-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          chip.style.borderColor = idx === activeSuggestionIndex ? "rgb(59 130 246)" : "rgb(203 213 225)"
+          chip.style.background = idx === activeSuggestionIndex ? "rgb(219 234 254)" : "white"
+          chip.style.color = "rgb(15 23 42)"
+          chip.addEventListener("mousedown", (evt) => {
+            evt.preventDefault()
+            applySuggestion(idx)
+            editorEl.focus()
+          })
+          suggestionsEl.appendChild(chip)
+        })
+        suggestionsEl.style.display = "flex"
+        syncSuggestionsRect()
+      }
+
+      const scheduleSuggestionLookup = () => {
+        if (!supportsTransliteration) return
+        if (suggestionDebounce) window.clearTimeout(suggestionDebounce)
+        const caret = editorEl.selectionStart ?? editorEl.value.length
+        transliterationWordRange = getCurrentWordRange(editorEl.value, caret)
+        if (!transliterationWordRange.word.trim()) {
+          closeSuggestions()
+          return
+        }
+
+        suggestionDebounce = window.setTimeout(async () => {
+          const currentReq = ++suggestionRequestId
+          const currentWord = transliterationWordRange.word
+          try {
+            const params = new URLSearchParams({
+              word: currentWord,
+              language: transliterationLanguage!,
+            })
+            const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" })
+            const payload = (await response.json()) as { suggestions?: string[] }
+            if (currentReq !== suggestionRequestId) return
+            const apiSuggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : []
+            const topSuggestions = Array.from(new Set(apiSuggestions.filter((s) => s !== currentWord))).slice(0, 5)
+            suggestionItems = [...topSuggestions, currentWord]
+            activeSuggestionIndex = 0
+            renderSuggestions()
+          } catch {
+            if (currentReq !== suggestionRequestId) return
+            closeSuggestions()
+          }
+        }, 300)
+      }
 
       const updateEditorRect = () => {
         const r = liveText.getBoundingClientRect()
@@ -1804,6 +1942,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         } else {
           editorEl.style.height = baseHeight + "px"
         }
+        syncSuggestionsRect()
       }
 
       const onContainerScroll = () => updateEditorRect()
@@ -1834,41 +1973,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       updateEditorRect()
 
       editorEl.addEventListener("input", () => {
-        if (!inlineHistoryPushed) {
-          textHistoryApiRef.current.pushPastBeforeMutation()
-          inlineHistoryPushed = true
+        syncModelFromEditor()
+        if (!supportsTransliteration) return
+        if (isApplyingSuggestion) {
+          isApplyingSuggestion = false
+          return
         }
-        const val = normalizeEditableValue(editorEl.value)
-        const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
-        if (docEl2) applyEditableValueToTextEl(docEl2, val)
-        // Keep the visible SVG text updated while typing (textarea text is transparent).
-        applyEditableValueToTextEl(liveText, val)
-        updateEditorRect()
-        if (ov) {
-          const r = textOverlayRect(liveText)
-          const editorHeightPx = editorEl.getBoundingClientRect().height
-          const editorHeightSvg = editorHeightPx / Math.max(scaleY, 0.0001)
-          const nextHeight = Math.max(r.rh, editorHeightSvg)
-          ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
-          ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
-          ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
-          ;(ov as SVGRectElement).setAttribute("height", String(nextHeight))
-          renderTextHandles(tid)
-        }
-        setTextValues((prev) => ({ ...prev, [tid]: val }))
-        const panel = panelInputRef.current
-        if (panel && selectedTextIdState === tid) panel.value = val
+        scheduleSuggestionLookup()
       })
       const overlayDiv = document.createElement("div")
       overlayDiv.id = "txt-editor-overlay"
       overlayDiv.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:50;"
 
       overlayDiv.appendChild(editorEl)
+      overlayDiv.appendChild(suggestionsEl)
       let committed = false
       const commit = (opts?: { bumpPreview?: boolean }) => {
         if (suppressEditorCommitRef.current) return
         if (committed) return
         committed = true
+        closeSuggestions()
+        if (suggestionDebounce) {
+          window.clearTimeout(suggestionDebounce)
+          suggestionDebounce = null
+        }
+        suggestionRequestId += 1
         const bumpPreview = opts?.bumpPreview !== false
         if (container) container.removeEventListener("scroll", onContainerScroll)
         window.removeEventListener("scroll", onGlobalScrollOrResize, true)
@@ -1899,7 +2028,44 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       activeInlineEditor = { tid, commit }
       editorEl.addEventListener("keydown", (e) => {
         const ke = e as unknown as KeyboardEvent
+        if (supportsTransliteration && suggestionItems.length > 0) {
+          if (ke.key === "ArrowDown") {
+            e.preventDefault()
+            activeSuggestionIndex = (activeSuggestionIndex - 1 + suggestionItems.length) % suggestionItems.length
+            renderSuggestions()
+            return
+          }
+          if (ke.key === "ArrowUp") {
+            e.preventDefault()
+            activeSuggestionIndex = (activeSuggestionIndex + 1) % suggestionItems.length
+            renderSuggestions()
+            return
+          }
+          if (ke.key === "Enter") {
+            e.preventDefault()
+            applySuggestion(activeSuggestionIndex)
+            return
+          }
+          if (ke.key === " ") {
+            e.preventDefault()
+            applySuggestion(activeSuggestionIndex)
+            const caret = editorEl.selectionStart ?? editorEl.value.length
+            editorEl.value = editorEl.value.slice(0, caret) + " " + editorEl.value.slice(caret)
+            const nextCaret = caret + 1
+            editorEl.setSelectionRange(nextCaret, nextCaret)
+            syncModelFromEditor()
+            return
+          }
+        }
+        if (supportsTransliteration && ke.key === " ") {
+          closeSuggestions()
+        }
         if (ke.key === "Escape") {
+          if (supportsTransliteration && suggestionItems.length > 0) {
+            e.preventDefault()
+            closeSuggestions()
+            return
+          }
           e.preventDefault()
           commit()
           return
@@ -1913,7 +2079,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           commit()
         }
       })
-      editorEl.addEventListener("blur", () => setTimeout(() => commit(), 80))
+      editorEl.addEventListener("blur", () =>
+        setTimeout(() => {
+          closeSuggestions()
+          commit()
+        }, 80)
+      )
       // Show the SVG text; the editor is caret-only and has transparent text.
       liveText.style.display = ""
       if (ov) (ov as HTMLElement).style.display = ""
@@ -3240,6 +3411,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       id: cartId,
       name: template.name,
       category: template.category,
+      language: template.language,
       price: template.price,
       colors: template.colors,
       emoji: template.emoji,

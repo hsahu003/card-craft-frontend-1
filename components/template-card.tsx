@@ -3,17 +3,8 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useWishlist } from "@/contexts/wishlist-context"
+import type { Template } from "@/lib/templates"
 import { Heart } from "lucide-react"
-
-interface Template {
-  id: string
-  name: string
-  category: string
-  price: number
-  colors: [string, string]
-  emoji: string
-  svg?: string
-}
 
 interface TemplateCardProps {
   template: Template

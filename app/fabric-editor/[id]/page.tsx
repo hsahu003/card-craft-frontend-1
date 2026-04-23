@@ -265,6 +265,7 @@ export default function FabricEditorPage({ params }: { params: Promise<{ id: str
       id: cartId,
       name: template.name,
       category: template.category,
+      language: template.language,
       price: template.price,
       colors: template.colors,
       emoji: template.emoji,

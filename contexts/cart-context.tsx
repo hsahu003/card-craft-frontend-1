@@ -11,6 +11,7 @@ import {
 } from "react"
 import { useUser } from "@/contexts/user-context"
 import { getStorageKey } from "@/lib/user-storage-key"
+import type { TemplateLanguage } from "@/lib/templates"
 
 const CART_STORAGE_KEY = "cardcraft-cart"
 
@@ -18,6 +19,7 @@ export interface CartItem {
   id: string
   name: string
   category: string
+  language: TemplateLanguage
   price: number
   colors: [string, string]
   emoji: string
