@@ -1331,7 +1331,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
       applySelectionStrokeStyle({ txtIds: tid ? [tid] : [], stickerIds: [], imgId: null })
       // Remove any existing handle groups
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
       })
       if (!tid) return
@@ -1388,7 +1388,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setSelectedImageZoneIdState(null)
       }
       applySelectionStrokeStyle({ txtIds: [], stickerIds: sid ? [sid] : [], imgId: null })
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
       })
       if (!sid) return
@@ -1467,6 +1467,87 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       svgEl.appendChild(g)
     }
 
+    const getMultiSelectionBox = (idsTxt: string[], idsSticker: string[]) => {
+      const txtBoxes = idsTxt
+        .map((id) => {
+          const ov = svgEl.querySelector("#overlay_" + id) as SVGRectElement | null
+          if (!ov) return null
+          const x = parseFloat(ov.getAttribute("x") || "")
+          const y = parseFloat(ov.getAttribute("y") || "")
+          const w = parseFloat(ov.getAttribute("width") || "")
+          const h = parseFloat(ov.getAttribute("height") || "")
+          if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null
+          return { x, y, w, h }
+        })
+        .filter((b): b is { x: number; y: number; w: number; h: number } => Boolean(b))
+
+      const stickerBoxes = idsSticker
+        .map((id) => {
+          const ov = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
+          if (!ov) return null
+          const x = parseFloat(ov.getAttribute("x") || "")
+          const y = parseFloat(ov.getAttribute("y") || "")
+          const w = parseFloat(ov.getAttribute("width") || "")
+          const h = parseFloat(ov.getAttribute("height") || "")
+          if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null
+          return { x, y, w, h }
+        })
+        .filter((b): b is { x: number; y: number; w: number; h: number } => Boolean(b))
+
+      const all = [...txtBoxes, ...stickerBoxes]
+      if (all.length === 0) return null
+      const left = Math.min(...all.map((b) => b.x))
+      const top = Math.min(...all.map((b) => b.y))
+      const right = Math.max(...all.map((b) => b.x + b.w))
+      const bottom = Math.max(...all.map((b) => b.y + b.h))
+      return { x: left, y: top, w: right - left, h: bottom - top }
+    }
+
+    const renderMultiSelectionHandles = (
+      idsTxt: string[],
+      idsSticker: string[],
+      boxOverride?: { x: number; y: number; w: number; h: number } | null
+    ) => {
+      Array.from(
+        svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')
+      ).forEach((g) => {
+        g.parentNode?.removeChild(g)
+      })
+      if (idsTxt.length + idsSticker.length <= 1) return
+      const box = boxOverride || getMultiSelectionBox(idsTxt, idsSticker)
+      if (!box || !box.w || !box.h) return
+
+      const g = previewDoc.createElementNS(ns, "g")
+      g.setAttribute("id", "handles_multi")
+      g.setAttribute("data-multi-handles", "1")
+      g.setAttribute("pointer-events", "none")
+
+      const handleSize = Math.max(Math.min(Math.min(box.w, box.h) * 0.12, 14), 6)
+      const r = handleSize / 2
+      const corners: { key: "tl" | "tr" | "bl" | "br"; cx: number; cy: number; cursor: string }[] = [
+        { key: "tl", cx: box.x, cy: box.y, cursor: "nwse-resize" },
+        { key: "tr", cx: box.x + box.w, cy: box.y, cursor: "nesw-resize" },
+        { key: "bl", cx: box.x, cy: box.y + box.h, cursor: "nesw-resize" },
+        { key: "br", cx: box.x + box.w, cy: box.y + box.h, cursor: "nwse-resize" },
+      ]
+      corners.forEach(({ key, cx, cy, cursor }) => {
+        const handle = previewDoc.createElementNS(ns, "rect")
+        handle.setAttribute("x", String(cx - r))
+        handle.setAttribute("y", String(cy - r))
+        handle.setAttribute("width", String(handleSize))
+        handle.setAttribute("height", String(handleSize))
+        handle.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
+        handle.setAttribute("fill", "#ffffff")
+        handle.setAttribute("stroke", "#378ADD")
+        handle.setAttribute("stroke-width", "0.9")
+        handle.setAttribute("pointer-events", "all")
+        handle.setAttribute("data-multi-handle", key)
+        handle.setAttribute("style", "cursor:" + cursor)
+        g.appendChild(handle)
+      })
+      svgEl.appendChild(g)
+    }
+
     const buildMultiSelectionDragState = (
       idsTxt: string[],
       idsSticker: string[],
@@ -1475,7 +1556,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       startClientY: number
     ): Extract<DragState, { type: "multi" }> | null => {
       const { sx, sy } = getScale()
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
         g.parentNode?.removeChild(g)
       })
       const startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }> = {}
@@ -1565,6 +1646,51 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
     }
 
+    const buildMultiSelectionResizeState = (
+      idsTxt: string[],
+      idsSticker: string[],
+      handleEl: Element,
+      startClientX: number,
+      startClientY: number,
+      corner: "tl" | "tr" | "bl" | "br"
+    ): Extract<DragState, { type: "multiResize" }> | null => {
+      const base = buildMultiSelectionDragState(idsTxt, idsSticker, handleEl, startClientX, startClientY)
+      if (!base) return null
+      const startTxtFontSize: Record<string, number> = {}
+      idsTxt.forEach((id) => {
+        const live = svgEl.querySelector(idSelector(id)) as SVGElement | null
+        if (!live) return
+        const leaf = getLeafTspans(live)[0]
+        const fromLeaf = leaf ? parseFloat(leaf.getAttribute("font-size") || "") : NaN
+        const fromEl = parseFloat(live.getAttribute("font-size") || "")
+        const cs = typeof window !== "undefined" ? window.getComputedStyle((leaf || live) as any) : null
+        const fromComputed = cs ? parseFloat(cs.fontSize || "") : NaN
+        const next = Number.isFinite(fromLeaf) && fromLeaf > 0 ? fromLeaf : Number.isFinite(fromEl) && fromEl > 0 ? fromEl : fromComputed
+        if (Number.isFinite(next) && next > 0) startTxtFontSize[id] = next
+      })
+      const gx = base.groupBox.x
+      const gy = base.groupBox.y
+      const gw = base.groupBox.w
+      const gh = base.groupBox.h
+      const anchors: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number; cx: number; cy: number }> = {
+        tl: { x: gx + gw, y: gy + gh, cx: gx, cy: gy },
+        tr: { x: gx, y: gy + gh, cx: gx + gw, cy: gy },
+        bl: { x: gx + gw, y: gy, cx: gx, cy: gy + gh },
+        br: { x: gx, y: gy, cx: gx + gw, cy: gy + gh },
+      }
+      const c = anchors[corner]
+      return {
+        ...base,
+        type: "multiResize",
+        startTxtFontSize,
+        corner,
+        anchorX: c.x,
+        anchorY: c.y,
+        startCornerX: c.cx,
+        startCornerY: c.cy,
+      }
+    }
+
     container.innerHTML = ""
     container.appendChild(svgEl)
 
@@ -1605,8 +1731,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const isMulti = multiTxt.length + multiStickers.length > 1
     if (isMulti) {
       applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
-      // Ensure handles are removed in multi-select mode.
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => g.parentNode?.removeChild(g))
+      renderMultiSelectionHandles(multiTxt, multiStickers)
     } else if (selectedTextIdState && svgEl.querySelector("#overlay_" + selectedTextIdState)) {
       renderTextHandles(selectedTextIdState)
     } else if (selectedStickerIdState && svgEl.querySelector("#sticker_overlay_" + selectedStickerIdState)) {
@@ -1731,6 +1856,28 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
           startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
           groupBox: { x: number; y: number; w: number; h: number }
+          moved: boolean
+        }
+      | {
+          type: "multiResize"
+          idsTxt: string[]
+          idsSticker: string[]
+          overlay: Element
+          sx: number
+          sy: number
+          startX: number
+          startY: number
+          startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }>
+          startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+          startTxtFontSize: Record<string, number>
+          startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
+          startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+          groupBox: { x: number; y: number; w: number; h: number }
+          corner: "tl" | "tr" | "bl" | "br"
+          anchorX: number
+          anchorY: number
+          startCornerX: number
+          startCornerY: number
           moved: boolean
         }
 
@@ -2098,6 +2245,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const isMultiToggle = e.ctrlKey || e.metaKey
       const handle = target.closest("[data-text-handle]") as SVGElement | null
       const stickerHandle = target.closest("[data-sticker-handle]") as SVGElement | null
+      const multiHandle = target.closest("[data-multi-handle]") as SVGElement | null
       const rotateHandle = target.closest("[data-rotate-handle='1']") as SVGElement | null
       const imgOv = target.closest("[data-img-zone]")
       const txtOv = target.closest("[data-text-zone]")
@@ -2153,7 +2301,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         return
       }
-      if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle) {
+      if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle && !multiHandle) {
         // Clicked non-selectable area in SVG -> clear current selection.
         if (activeInlineEditor) {
           activeInlineEditor.commit({ bumpPreview: false })
@@ -2183,6 +2331,20 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
       e.preventDefault()
       const { sx, sy } = getScale()
+      if (multiHandle) {
+        const corner = multiHandle.getAttribute("data-multi-handle") as "tl" | "tr" | "bl" | "br" | null
+        const multiTxt = selectedTextIdsRef.current
+        const multiStickers = selectedStickerIdsRef.current
+        if (!corner || multiTxt.length + multiStickers.length <= 1) return
+        const nextDrag = buildMultiSelectionResizeState(multiTxt, multiStickers, multiHandle, e.clientX, e.clientY, corner)
+        if (!nextDrag) return
+        textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
+        drag = nextDrag
+        ;(multiHandle as unknown as HTMLElement).style.cursor = getComputedStyle(multiHandle).cursor || "nwse-resize"
+        applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
+        renderMultiSelectionHandles(multiTxt, multiStickers, nextDrag.groupBox)
+        return
+      }
       if (stickerHandle) {
         const sid = stickerHandle.getAttribute("data-sticker-id")
         const corner = stickerHandle.getAttribute("data-sticker-handle") as "tl" | "tr" | "bl" | "br" | null
@@ -2385,6 +2547,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               selectedTextId = null
               selectedStickerId = null
               applySelectionStrokeStyle({ txtIds: next, stickerIds: selectedStickerIdsRef.current, imgId: null })
+              renderMultiSelectionHandles(next, selectedStickerIdsRef.current)
             } else if (next.length === 1 && selectedStickerIdsRef.current.length === 0) {
               renderTextHandles(next[0]!)
               setSelectedStickerIdsState([])
@@ -2394,7 +2557,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             } else {
               applySelectionStrokeStyle({ txtIds: next, stickerIds: selectedStickerIdsRef.current, imgId: null })
             }
-            Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => g.parentNode?.removeChild(g))
             return next
           })
           return
@@ -2407,6 +2569,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           if (!drag) return
           ;(txtOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
+          renderMultiSelectionHandles(multiTxt, multiStickers)
           return
         }
 
@@ -2467,6 +2630,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               selectedTextId = null
               selectedStickerId = null
               applySelectionStrokeStyle({ txtIds: selectedTextIdsRef.current, stickerIds: next, imgId: null })
+              renderMultiSelectionHandles(selectedTextIdsRef.current, next)
             } else if (next.length === 1 && selectedTextIdsRef.current.length === 0) {
               setSelectedTextIdsState([])
               renderStickerHandles(next[0]!)
@@ -2476,7 +2640,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             } else {
               applySelectionStrokeStyle({ txtIds: selectedTextIdsRef.current, stickerIds: next, imgId: null })
             }
-            Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => g.parentNode?.removeChild(g))
             return next
           })
           return
@@ -2489,6 +2652,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           if (!drag) return
           ;(stickerOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
+          renderMultiSelectionHandles(multiTxt, multiStickers)
           return
         }
 
@@ -2666,6 +2830,137 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         })
 
         applySelectionStrokeStyle({ txtIds: multiDrag.idsTxt, stickerIds: multiDrag.idsSticker, imgId: null })
+        renderMultiSelectionHandles(multiDrag.idsTxt, multiDrag.idsSticker, {
+          x: multiDrag.groupBox.x + dxSvg,
+          y: multiDrag.groupBox.y + dySvg,
+          w: multiDrag.groupBox.w,
+          h: multiDrag.groupBox.h,
+        })
+        return
+      }
+
+      if (drag.type === "multiResize") {
+        const multiDrag = drag
+        const { sx, sy } = getScale()
+        const dxSvg = (e.clientX - multiDrag.startX) * sx
+        const dySvg = (e.clientY - multiDrag.startY) * sy
+        const newCornerX = multiDrag.startCornerX + dxSvg
+        const newCornerY = multiDrag.startCornerY + dySvg
+        const startDiag = Math.hypot(multiDrag.startCornerX - multiDrag.anchorX, multiDrag.startCornerY - multiDrag.anchorY)
+        const newDiag = Math.hypot(newCornerX - multiDrag.anchorX, newCornerY - multiDrag.anchorY)
+        if (!startDiag || !Number.isFinite(startDiag)) return
+        let scale = newDiag / startDiag
+        if (!Number.isFinite(scale) || scale <= 0) scale = 1
+        scale = Math.max(0.1, Math.min(5, scale))
+
+        const scalePoint = (x: number, y: number) => ({
+          x: multiDrag.anchorX + (x - multiDrag.anchorX) * scale,
+          y: multiDrag.anchorY + (y - multiDrag.anchorY) * scale,
+        })
+
+        const applyScaledFont = (el: SVGElement, font: number) => {
+          el.setAttribute("font-size", String(font))
+          ;(el as unknown as HTMLElement).style.fontSize = String(font) + "px"
+          const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+          tspans.forEach((t) => {
+            if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(font))
+            ;(t as unknown as HTMLElement).style.fontSize = String(font) + "px"
+            const style = t.getAttribute("style")
+            if (style && style.includes("font-size")) {
+              const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
+              t.setAttribute("style", withoutSize ? `${withoutSize}font-size:${font}px;` : `font-size:${font}px;`)
+            }
+          })
+        }
+
+        multiDrag.idsTxt.forEach((id) => {
+          const base = multiDrag.startTxt[id]
+          if (!base) return
+          const live = svgEl.querySelector(idSelector(id)) as SVGElement | null
+          const docEl = svgDocRef.current?.querySelector(idSelector(id)) as SVGElement | null
+          const targets = [live, docEl]
+          targets.forEach((el) => {
+            if (!el) return
+            const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
+            if (tspans.length && base.tspanXY.length) {
+              tspans.forEach((t, i) => {
+                const point = base.tspanXY[i]
+                if (!point) return
+                const next = scalePoint(point.x, point.y)
+                t.setAttribute("x", String(next.x))
+                t.setAttribute("y", String(next.y))
+              })
+            } else {
+              const next = scalePoint(base.x, base.y)
+              el.setAttribute("x", String(next.x))
+              el.setAttribute("y", String(next.y))
+            }
+            const baseFont = multiDrag.startTxtFontSize[id]
+            if (Number.isFinite(baseFont) && baseFont > 0) {
+              const newFont = Math.max(4, Math.min(200, baseFont * scale))
+              applyScaledFont(el, newFont)
+            }
+          })
+          const ov = svgEl.querySelector("#overlay_" + id) as SVGRectElement | null
+          const baseOv = multiDrag.startTxtOverlay[id]
+          if (ov && baseOv) {
+            const tl = scalePoint(baseOv.x, baseOv.y)
+            const br = scalePoint(baseOv.x + baseOv.w, baseOv.y + baseOv.h)
+            ov.setAttribute("x", String(Math.min(tl.x, br.x)))
+            ov.setAttribute("y", String(Math.min(tl.y, br.y)))
+            ov.setAttribute("width", String(Math.abs(br.x - tl.x)))
+            ov.setAttribute("height", String(Math.abs(br.y - tl.y)))
+          }
+        })
+
+        multiDrag.idsSticker.forEach((id) => {
+          const base = multiDrag.startSticker[id]
+          if (!base) return
+          const tl = scalePoint(base.x, base.y)
+          const br = scalePoint(base.x + base.w, base.y + base.h)
+          const nx = Math.min(tl.x, br.x)
+          const ny = Math.min(tl.y, br.y)
+          const nw = Math.max(Math.abs(br.x - tl.x), 1)
+          const nh = Math.max(Math.abs(br.y - tl.y), 1)
+          const live = svgEl.querySelector(idSelector(id)) as SVGElement | null
+          const docEl = svgDocRef.current?.querySelector(idSelector(id)) as SVGElement | null
+          ;[live, docEl].forEach((el) => {
+            if (!el) return
+            el.setAttribute("x", String(nx))
+            el.setAttribute("y", String(ny))
+            el.setAttribute("width", String(nw))
+            el.setAttribute("height", String(nh))
+            if (base.angle !== null && Math.abs(base.angle) > 0.0001) {
+              const pivotX = nx + nw / 2
+              const pivotY = ny + nh / 2
+              el.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
+              el.setAttribute("data-rotation-angle", String(base.angle))
+            }
+          })
+          const ov = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
+          if (ov) {
+            ov.setAttribute("x", String(nx))
+            ov.setAttribute("y", String(ny))
+            ov.setAttribute("width", String(nw))
+            ov.setAttribute("height", String(nh))
+            if (base.angle !== null && Math.abs(base.angle) > 0.0001) {
+              const pivotX = nx + nw / 2
+              const pivotY = ny + nh / 2
+              ov.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
+            } else {
+              ov.removeAttribute("transform")
+            }
+          }
+        })
+
+        const box = {
+          x: Math.min(multiDrag.anchorX, multiDrag.anchorX + (multiDrag.groupBox.x - multiDrag.anchorX) * scale),
+          y: Math.min(multiDrag.anchorY, multiDrag.anchorY + (multiDrag.groupBox.y - multiDrag.anchorY) * scale),
+          w: Math.max(Math.abs(multiDrag.groupBox.w * scale), 1),
+          h: Math.max(Math.abs(multiDrag.groupBox.h * scale), 1),
+        }
+        applySelectionStrokeStyle({ txtIds: multiDrag.idsTxt, stickerIds: multiDrag.idsSticker, imgId: null })
+        renderMultiSelectionHandles(multiDrag.idsTxt, multiDrag.idsSticker, box)
         return
       }
 
@@ -3099,17 +3394,51 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const type = drag.type
       const tid = "id" in drag ? (drag as any).id : ""
       const openEditorOnClick = type === "txt" && drag.type === "txt" ? drag.openEditorOnClick : false
-      ;(drag.overlay as HTMLElement).style.cursor = "grab"
+      if (type === "multiResize" && "corner" in drag) {
+        const cursorByCorner: Record<"tl" | "tr" | "bl" | "br", string> = {
+          tl: "nwse-resize",
+          tr: "nesw-resize",
+          bl: "nesw-resize",
+          br: "nwse-resize",
+        }
+        ;(drag.overlay as HTMLElement).style.cursor = cursorByCorner[drag.corner]
+      } else {
+        ;(drag.overlay as HTMLElement).style.cursor = "grab"
+      }
       if (type === "txt" || type === "sticker" || type === "multi") hideGuides(svgEl)
 
       if (
         wasDrag &&
-        (type === "txt" || type === "resize" || type === "img" || type === "sticker" || type === "stickerResize" || type === "rotate-sticker" || type === "multi")
+        (type === "txt" ||
+          type === "resize" ||
+          type === "img" ||
+          type === "sticker" ||
+          type === "stickerResize" ||
+          type === "rotate-sticker" ||
+          type === "multi" ||
+          type === "multiResize")
       ) {
         const snap = textHistoryApiRef.current.pendingDragSnapshot
         if (snap) textHistoryApiRef.current.pushPastSnapshot(snap)
       }
       textHistoryApiRef.current.pendingDragSnapshot = null
+
+      if (type === "multiResize") {
+        const idsTxt = [...drag.idsTxt]
+        const idsSticker = [...drag.idsSticker]
+        // Keep multi-selection active after resize so handles remain visible
+        // until the user explicitly deselects.
+        selectedTextId = null
+        selectedStickerId = null
+        selectedImageZoneId = null
+        setSelectedTextIdState(null)
+        setSelectedStickerIdState(null)
+        setSelectedImageZoneIdState(null)
+        setSelectedTextIdsState(idsTxt)
+        setSelectedStickerIdsState(idsSticker)
+        applySelectionStrokeStyle({ txtIds: idsTxt, stickerIds: idsSticker, imgId: null })
+        renderMultiSelectionHandles(idsTxt, idsSticker)
+      }
 
       if (type === "img" && wasDrag) {
         const dx = e.clientX - drag.startX
@@ -3128,7 +3457,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       drag = null
-      if ((type === "sticker" || type === "stickerResize" || type === "rotate-sticker" || type === "multi") && wasDrag) {
+      if ((type === "sticker" || type === "stickerResize" || type === "rotate-sticker" || type === "multi" || type === "multiResize") && wasDrag) {
         setPreviewVersion((v) => v + 1)
       }
       if (type === "resize") {
@@ -3232,7 +3561,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
         ;(r as unknown as HTMLElement).style.display = "none"
       })
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"]')).forEach((g) => {
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
         ;(g as unknown as HTMLElement).style.display = "none"
       })
 
@@ -3267,15 +3596,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const svg = previewContainerRef.current?.querySelector("svg")
     if (!svg) return
     const showAll = isPreviewHovering
+    const selectedTextSet = new Set(selectedTextIdsState)
+    const selectedStickerSet = new Set(selectedStickerIdsState)
 
     Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone]")).forEach((r) => {
       const id = r.getAttribute("data-text-zone")
-      const keepSelected = !!id && id === selectedTextIdState
+      const keepSelected = !!id && (id === selectedTextIdState || selectedTextSet.has(id))
       ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
     })
     Array.from(svg.querySelectorAll<SVGRectElement>("[data-sticker-zone]")).forEach((r) => {
       const id = r.getAttribute("data-sticker-zone")
-      const keepSelected = !!id && id === selectedStickerIdState
+      const keepSelected = !!id && (id === selectedStickerIdState || selectedStickerSet.has(id))
       ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
     })
     Array.from(svg.querySelectorAll<SVGRectElement>("[data-img-zone]")).forEach((r) => {
@@ -3284,14 +3615,25 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
     })
 
-    // Handle groups are single-selection per type in current flow.
+    const isMultiSelectionActive = selectedTextIdsState.length + selectedStickerIdsState.length > 1
     Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
       ;(g as unknown as HTMLElement).style.display = showAll || !!selectedTextIdState ? "" : "none"
     })
     Array.from(svg.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
       ;(g as unknown as HTMLElement).style.display = showAll || !!selectedStickerIdState ? "" : "none"
     })
-  }, [isPreviewHovering, previewVersion, selectedTextIdState, selectedStickerIdState, selectedImageZoneIdState])
+    Array.from(svg.querySelectorAll<SVGGElement>('[data-multi-handles="1"]')).forEach((g) => {
+      ;(g as unknown as HTMLElement).style.display = showAll || isMultiSelectionActive ? "" : "none"
+    })
+  }, [
+    isPreviewHovering,
+    previewVersion,
+    selectedTextIdState,
+    selectedStickerIdState,
+    selectedImageZoneIdState,
+    selectedTextIdsState,
+    selectedStickerIdsState,
+  ])
 
   useEffect(() => {
     const container = previewContainerRef.current
