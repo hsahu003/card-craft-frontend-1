@@ -159,6 +159,10 @@ function applyEditableValueToTextEl(target: SVGElement, value: string) {
       }
     }
   }
+  const persistedStepAttr = parseFloat(target.getAttribute("data-editor-line-step") || "")
+  if (!(stepY > 0) && Number.isFinite(persistedStepAttr) && persistedStepAttr > 0) {
+    stepY = persistedStepAttr
+  }
   if (!(stepY > 0)) {
     const leafFontSizeSvg = parseFloat(templateLeaf.getAttribute("font-size") || "")
     const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
@@ -170,11 +174,19 @@ function applyEditableValueToTextEl(target: SVGElement, value: string) {
           : 14
     stepY = fallbackFontSvg * 1.25
   }
+  target.setAttribute("data-editor-line-step", String(stepY))
 
-  Array.from(target.querySelectorAll("tspan")).forEach((node) => {
+  // Preserve template tspan container hierarchy (common in Inkscape centered text).
+  // Removing all tspans can break alignment/selection mapping for some templates.
+  const leafParent = templateLeaf.parentNode
+  if (!leafParent) {
+    target.textContent = normalizedVal
+    return
+  }
+
+  leaf.forEach((node) => {
     node.parentNode?.removeChild(node)
   })
-  target.textContent = ""
 
   parts.forEach((line, i) => {
     const newLeaf = templateLeaf.cloneNode(false) as SVGElement
@@ -182,7 +194,7 @@ function applyEditableValueToTextEl(target: SVGElement, value: string) {
     newLeaf.setAttribute("x", String(baseX))
     newLeaf.setAttribute("y", String(baseY + i * stepY))
     newLeaf.textContent = line
-    target.appendChild(newLeaf)
+    leafParent.appendChild(newLeaf)
   })
 }
 
@@ -1989,7 +2001,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         const val = normalizeEditableValue(editorEl.value)
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
-        if (docEl2) applyEditableValueToTextEl(docEl2, val)
+        if (docEl2) {
+          applyEditableValueToTextEl(docEl2, val)
+        }
         applyEditableValueToTextEl(liveText, val)
         updateEditorRect()
         syncSuggestionsRect()
