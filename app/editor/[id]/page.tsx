@@ -10,6 +10,8 @@ import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/temp
 import { Copy, Redo2, ShoppingCart, Trash2, Undo2 } from "lucide-react"
 import {
   getSVGSize,
+  getSVGSizePx,
+  getSVGSizeMm,
   getSVGElementSize,
   getTextMetrics,
   textOverlayRect,
@@ -210,6 +212,11 @@ function getCurrentWordRange(value: string, caretIndex: number) {
 function resolveTransliterationLanguage(language: TemplateLanguage): "hindi" | "marathi" | null {
   if (language === "hindi" || language === "marathi") return language
   return null
+}
+
+function isRomanPhoneticWord(word: string) {
+  // Transliteration should trigger only for English phonetic typing.
+  return /^[A-Za-z]+$/.test(word)
 }
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -481,7 +488,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     const selectedTid = selectedTextIdState
     const selectedSid = selectedStickerIdState
-    if (!selectedTid && !selectedSid) return
+    const multiTxt = selectedTextIdsRef.current
+    const multiStickers = selectedStickerIdsRef.current
+    const hasMulti = multiTxt.length + multiStickers.length > 1
+    if (!selectedTid && !selectedSid && !hasMulti) return
 
     pushPastBeforeMutation()
 
@@ -511,6 +521,71 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         el.setAttribute("x", String(ox + dx))
         el.setAttribute("y", String(oy + dy))
       }
+    }
+
+    if (hasMulti) {
+      const nextTextFields: { id: string; label: string }[] = []
+      const nextTextValues: Record<string, string> = {}
+      const newTextIds: string[] = []
+      const newStickerIds: string[] = []
+
+      multiStickers.forEach((id, idx) => {
+        const src = doc.querySelector(idSelector(id)) as SVGImageElement | null
+        if (!src) return
+        const clone = src.cloneNode(true) as SVGImageElement
+        const newId = STICKER_PREFIX + "copy_" + nextIdSuffix + "_" + idx
+        clone.setAttribute("id", newId)
+        const w = Math.max(1, parseFloat(src.getAttribute("width") || "0") || 32)
+        const h = Math.max(1, parseFloat(src.getAttribute("height") || "0") || 32)
+        const { dx, dy } = getOffsetFromLiveOverlay("#sticker_overlay_" + id, w, h)
+        const x = (parseFloat(src.getAttribute("x") || "0") || 0) + dx
+        const y = (parseFloat(src.getAttribute("y") || "0") || 0) + dy
+        clone.setAttribute("x", String(x))
+        clone.setAttribute("y", String(y))
+        const angle = parseFloat(src.getAttribute("data-rotation-angle") || "")
+        if (Number.isFinite(angle) && Math.abs(angle) > 0.0001) {
+          const pivotX = x + w / 2
+          const pivotY = y + h / 2
+          clone.setAttribute("data-rotation-angle", String(angle))
+          clone.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+        } else {
+          clone.removeAttribute("data-rotation-angle")
+          clone.removeAttribute("transform")
+        }
+        src.parentNode?.appendChild(clone)
+        newStickerIds.push(newId)
+      })
+
+      multiTxt.forEach((id, idx) => {
+        const src = doc.querySelector(idSelector(id)) as SVGElement | null
+        if (!src) return
+        const clone = src.cloneNode(true) as SVGElement
+        const newId = EDITABLE_PREFIX + "copy_" + nextIdSuffix + "_" + idx
+        clone.setAttribute("id", newId)
+        clone.removeAttribute("transform")
+        clone.removeAttribute("data-rotation-angle")
+        const ov = svgLive?.querySelector("#overlay_" + id) as SVGRectElement | null
+        const fallbackW = Math.max(1, parseFloat(ov?.getAttribute("width") || "") || 120)
+        const fallbackH = Math.max(1, parseFloat(ov?.getAttribute("height") || "") || 32)
+        const { dx, dy } = getOffsetFromLiveOverlay("#overlay_" + id, fallbackW, fallbackH)
+        shiftTextEl(clone, dx, dy)
+        src.parentNode?.appendChild(clone)
+        nextTextFields.push({ id: newId, label: "copy" })
+        nextTextValues[newId] = (textValues[id] ?? src.textContent ?? "").toString()
+        newTextIds.push(newId)
+      })
+
+      if (nextTextFields.length > 0) {
+        setTextFields((prev) => [...prev, ...nextTextFields])
+        setTextValues((prev) => ({ ...prev, ...nextTextValues }))
+      }
+      setSelectedImageZoneIdState(null)
+      setSelectedTextIdState(null)
+      setSelectedStickerIdState(null)
+      setSelectedTextIdsState(newTextIds)
+      setSelectedStickerIdsState(newStickerIds)
+      setPreviewVersion((v) => v + 1)
+      return
     }
 
     if (selectedSid) {
@@ -1900,6 +1975,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startCornerY: number
           moved: boolean
         }
+      | {
+          type: "marquee"
+          overlay: Element
+          startX: number
+          startY: number
+          startSvgX: number
+          startSvgY: number
+          rectEl: SVGRectElement
+          idsTxt: string[]
+          idsSticker: string[]
+          moved: boolean
+        }
 
     let drag: DragState | null = null
     let hiddenTextEditorOverlay: HTMLElement | null = null
@@ -1910,6 +1997,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const bbox = svgEl.getBoundingClientRect()
       const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
       return { sx: vb[2] / bbox.width, sy: vb[3] / bbox.height }
+    }
+
+    function clientToSvgPoint(clientX: number, clientY: number) {
+      const svgRect = svgEl.getBoundingClientRect()
+      const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
+      const relX = (clientX - svgRect.left) / Math.max(svgRect.width, 1)
+      const relY = (clientY - svgRect.top) / Math.max(svgRect.height, 1)
+      return { x: vb[0] + relX * vb[2], y: vb[1] + relY * vb[3] }
     }
 
     function openEditor(tid: string) {
@@ -2067,7 +2162,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (suggestionDebounce) window.clearTimeout(suggestionDebounce)
         const caret = editorEl.selectionStart ?? editorEl.value.length
         transliterationWordRange = getCurrentWordRange(editorEl.value, caret)
-        if (!transliterationWordRange.word.trim()) {
+        const word = transliterationWordRange.word.trim()
+        if (!word || !isRomanPhoneticWord(word)) {
           closeSuggestions()
           return
         }
@@ -2142,6 +2238,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       updateEditorRect()
 
       editorEl.addEventListener("input", () => {
+        if (template.language === "hindi" && editorEl.value.includes("|")) {
+          editorEl.value = editorEl.value.replace(/\|/g, "।")
+        }
         syncModelFromEditor()
         if (!supportsTransliteration) return
         if (isApplyingSuggestion) {
@@ -2324,18 +2423,36 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         return
       }
       if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle && !multiHandle) {
-        // Clicked non-selectable area in SVG -> clear current selection.
+        // Clicked empty SVG area -> start marquee selection.
         if (activeInlineEditor) {
           activeInlineEditor.commit({ bumpPreview: false })
           activeInlineEditor = null
         }
-        renderTextHandles(null)
-        renderStickerHandles(null)
-        setSelectedTextIdsState([])
-        setSelectedStickerIdsState([])
-        selectedImageZoneId = null
-        setSelectedImageZoneIdState(null)
-        applySelectionStrokeStyle({ txtIds: [], stickerIds: [], imgId: null })
+        const p = clientToSvgPoint(e.clientX, e.clientY)
+        const marquee = previewDoc.createElementNS(ns, "rect")
+        marquee.setAttribute("x", String(p.x))
+        marquee.setAttribute("y", String(p.y))
+        marquee.setAttribute("width", "0")
+        marquee.setAttribute("height", "0")
+        marquee.setAttribute("fill", "rgba(55,138,221,0.12)")
+        marquee.setAttribute("stroke", "#378ADD")
+        marquee.setAttribute("stroke-width", "1")
+        marquee.setAttribute("stroke-dasharray", "4 3")
+        marquee.setAttribute("pointer-events", "none")
+        marquee.setAttribute("data-marquee-selection", "1")
+        svgEl.appendChild(marquee)
+        drag = {
+          type: "marquee",
+          overlay: svgEl,
+          startX: e.clientX,
+          startY: e.clientY,
+          startSvgX: p.x,
+          startSvgY: p.y,
+          rectEl: marquee,
+          idsTxt: [],
+          idsSticker: [],
+          moved: false,
+        }
         return
       }
       // If user clicks a different text while inline editing, close current editor without rebuilding preview
@@ -2718,6 +2835,56 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const dy = e.clientY - drag.startY
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true
       if (!drag.moved) return
+
+      if (drag.type === "marquee") {
+        const p = clientToSvgPoint(e.clientX, e.clientY)
+        const x = Math.min(drag.startSvgX, p.x)
+        const y = Math.min(drag.startSvgY, p.y)
+        const w = Math.abs(p.x - drag.startSvgX)
+        const h = Math.abs(p.y - drag.startSvgY)
+        drag.rectEl.setAttribute("x", String(x))
+        drag.rectEl.setAttribute("y", String(y))
+        drag.rectEl.setAttribute("width", String(w))
+        drag.rectEl.setAttribute("height", String(h))
+
+        const intersects = (bx: number, by: number, bw: number, bh: number) =>
+          bx < x + w && bx + bw > x && by < y + h && by + bh > y
+
+        const txtIds = Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone]"))
+          .map((ov) => {
+            const id = ov.getAttribute("data-text-zone")
+            if (!id) return null
+            const ox = parseFloat(ov.getAttribute("x") || "")
+            const oy = parseFloat(ov.getAttribute("y") || "")
+            const ow = parseFloat(ov.getAttribute("width") || "")
+            const oh = parseFloat(ov.getAttribute("height") || "")
+            if (!Number.isFinite(ox) || !Number.isFinite(oy) || !Number.isFinite(ow) || !Number.isFinite(oh) || ow <= 0 || oh <= 0) return null
+            return intersects(ox, oy, ow, oh) ? id : null
+          })
+          .filter((id): id is string => Boolean(id))
+
+        const stickerIds = Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-sticker-zone]"))
+          .map((ov) => {
+            const id = ov.getAttribute("data-sticker-zone")
+            if (!id) return null
+            const ox = parseFloat(ov.getAttribute("x") || "")
+            const oy = parseFloat(ov.getAttribute("y") || "")
+            const ow = parseFloat(ov.getAttribute("width") || "")
+            const oh = parseFloat(ov.getAttribute("height") || "")
+            if (!Number.isFinite(ox) || !Number.isFinite(oy) || !Number.isFinite(ow) || !Number.isFinite(oh) || ow <= 0 || oh <= 0) return null
+            return intersects(ox, oy, ow, oh) ? id : null
+          })
+          .filter((id): id is string => Boolean(id))
+
+        drag.idsTxt = txtIds
+        drag.idsSticker = stickerIds
+        applySelectionStrokeStyle({ txtIds, stickerIds, imgId: null })
+        Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
+          g.parentNode?.removeChild(g)
+        })
+        if (txtIds.length + stickerIds.length > 1) renderMultiSelectionHandles(txtIds, stickerIds)
+        return
+      }
 
       if (drag.type === "multi") {
         const multiDrag = drag
@@ -3427,7 +3594,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       } else {
         ;(drag.overlay as HTMLElement).style.cursor = "grab"
       }
-      if (type === "txt" || type === "sticker" || type === "multi") hideGuides(svgEl)
+      if (type === "txt" || type === "sticker" || type === "multi" || type === "marquee") hideGuides(svgEl)
 
       if (
         wasDrag &&
@@ -3444,6 +3611,55 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (snap) textHistoryApiRef.current.pushPastSnapshot(snap)
       }
       textHistoryApiRef.current.pendingDragSnapshot = null
+
+      if (type === "marquee") {
+        const marqueeDrag = drag
+        marqueeDrag.rectEl.parentNode?.removeChild(marqueeDrag.rectEl)
+        selectedImageZoneId = null
+        setSelectedImageZoneIdState(null)
+
+        if (!wasDrag) {
+          renderTextHandles(null)
+          renderStickerHandles(null)
+          setSelectedTextIdsState([])
+          setSelectedStickerIdsState([])
+          setSelectedTextIdState(null)
+          setSelectedStickerIdState(null)
+          applySelectionStrokeStyle({ txtIds: [], stickerIds: [], imgId: null })
+          drag = null
+          return
+        }
+
+        const txtIds = marqueeDrag.idsTxt
+        const stickerIds = marqueeDrag.idsSticker
+        const total = txtIds.length + stickerIds.length
+        if (total === 0) {
+          renderTextHandles(null)
+          renderStickerHandles(null)
+          setSelectedTextIdsState([])
+          setSelectedStickerIdsState([])
+          setSelectedTextIdState(null)
+          setSelectedStickerIdState(null)
+          applySelectionStrokeStyle({ txtIds: [], stickerIds: [], imgId: null })
+        } else if (total === 1 && txtIds.length === 1) {
+          setSelectedTextIdsState([txtIds[0]!])
+          setSelectedStickerIdsState([])
+          renderTextHandles(txtIds[0]!)
+        } else if (total === 1 && stickerIds.length === 1) {
+          setSelectedTextIdsState([])
+          setSelectedStickerIdsState([stickerIds[0]!])
+          renderStickerHandles(stickerIds[0]!)
+        } else {
+          selectedTextId = null
+          selectedStickerId = null
+          setSelectedTextIdState(null)
+          setSelectedStickerIdState(null)
+          setSelectedTextIdsState(txtIds)
+          setSelectedStickerIdsState(stickerIds)
+          applySelectionStrokeStyle({ txtIds, stickerIds, imgId: null })
+          renderMultiSelectionHandles(txtIds, stickerIds)
+        }
+      }
 
       if (type === "multiResize") {
         const idsTxt = [...drag.idsTxt]
@@ -3717,7 +3933,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       )
 
       const s = new XMLSerializer().serializeToString(exportDoc)
-      const { w, h } = getSVGSize(doc)
+      const { wPx: w, hPx: h } = getSVGSizePx(doc)
       // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
       // (jsPDF embeds the canvas as a raster image, so this directly impacts perceived sharpness.)
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
@@ -3744,9 +3960,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         URL.revokeObjectURL(svgObjectUrl)
       }
       const imgData = canvas.toDataURL("image/png")
-      const pxToMm = (px: number) => (px * 25.4) / 96
-      const pw = pxToMm(w)
-      const ph = pxToMm(h)
+      const { wMm: pw, hMm: ph } = getSVGSizeMm(doc)
       const pdf = new jsPDF({
         orientation: pw > ph ? "landscape" : "portrait",
         unit: "mm",
@@ -3848,7 +4062,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 </p>
               ) : (
                 <>
-                  {(selectedTextIdState || selectedStickerIdState) && (
+                  {(selectedTextIdState ||
+                    selectedStickerIdState ||
+                    selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
                     <div className="mb-2 mt-1 flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
                       <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selection</div>
                       <div className="flex shrink-0 items-center gap-1.5">
@@ -3858,7 +4074,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                           variant="outline"
                           className="h-7 gap-1.5 px-2 text-xs"
                           onClick={duplicateSelected}
-                          title="Duplicate selected element"
+                          title="Duplicate selected element(s)"
                         >
                           <Copy className="h-3.5 w-3.5" />
                           Duplicate
@@ -3869,7 +4085,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                           variant="outline"
                           className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={deleteSelected}
-                          title="Delete selected text or sticker"
+                          title="Delete selected text/sticker selection"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Delete

@@ -27,6 +27,61 @@ export function getSVGSize(doc: Document): { w: number; h: number } {
   return { w: w || 800, h: h || 600 }
 }
 
+function lengthToMm(raw: string | null): number | null {
+  if (!raw) return null
+  const s = raw.trim().toLowerCase()
+  if (!s) return null
+  const m = s.match(/^(-?\d*\.?\d+)\s*(mm|cm|in|pt|pc|px)?$/)
+  if (!m) return null
+  const n = parseFloat(m[1] || "")
+  if (!Number.isFinite(n) || n <= 0) return null
+  const unit = m[2] || "px"
+  if (unit === "mm") return n
+  if (unit === "cm") return n * 10
+  if (unit === "in") return n * 25.4
+  if (unit === "pt") return (n * 25.4) / 72
+  if (unit === "pc") return (n * 25.4) / 6
+  return (n * 25.4) / 96
+}
+
+function lengthToPx(raw: string | null): number | null {
+  if (!raw) return null
+  const s = raw.trim().toLowerCase()
+  if (!s) return null
+  const m = s.match(/^(-?\d*\.?\d+)\s*(mm|cm|in|pt|pc|px)?$/)
+  if (!m) return null
+  const n = parseFloat(m[1] || "")
+  if (!Number.isFinite(n) || n <= 0) return null
+  const unit = m[2] || "px"
+  if (unit === "px") return n
+  if (unit === "in") return n * 96
+  if (unit === "cm") return (n / 2.54) * 96
+  if (unit === "mm") return (n / 25.4) * 96
+  if (unit === "pt") return (n / 72) * 96
+  if (unit === "pc") return (n / 6) * 96
+  return n
+}
+
+export function getSVGSizeMm(doc: Document): { wMm: number; hMm: number } {
+  const root = doc.documentElement
+  const widthMm = lengthToMm(root.getAttribute("width"))
+  const heightMm = lengthToMm(root.getAttribute("height"))
+  if (widthMm && heightMm) return { wMm: widthMm, hMm: heightMm }
+
+  const { w, h } = getSVGSize(doc)
+  const pxToMm = (px: number) => (px * 25.4) / 96
+  return { wMm: pxToMm(w), hMm: pxToMm(h) }
+}
+
+export function getSVGSizePx(doc: Document): { wPx: number; hPx: number } {
+  const root = doc.documentElement
+  const wPx = lengthToPx(root.getAttribute("width"))
+  const hPx = lengthToPx(root.getAttribute("height"))
+  if (wPx && hPx) return { wPx, hPx }
+  const { w, h } = getSVGSize(doc)
+  return { wPx: w, hPx: h }
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg"
 
 /** Deep-clone an SVG document without serialize→parse (avoids parser errors on complex Inkscape SVGs). */

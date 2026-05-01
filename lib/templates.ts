@@ -29,6 +29,8 @@ export const allTemplates: Template[] = [
   { id: "10", name: "Professional Note", category: "Corporate", language: "english", price: 109, colors: ["#F1F5F9", "#475569"], emoji: "📝", svg: "/assets/cards/greeting-card-10.svg" },
   { id: "11", name: "Wedding Invitation Peacock", category: "Wedding", language: "english", price: 99, colors: ["#FCE7F3", "#DB2777"], emoji: "🌸", svg: "/assets/cards/greeting-card-11.svg" },
   { id: "12", name: "Winter Wonderland", category: "Holiday", language: "hindi", price: 99, colors: ["#F0F9FF", "#38BDF8"], emoji: "❄️", svg: "/assets/cards/greeting-card-12.svg" },
+  { id: "13", name: "First Birthday", category: "Birthday", language: "hindi", price: 99, colors: ["#F0F9FF", "#38BDF8"], emoji: "❄️", svg: "/assets/cards/greeting-card-13.svg" },
+  { id: "14", name: "First Birthday Wild", category: "Birthday", language: "english", price: 99, colors: ["#F0F9FF", "#38BDF8"], emoji: "❄️", svg: "/assets/cards/greeting-card-14.svg" },
 ]
 
 const byId = new Map(allTemplates.map((t) => [t.id, t]))
