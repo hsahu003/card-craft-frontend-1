@@ -3911,6 +3911,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       // complex templates (Inkscape, emoji, etc.) do not break re-parse like preview/export.
       const exportDoc = cloneSvgDocument(doc)
       if (!exportDoc) throw new Error("Could not clone SVG for export")
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+      const scale = Math.max(4, Math.min(12, dpr * 4))
       const stickerEls = Array.from(exportDoc.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`))
       await Promise.all(
         stickerEls.map(async (el) => {
@@ -3923,7 +3925,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             const stickerSvg = await res.text()
             const tw = Math.max(1, parseFloat(el.getAttribute("width") || "32"))
             const th = Math.max(1, parseFloat(el.getAttribute("height") || "32"))
-            const pngDataUrl = await rasterizeStickerSvgToPngDataUrl(stickerSvg, tw, th)
+            const pngDataUrl = await rasterizeStickerSvgToPngDataUrl(stickerSvg, tw, th, scale)
             el.setAttribute("href", pngDataUrl)
             el.removeAttribute("xlink:href")
           } catch {
@@ -3936,8 +3938,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const { wPx: w, hPx: h } = getSVGSizePx(doc)
       // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
       // (jsPDF embeds the canvas as a raster image, so this directly impacts perceived sharpness.)
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
-      const scale = Math.max(4, Math.min(12, dpr * 4))
       const canvas = document.createElement("canvas")
       canvas.width = w * scale
       canvas.height = h * scale

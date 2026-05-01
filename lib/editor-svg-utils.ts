@@ -102,7 +102,8 @@ export function cloneSvgDocument(doc: Document): Document | null {
 export async function rasterizeStickerSvgToPngDataUrl(
   stickerSvgText: string,
   targetW: number,
-  targetH: number
+  targetH: number,
+  qualityScale = 1
 ): Promise<string> {
   if (typeof document === "undefined") throw new Error("No document")
   const encoded = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(stickerSvgText)
@@ -116,7 +117,9 @@ export async function rasterizeStickerSvgToPngDataUrl(
   const tw = Math.max(1, targetW)
   const th = Math.max(1, targetH)
   const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
-  const crisp = Math.max(2, Math.min(8, Math.round(dpr * 4)))
+  const requestedScale = Number.isFinite(qualityScale) ? qualityScale : 1
+  // Match rasterized sticker density with export scale to avoid blurry upscaling in PDFs.
+  const crisp = Math.max(2, Math.min(32, Math.round(Math.max(dpr * 2, requestedScale * 2))))
   const canvas = document.createElement("canvas")
   canvas.width = Math.max(1, Math.round(tw * crisp))
   canvas.height = Math.max(1, Math.round(th * crisp))
