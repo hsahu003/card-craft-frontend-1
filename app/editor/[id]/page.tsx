@@ -35,6 +35,8 @@ import { toast } from "sonner"
 const EDITABLE_PREFIX = "editable_"
 const IMAGE_ZONE_PREFIX = "image_zone_"
 const STICKER_PREFIX = "sticker_"
+/** Minimum sticker width/height in SVG units; enforced with uniform scale so aspect ratio is preserved. */
+const MIN_STICKER_AXIS_PX = 7
 // Multiplier to make image drag feel more responsive.
 // 1 = geometric mapping only, >1 = faster movement.
 const IMAGE_DRAG_SPEED = 1.25
@@ -2491,10 +2493,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const stickerEl = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
         const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
         if (!stickerEl || !ov) return
-        const x = parseFloat(stickerEl.getAttribute("x") || "0")
-        const y = parseFloat(stickerEl.getAttribute("y") || "0")
-        const w = Math.max(parseFloat(stickerEl.getAttribute("width") || "0"), 1)
-        const h = Math.max(parseFloat(stickerEl.getAttribute("height") || "0"), 1)
+        // Match overlay (handle positions); template `<image>` x/y/wh can differ from getBBox-synced overlay.
+        const x = parseFloat(ov.getAttribute("x") || stickerEl.getAttribute("x") || "0")
+        const y = parseFloat(ov.getAttribute("y") || stickerEl.getAttribute("y") || "0")
+        const w = Math.max(parseFloat(ov.getAttribute("width") || stickerEl.getAttribute("width") || "0"), 1)
+        const h = Math.max(parseFloat(ov.getAttribute("height") || stickerEl.getAttribute("height") || "0"), 1)
         const corners: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
           tl: { x, y },
           tr: { x: x + w, y },
@@ -3041,6 +3044,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         let scale = newDiag / startDiag
         if (!Number.isFinite(scale) || scale <= 0) scale = 1
         scale = Math.max(0.1, Math.min(5, scale))
+        let minStickerScale = 0
+        multiDrag.idsSticker.forEach((id) => {
+          const b = multiDrag.startSticker[id]
+          if (!b || !(b.w > 0) || !(b.h > 0)) return
+          minStickerScale = Math.max(minStickerScale, MIN_STICKER_AXIS_PX / b.w, MIN_STICKER_AXIS_PX / b.h)
+        })
+        scale = Math.max(scale, minStickerScale)
 
         const scalePoint = (x: number, y: number) => ({
           x: multiDrag.anchorX + (x - multiDrag.anchorX) * scale,
@@ -3315,8 +3325,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (!startDiag) return
         let scale = Math.hypot(newCornerX - drag.anchorX, newCornerY - drag.anchorY) / startDiag
         if (!Number.isFinite(scale) || scale <= 0) scale = 1
-        const nextW = Math.max(10, drag.startW * scale)
-        const nextH = Math.max(10, drag.startH * scale)
+        const minScale = Math.max(MIN_STICKER_AXIS_PX / drag.startW, MIN_STICKER_AXIS_PX / drag.startH)
+        scale = Math.max(scale, minScale)
+        const nextW = drag.startW * scale
+        const nextH = drag.startH * scale
         // Keep the opposite (anchor) corner fixed; compute top-left accordingly.
         // draggedCorner -> fixedAnchorCorner
         // br -> tl, bl -> tr, tr -> bl, tl -> br
