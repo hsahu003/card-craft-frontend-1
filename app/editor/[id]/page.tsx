@@ -116,6 +116,21 @@ function paintOverlayBoundingPresentation(svg: SVGElement, input: OverlayBoundin
       r.setAttribute("stroke-opacity", String(OVERLAY_OPACITY_DASH_SUBTLE))
     }
   }
+
+  // Empty image zones: upload icon tint only (no dashed frame on the hit target rect).
+  const DEFAULT_UPLOAD_CIRCLE_FILL = "rgba(55,138,221,0.13)"
+  const DEFAULT_UPLOAD_CIRCLE_STROKE = "rgba(55,138,221,0.4)"
+  const HOVER_UPLOAD_CIRCLE_FILL = "rgba(55,138,221,0.26)"
+  const HOVER_UPLOAD_CIRCLE_STROKE = "rgba(55,138,221,0.72)"
+  Array.from(svg.querySelectorAll<SVGRectElement>("[data-empty-upload='1']")).forEach((host) => {
+    const zid = host.getAttribute("data-upload-zone")
+    const hovered = !!zid && zid === input.hoveredElementId && input.pointerInsidePreview
+    const circ = zid ? (svg.querySelector("#upload_icon_" + zid)?.querySelector("circle") ?? null) : null
+    if (circ) {
+      circ.setAttribute("fill", hovered ? HOVER_UPLOAD_CIRCLE_FILL : DEFAULT_UPLOAD_CIRCLE_FILL)
+      circ.setAttribute("stroke", hovered ? HOVER_UPLOAD_CIRCLE_STROKE : DEFAULT_UPLOAD_CIRCLE_STROKE)
+    }
+  })
 }
 
 type OverlayHandleVisibilityInput = {
@@ -153,6 +168,14 @@ function pickHoveredOverlayZoneId(svg: Element, clientX: number, clientY: number
     if (zt) return zt
     const zs = el.closest?.("[data-sticker-zone]")?.getAttribute("data-sticker-zone")
     if (zs) return zs
+    const zu = el.closest?.("[data-upload-zone]")?.getAttribute("data-upload-zone")
+    if (zu) return zu
+    const iconG = el.closest?.("g[id^='upload_icon_']")
+    if (iconG) {
+      const idAttr = iconG.getAttribute("id") || ""
+      const m = idAttr.match(/^upload_icon_(.+)$/)
+      if (m?.[1]) return m[1]
+    }
     const zi = el.closest?.("[data-img-zone]")?.getAttribute("data-img-zone")
     if (zi) return zi
     const th = el.closest?.("[data-text-handle]")?.getAttribute("data-text-id")
@@ -1425,8 +1448,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         hotspot.setAttribute("y", String(zoneY))
         hotspot.setAttribute("width", String(zoneW))
         hotspot.setAttribute("height", String(zoneH))
-        hotspot.setAttribute("fill", "none")
+        hotspot.setAttribute("fill", "transparent")
         hotspot.setAttribute("data-upload-zone", zoneId)
+        hotspot.setAttribute("data-empty-upload", "1")
         hotspot.setAttribute("pointer-events", "all")
         hotspot.setAttribute("style", "cursor:pointer")
         if (st.hasClip && st.existingClipId) hotspot.setAttribute("clip-path", st.existingClipId)
