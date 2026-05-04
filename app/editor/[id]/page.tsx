@@ -47,6 +47,124 @@ const ROTATE_SNAP_TARGETS_DEG = [0, 90, 180, 270, 360] as const
 // Line spacing multiplier so line-height scales with font-size (e.g. 1.25 = 125% of font size).
 const LINE_HEIGHT_RATIO = 1.25
 
+/** Dashed overlay style for preview bounding boxes (idle / subtle / hover). */
+const OVERLAY_DASH = "2 1"
+const OVERLAY_OPACITY_DASH_NORMAL = 0.6
+const OVERLAY_OPACITY_DASH_SUBTLE = 0.15
+const OVERLAY_OPACITY_DASH_HOVER = 0.78
+
+type OverlayBoundingPaintInput = {
+  pointerInsidePreview: boolean
+  hoveredElementId: string | null
+  solidTextIds: string[]
+  solidStickerIds: string[]
+  solidImgId: string | null
+}
+
+/** Stroke / dash / opacity for text, sticker, and image-zone overlay rects only. */
+function paintOverlayBoundingPresentation(svg: SVGElement, input: OverlayBoundingPaintInput) {
+  const solidTxt = new Set(input.solidTextIds)
+  const solidStk = new Set(input.solidStickerIds)
+  const hasSelection = solidTxt.size > 0 || solidStk.size > 0 || !!input.solidImgId
+
+  const rects = Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]"))
+
+  for (const r of rects) {
+    const tid = r.getAttribute("data-text-zone")
+    const sid = r.getAttribute("data-sticker-zone")
+    const iid = r.getAttribute("data-img-zone")
+    const id = tid ?? sid ?? iid
+    if (!id) continue
+
+    let isSolid = false
+    if (tid && solidTxt.has(id)) isSolid = true
+    if (sid && solidStk.has(id)) isSolid = true
+    if (iid && input.solidImgId === id) isSolid = true
+
+    const el = r as unknown as HTMLElement
+
+    if (!input.pointerInsidePreview && !hasSelection) {
+      el.style.display = "none"
+      continue
+    }
+
+    // Selection active but pointer left the preview: only the selected solid ring(s) stay visible.
+    if (!input.pointerInsidePreview && hasSelection && !isSolid) {
+      el.style.display = "none"
+      continue
+    }
+
+    el.style.display = ""
+
+    if (isSolid) {
+      r.setAttribute("stroke-dasharray", "none")
+      r.removeAttribute("stroke-opacity")
+      continue
+    }
+
+    r.setAttribute("stroke-dasharray", OVERLAY_DASH)
+
+    if (!hasSelection) {
+      const op = id === input.hoveredElementId ? OVERLAY_OPACITY_DASH_HOVER : OVERLAY_OPACITY_DASH_NORMAL
+      r.setAttribute("stroke-opacity", String(op))
+      continue
+    }
+
+    if (input.pointerInsidePreview && id === input.hoveredElementId) {
+      r.setAttribute("stroke-opacity", String(OVERLAY_OPACITY_DASH_NORMAL))
+    } else {
+      r.setAttribute("stroke-opacity", String(OVERLAY_OPACITY_DASH_SUBTLE))
+    }
+  }
+}
+
+type OverlayHandleVisibilityInput = {
+  selectedTextId: string | null
+  selectedStickerId: string | null
+  selectedTextIds: string[]
+  selectedStickerIds: string[]
+}
+
+/** Resize / rotate handle groups: visible only when there is a real selection (not preview-hover alone). */
+function paintOverlayHandleVisibility(svg: SVGElement, input: OverlayHandleVisibilityInput) {
+  const isMulti = input.selectedTextIds.length + input.selectedStickerIds.length > 1
+  const showText = !!input.selectedTextId && !isMulti
+  const showSticker = !!input.selectedStickerId && !isMulti
+  const showMulti = isMulti
+
+  Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
+    ;(g as unknown as HTMLElement).style.display = showText ? "" : "none"
+  })
+  Array.from(svg.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
+    ;(g as unknown as HTMLElement).style.display = showSticker ? "" : "none"
+  })
+  Array.from(svg.querySelectorAll<SVGGElement>('[data-multi-handles="1"]')).forEach((g) => {
+    ;(g as unknown as HTMLElement).style.display = showMulti ? "" : "none"
+  })
+}
+
+/** Resolve which logical zone id is under the pointer (including resize/rotate controls). */
+function pickHoveredOverlayZoneId(svg: Element, clientX: number, clientY: number): string | null {
+  const stack = document.elementsFromPoint(clientX, clientY)
+  for (const raw of stack) {
+    const el = raw as Element
+    if (!svg.contains(el)) continue
+    const zt = el.closest?.("[data-text-zone]")?.getAttribute("data-text-zone")
+    if (zt) return zt
+    const zs = el.closest?.("[data-sticker-zone]")?.getAttribute("data-sticker-zone")
+    if (zs) return zs
+    const zi = el.closest?.("[data-img-zone]")?.getAttribute("data-img-zone")
+    if (zi) return zi
+    const th = el.closest?.("[data-text-handle]")?.getAttribute("data-text-id")
+    if (th) return th
+    const sh = el.closest?.("[data-sticker-handle]")?.getAttribute("data-sticker-id")
+    if (sh) return sh
+    const rh = el.closest?.("[data-rotate-handle='1']")?.getAttribute("data-rotate-id")
+    if (rh) return rh
+  }
+  return null
+}
+
 async function fileToDataUrl(file: Blob): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -272,6 +390,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [selectedStickerIdsState, setSelectedStickerIdsState] = useState<string[]>([])
   const [selectedImageZoneIdState, setSelectedImageZoneIdState] = useState<string | null>(null)
   const [isPreviewHovering, setIsPreviewHovering] = useState(false)
+  const [hoveredElementId, setHoveredElementId] = useState<string | null>(null)
   const [selectedTextFontSizeUi, setSelectedTextFontSizeUi] = useState<number>(16)
   const selectedTextIdRef = useRef<string | null>(null)
   selectedTextIdRef.current = selectedTextIdState
@@ -279,6 +398,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   selectedTextIdsRef.current = selectedTextIdsState
   const selectedStickerIdsRef = useRef<string[]>([])
   selectedStickerIdsRef.current = selectedStickerIdsState
+  /** Synced every render so preview pointermove handlers read fresh hover without re-cloning the SVG. */
+  const previewPointerRef = useRef({ pointerInside: false, hoverId: null as string | null })
+  previewPointerRef.current.pointerInside = isPreviewHovering
+  previewPointerRef.current.hoverId = hoveredElementId
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
   const selectedTextField = selectedTextIdState ? textFields.find((field) => field.id === selectedTextIdState) ?? null : null
@@ -1260,8 +1383,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     // Image zone overlays
     Object.entries(zoneStates).forEach(([zoneId, st]) => {
       const clipBounds = st.hasClip && st.existingClipId ? getClipBounds(previewDoc, st.existingClipId) : null
-      console.log("clipBounds", clipBounds)
-      console.log("st", st)
       const zoneX = clipBounds ? clipBounds.x : st.zoneX
       const zoneY = clipBounds ? clipBounds.y : st.zoneY
       const zoneW = clipBounds ? clipBounds.w : st.zoneW
@@ -1319,8 +1440,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         rect.setAttribute("fill", "transparent")
         // Selection box for image zones: draw around the effective clip bounds when clip-path exists.
         rect.setAttribute("stroke", "red")
-        rect.setAttribute("stroke-width", "1")
-        rect.setAttribute("stroke-dasharray", "3 2")
+        rect.setAttribute("stroke-width", ".3")
+        rect.setAttribute("stroke-dasharray", OVERLAY_DASH)
         rect.setAttribute("rx", "2")
         rect.setAttribute("data-img-zone", zoneId)
         rect.setAttribute("style", "cursor:grab")
@@ -1358,10 +1479,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("width", String(w))
       ov.setAttribute("height", String(h))
       ov.setAttribute("fill", "transparent")
-      ov.setAttribute("stroke", "#378ADD")
-      ov.setAttribute("stroke-width", "1")
-      ov.setAttribute("stroke-dasharray", "3 2")
-      ov.setAttribute("rx", "2")
+      ov.setAttribute("stroke", "#323f4b")
+      ov.setAttribute("stroke-width", ".3")
+      ov.setAttribute("stroke-dasharray", OVERLAY_DASH)
+      ov.setAttribute("rx", "1")
       ov.setAttribute("style", "cursor:grab")
       ov.setAttribute("data-sticker-zone", sid)
       ov.setAttribute("id", "sticker_overlay_" + sid)
@@ -1382,8 +1503,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("height", String(rh))
       ov.setAttribute("fill", "transparent")
       ov.setAttribute("stroke", "red")
-      ov.setAttribute("stroke-width", "1")
-      ov.setAttribute("stroke-dasharray", "3 2")
+      ov.setAttribute("stroke-width", ".3")
+      ov.setAttribute("stroke-dasharray", OVERLAY_DASH)
       ov.setAttribute("rx", "2")
       ov.setAttribute("style", "cursor:grab")
       ov.setAttribute("data-text-zone", tid)
@@ -1400,21 +1521,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const txtIds = opts?.txtIds ?? []
       const stickerIds = opts?.stickerIds ?? []
       const imgId = opts?.imgId ?? null
-      Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
-        r.setAttribute("stroke-dasharray", "3 2")
+      const ptr = previewPointerRef.current
+      paintOverlayBoundingPresentation(svgEl, {
+        pointerInsidePreview: ptr.pointerInside,
+        hoveredElementId: ptr.hoverId,
+        solidTextIds: txtIds,
+        solidStickerIds: stickerIds,
+        solidImgId: imgId,
       })
-      txtIds.forEach((id) => {
-        const ov = svgEl.querySelector("#overlay_" + id) as SVGRectElement | null
-        if (ov) ov.setAttribute("stroke-dasharray", "none")
-      })
-      stickerIds.forEach((id) => {
-        const ov = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
-        if (ov) ov.setAttribute("stroke-dasharray", "none")
-      })
-      if (imgId) {
-        const ov = svgEl.querySelector(`[data-img-zone="${imgId}"]`) as SVGRectElement | null
-        if (ov) ov.setAttribute("stroke-dasharray", "none")
-      }
     }
 
     const renderTextHandles = (tid: string | null) => {
@@ -3806,14 +3920,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         activeInlineEditor = null
       }
 
-      // Outside-svg click means overlays should be hidden right away.
+      // Pointer is outside the preview: sync ref immediately so in-effect stroke paint matches STATE 1.
+      previewPointerRef.current.pointerInside = false
+      previewPointerRef.current.hoverId = null
+      setHoveredElementId(null)
       setIsPreviewHovering(false)
-      Array.from(svgEl.querySelectorAll<SVGRectElement>("[data-text-zone],[data-sticker-zone],[data-img-zone]")).forEach((r) => {
-        ;(r as unknown as HTMLElement).style.display = "none"
-      })
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
-        ;(g as unknown as HTMLElement).style.display = "none"
-      })
 
       // After we hide overlays, clear selection state (prevents the dashed/dotted stroke
       // from flashing before the overlay disappears).
@@ -3841,42 +3952,34 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
 
-  // Show overlay rects only while pointer is over the preview <svg> (not the padded container alone).
+  // Preview overlay stroke/opacity + handle visibility from pointer + hover + selection (no SVG re-clone).
   useEffect(() => {
     const svg = previewContainerRef.current?.querySelector("svg")
     if (!svg) return
-    const showAll = isPreviewHovering
-    const selectedTextSet = new Set(selectedTextIdsState)
-    const selectedStickerSet = new Set(selectedStickerIdsState)
 
-    Array.from(svg.querySelectorAll<SVGRectElement>("[data-text-zone]")).forEach((r) => {
-      const id = r.getAttribute("data-text-zone")
-      const keepSelected = !!id && (id === selectedTextIdState || selectedTextSet.has(id))
-      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
-    })
-    Array.from(svg.querySelectorAll<SVGRectElement>("[data-sticker-zone]")).forEach((r) => {
-      const id = r.getAttribute("data-sticker-zone")
-      const keepSelected = !!id && (id === selectedStickerIdState || selectedStickerSet.has(id))
-      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
-    })
-    Array.from(svg.querySelectorAll<SVGRectElement>("[data-img-zone]")).forEach((r) => {
-      const id = r.getAttribute("data-img-zone")
-      const keepSelected = !!id && id === selectedImageZoneIdState
-      ;(r as unknown as HTMLElement).style.display = showAll || keepSelected ? "" : "none"
-    })
+    const solidTextIds = Array.from(
+      new Set([...selectedTextIdsState, ...(selectedTextIdState ? [selectedTextIdState] : [])])
+    )
+    const solidStickerIds = Array.from(
+      new Set([...selectedStickerIdsState, ...(selectedStickerIdState ? [selectedStickerIdState] : [])])
+    )
 
-    const isMultiSelectionActive = selectedTextIdsState.length + selectedStickerIdsState.length > 1
-    Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
-      ;(g as unknown as HTMLElement).style.display = showAll || !!selectedTextIdState ? "" : "none"
+    paintOverlayBoundingPresentation(svg, {
+      pointerInsidePreview: isPreviewHovering,
+      hoveredElementId,
+      solidTextIds,
+      solidStickerIds,
+      solidImgId: selectedImageZoneIdState,
     })
-    Array.from(svg.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
-      ;(g as unknown as HTMLElement).style.display = showAll || !!selectedStickerIdState ? "" : "none"
-    })
-    Array.from(svg.querySelectorAll<SVGGElement>('[data-multi-handles="1"]')).forEach((g) => {
-      ;(g as unknown as HTMLElement).style.display = showAll || isMultiSelectionActive ? "" : "none"
+    paintOverlayHandleVisibility(svg, {
+      selectedTextId: selectedTextIdState,
+      selectedStickerId: selectedStickerIdState,
+      selectedTextIds: selectedTextIdsState,
+      selectedStickerIds: selectedStickerIdsState,
     })
   }, [
     isPreviewHovering,
+    hoveredElementId,
     previewVersion,
     selectedTextIdState,
     selectedStickerIdState,
@@ -3899,10 +4002,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const onMove = (e: MouseEvent) => {
       // When editing text, an invisible textarea sits above the SVG and can trigger svg mouseleave.
       // Using the SVG bounding box keeps hover state stable while the pointer is visually inside.
-      setIsPreviewHovering(isPointInsideSvg(e.clientX, e.clientY))
+      const inside = isPointInsideSvg(e.clientX, e.clientY)
+      setIsPreviewHovering(inside)
+      if (!inside) {
+        setHoveredElementId(null)
+        return
+      }
+      const svg = container.querySelector("svg")
+      if (!svg) return
+      setHoveredElementId(pickHoveredOverlayZoneId(svg, e.clientX, e.clientY))
     }
 
-    const onLeaveContainer = () => setIsPreviewHovering(false)
+    const onLeaveContainer = () => {
+      setIsPreviewHovering(false)
+      setHoveredElementId(null)
+    }
 
     container.addEventListener("mousemove", onMove, { passive: true })
     container.addEventListener("mouseleave", onLeaveContainer)
