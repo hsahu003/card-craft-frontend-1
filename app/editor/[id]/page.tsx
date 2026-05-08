@@ -268,7 +268,7 @@ function normalizeEditableValue(value: string) {
   return hasVisibleContent ? value : "text here"
 }
 
-function applyEditableValueToTextEl(target: SVGElement, value: string) {
+function applyEditableValueToTextEl(target: SVGElement, value: string, forceStepY?: number) {
   const normalizedVal = normalizeEditableValue(value)
   const leaf = getLeafTspansInDomOrder(target)
   const parts = normalizedVal.split("\n")
@@ -293,31 +293,46 @@ function applyEditableValueToTextEl(target: SVGElement, value: string) {
   const baseY = Number.isFinite(firstLeafY) ? firstLeafY : parseFloat(target.getAttribute("y") || "0")
 
   let stepY = 0
-  if (leaf.length >= 2) {
-    for (let i = 1; i < leaf.length; i++) {
-      const prevY = parseFloat(leaf[i - 1]?.getAttribute("y") || "")
-      const nextY = parseFloat(leaf[i]?.getAttribute("y") || "")
-      const dy = Math.abs(nextY - prevY)
-      if (Number.isFinite(dy) && dy > 0) {
-        stepY = dy
-        break
+  if (Number.isFinite(forceStepY) && (forceStepY as number) > 0) {
+    stepY = forceStepY as number
+  } else {
+    if (leaf.length >= 2) {
+      for (let i = 1; i < leaf.length; i++) {
+        const prevY = parseFloat(leaf[i - 1]?.getAttribute("y") || "")
+        const nextY = parseFloat(leaf[i]?.getAttribute("y") || "")
+        const dy = Math.abs(nextY - prevY)
+        if (Number.isFinite(dy) && dy > 0) {
+          stepY = dy
+          break
+        }
       }
     }
-  }
-  const persistedStepAttr = parseFloat(target.getAttribute("data-editor-line-step") || "")
-  if (!(stepY > 0) && Number.isFinite(persistedStepAttr) && persistedStepAttr > 0) {
-    stepY = persistedStepAttr
-  }
-  if (!(stepY > 0)) {
-    const leafFontSizeSvg = parseFloat(templateLeaf.getAttribute("font-size") || "")
-    const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
-    const fallbackFontSvg =
-      Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
-        ? leafFontSizeSvg
-        : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
-          ? targetFontSizeSvg
-          : 14
-    stepY = fallbackFontSvg * 1.25
+    const persistedStepAttr = parseFloat(target.getAttribute("data-editor-line-step") || "")
+    if (!(stepY > 0) && Number.isFinite(persistedStepAttr) && persistedStepAttr > 0) {
+      stepY = persistedStepAttr
+    }
+    if (!(stepY > 0)) {
+      const leafFontSizeSvg = parseFloat(templateLeaf.getAttribute("font-size") || "")
+      const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
+      const computedFontSvg = (() => {
+        try {
+          const cs = typeof window !== "undefined" ? window.getComputedStyle(templateLeaf as any) : null
+          const v = cs ? parseFloat(cs.fontSize || "") : NaN
+          return Number.isFinite(v) && v > 0 ? v : NaN
+        } catch {
+          return NaN
+        }
+      })()
+      const fallbackFontSvg =
+        Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0
+          ? leafFontSizeSvg
+          : Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0
+            ? targetFontSizeSvg
+            : Number.isFinite(computedFontSvg) && computedFontSvg > 0
+              ? computedFontSvg
+            : 14
+      stepY = fallbackFontSvg * 1.25
+    }
   }
   target.setAttribute("data-editor-line-step", String(stepY))
 
@@ -2170,12 +2185,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       // Many Inkscape templates define font-size on leaf <tspan>s, so parent <text> can differ.
       const firstLeaf = leafTspans[0]
       const leafCs = typeof window !== "undefined" && firstLeaf ? window.getComputedStyle(firstLeaf as any) : null
-      console.log("leafCs", leafCs)
       const fontFamily = (leafCs?.fontFamily || cs?.fontFamily || "").trim() || st.ff
       const fontWeight = (leafCs?.fontWeight || cs?.fontWeight || "").trim() || st.fw
       const fontStyle = (leafCs?.fontStyle || cs?.fontStyle || "").trim() || "normal"
       const caretColor = (leafCs?.fill || cs?.fill || leafCs?.color || cs?.color || "").trim() || "#000"
-      console.log("leafCs?.color", leafCs?.color)
       const leafFontSizePx = leafCs ? parseFloat(leafCs.fontSize || "") : NaN
       const textAlign = leafCs?.textAlign || cs?.textAlign || "start"
       // `getComputedStyle(...).fontSize` for SVG text often represents the SVG user-unit size.
@@ -2235,11 +2248,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           inlineHistoryPushed = true
         }
         const val = normalizeEditableValue(editorEl.value)
+        // Call liveText first (in DOM) so getComputedStyle gives real SVG font size → correct stepY.
+        // Then pass that stepY to docEl2 (off-DOM) to prevent it from using browser default 16px.
+        applyEditableValueToTextEl(liveText, val)
+        const liveStep = parseFloat(liveText.getAttribute("data-editor-line-step") || "")
         const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
         if (docEl2) {
-          applyEditableValueToTextEl(docEl2, val)
+          applyEditableValueToTextEl(docEl2, val, Number.isFinite(liveStep) && liveStep > 0 ? liveStep : undefined)
         }
-        applyEditableValueToTextEl(liveText, val)
         updateEditorRect()
         syncSuggestionsRect()
         if (ov) {
@@ -2367,7 +2383,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         parentEl = parentEl.parentElement
       }
-      console.log("caretColor", caretColor)
       if (isMultiline) {
         editorEl.style.cssText = `position:fixed;left:${liveRect.left}px;top:${liveRect.top}px;width:${Math.max(liveRect.width, 40)}px;height:${Math.max(liveRect.height, 1)}px;font-size:${screenFs}px;font-family:${fontFamily};font-weight:${fontWeight};font-style:${fontStyle};line-height:${overlayLineHeight};letter-spacing:${csLetterSpacing};text-align:${textAlign};background:transparent;border:none;outline:none;color:transparent;-webkit-text-fill-color:transparent;caret-color:${caretColor};box-shadow:none;resize:none;z-index:100;padding:0;margin:0;overflow:hidden;white-space:pre;`
       } else {
@@ -2414,15 +2429,20 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         scrollParents.forEach((el) => el.removeEventListener("scroll", onGlobalScrollOrResize))
         if (overlayDiv.parentNode) overlayDiv.parentNode.removeChild(overlayDiv)
         const val = normalizeEditableValue(editorEl.value)
-        const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
-        if (docEl2) applyEditableValueToTextEl(docEl2, val)
-        setTextValues((prev) => ({ ...prev, [tid]: val }))
-        const panel = panelInputRef.current
-        if (panel && selectedTextIdState === tid) panel.value = val
+        // Apply to liveText (in DOM) first so getComputedStyle gives real SVG font size.
+        // Then forward the correct stepY to docEl2 (off-DOM) to keep both in sync.
         if (liveText) {
           applyEditableValueToTextEl(liveText, val)
           liveText.style.display = ""
         }
+        const liveStep = liveText ? parseFloat(liveText.getAttribute("data-editor-line-step") || "") : NaN
+        const docEl2 = svgDocRef.current?.querySelector(idSelector(tid)) as SVGElement | null
+        if (docEl2) {
+          applyEditableValueToTextEl(docEl2, val, Number.isFinite(liveStep) && liveStep > 0 ? liveStep : undefined)
+        }
+        setTextValues((prev) => ({ ...prev, [tid]: val }))
+        const panel = panelInputRef.current
+        if (panel && selectedTextIdState === tid) panel.value = val
         if (ov && liveText) {
           const r = textOverlayRect(liveText)
           ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
@@ -3659,7 +3679,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             return ax - bx
           })
           const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
-          const stepY = newFont * LINE_HEIGHT_RATIO
+          const persistedStep = parseFloat(el.getAttribute("data-editor-line-step") || "")
+          // Preserve the user's established line spacing (from Enter/new lines) by scaling it
+          // with the current font size during resize. Fallback to ratio-based spacing.
+          const stepY =
+            Number.isFinite(persistedStep) && persistedStep > 0 && Number.isFinite(resizeDrag.startFontSizePx) && resizeDrag.startFontSizePx > 0
+              ? (persistedStep * newFont) / resizeDrag.startFontSizePx
+              : newFont * LINE_HEIGHT_RATIO
           leaf.forEach((t, i) => {
             t.setAttribute("y", String(firstY + i * stepY))
           })
