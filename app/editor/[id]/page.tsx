@@ -42,6 +42,28 @@ const MIN_STICKER_AXIS_PX = 7
 const IMAGE_DRAG_SPEED = 1.25
 const IMAGE_COMPRESS_QUALITY = 0.75
 const IMAGE_COMPRESS_SKIP_BELOW_BYTES = 500 * 1024
+
+function clampImageOffsets(
+  proposedOX: number,
+  proposedOY: number,
+  scale: number,
+  zoneW: number,
+  zoneH: number,
+  imgW: number,
+  imgH: number
+) {
+  if (imgW <= 0 || imgH <= 0) return { clampedOX: 0, clampedOY: 0 }
+  const sb = Math.max(zoneW / imgW, zoneH / imgH)
+  const imgW2 = imgW * sb * Math.max(1, scale)
+  const imgH2 = imgH * sb * Math.max(1, scale)
+  const maxOX = Math.max(0, (imgW2 - zoneW) / 2)
+  const maxOY = Math.max(0, (imgH2 - zoneH) / 2)
+  return {
+    clampedOX: Math.max(-maxOX, Math.min(maxOX, proposedOX)),
+    clampedOY: Math.max(-maxOY, Math.min(maxOY, proposedOY)),
+  }
+}
+
 const ROTATE_SNAP_THRESHOLD_DEG = 5
 const ROTATE_SNAP_TARGETS_DEG = [0, 90, 180, 270, 360] as const
 // Line spacing multiplier so line-height scales with font-size (e.g. 1.25 = 125% of font size).
@@ -1013,9 +1035,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       pushPastBeforeMutation()
       const nextOX = (st.offsetX || 0) + dx
       const nextOY = (st.offsetY || 0) + dy
+      const { clampedOX, clampedOY } = clampImageOffsets(nextOX, nextOY, st.scale || 1, st.zoneW, st.zoneH, st.imgW, st.imgH)
       setZoneStates((prev) => ({
         ...prev,
-        [zid]: { ...prev[zid], offsetX: nextOX, offsetY: nextOY },
+        [zid]: { ...prev[zid], offsetX: clampedOX, offsetY: clampedOY },
       }))
       const imgEl = doc.querySelector(idSelector(zid)) as SVGImageElement | null
       if (imgEl) {
@@ -3375,12 +3398,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const sy = drag.sy
         const newOX = startOX + dx * sx * IMAGE_DRAG_SPEED
         const newOY = startOY + dy * sy * IMAGE_DRAG_SPEED
-        const liveImage = svgEl.querySelector(idSelector(dragId)) as SVGImageElement | null
-        if (liveImage) {
-          const sx0 = drag.startImgX ?? parseFloat(liveImage.getAttribute("x") || "0")
-          const sy0 = drag.startImgY ?? parseFloat(liveImage.getAttribute("y") || "0")
-          liveImage.setAttribute("x", String(sx0 + (newOX - startOX)))
-          liveImage.setAttribute("y", String(sy0 + (newOY - startOY)))
+        const st = zoneStatesRef.current[dragId]
+        if (st) {
+          const { clampedOX, clampedOY } = clampImageOffsets(newOX, newOY, st.scale || 1, st.zoneW, st.zoneH, st.imgW, st.imgH)
+          const liveImage = svgEl.querySelector(idSelector(dragId)) as SVGImageElement | null
+          if (liveImage) {
+            const sx0 = drag.startImgX ?? parseFloat(liveImage.getAttribute("x") || "0")
+            const sy0 = drag.startImgY ?? parseFloat(liveImage.getAttribute("y") || "0")
+            liveImage.setAttribute("x", String(sx0 + (clampedOX - startOX)))
+            liveImage.setAttribute("y", String(sy0 + (clampedOY - startOY)))
+          }
         }
       }
       if (drag.type === "sticker") {
@@ -3863,9 +3890,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setZoneStates((prev) => {
           const st = prev[tid]
           if (!st) return prev
+          const { clampedOX, clampedOY } = clampImageOffsets(finalOX, finalOY, st.scale || 1, st.zoneW, st.zoneH, st.imgW, st.imgH)
           return {
             ...prev,
-            [tid]: { ...st, offsetX: finalOX, offsetY: finalOY },
+            [tid]: { ...st, offsetX: clampedOX, offsetY: clampedOY },
           }
         })
         setPreviewVersion((v) => v + 1)
@@ -4415,7 +4443,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                 <label className="w-7 shrink-0 text-[11px] text-muted-foreground">Zoom</label>
                                 <input
                                   type="range"
-                                  min="50"
+                                  min="100"
                                   max="300"
                                   value={Math.round((selectedImageState.scale || 1) * 100)}
                                   onChange={(e) => {
@@ -4423,11 +4451,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                                       pushPastBeforeMutation()
                                       panelImageZoomPushedRef.current[selectedImageZone.id] = true
                                     }
-                                    const scale = Number(e.target.value) / 100
-                                    setZoneStates((prev) => ({
-                                      ...prev,
-                                      [selectedImageZone.id]: { ...prev[selectedImageZone.id], scale },
-                                    }))
+                                    const scale = Math.max(1, Number(e.target.value) / 100)
+                                    setZoneStates((prev) => {
+                                      const st = prev[selectedImageZone.id]
+                                      const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                                      return {
+                                        ...prev,
+                                        [selectedImageZone.id]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                                      }
+                                    })
                                     setPreviewVersion((v) => v + 1)
                                   }}
                                   onPointerUp={() => {
