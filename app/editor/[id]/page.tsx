@@ -1033,7 +1033,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (e.key !== "Delete" && e.key !== "Backspace") return
       const target = e.target as HTMLElement | null
       if (target?.closest("input, textarea, [contenteditable='true']")) return
-      if (!selectedStickerIdState && !selectedTextIdState && !selectedImageZoneIdState) return
+      const hasMultiSelection = selectedTextIdsRef.current.length + selectedStickerIdsRef.current.length > 0
+      if (!selectedStickerIdState && !selectedTextIdState && !selectedImageZoneIdState && !hasMultiSelection) return
       e.preventDefault()
       deleteSelected()
     }
@@ -1046,7 +1047,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
       const target = e.target as HTMLElement | null
       if (target?.closest("input, textarea, select, [contenteditable='true']")) return
-      const hasMultiSelection = selectedTextIdsRef.current.length + selectedStickerIdsRef.current.length > 1
+      const hasMultiSelection = selectedTextIdsRef.current.length + selectedStickerIdsRef.current.length > 0
       if (!selectedStickerIdState && !selectedTextIdState && !selectedImageZoneIdState && !hasMultiSelection) return
       e.preventDefault()
       const step = e.shiftKey ? 10 : 0.5
