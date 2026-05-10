@@ -353,7 +353,7 @@ function applyEditableValueToTextEl(target: SVGElement, value: string, forceStep
     newLeaf.removeAttribute("id")
     newLeaf.setAttribute("x", String(baseX))
     newLeaf.setAttribute("y", String(baseY + i * stepY))
-    newLeaf.textContent = line
+    newLeaf.textContent = line || "\u200B"
     leafParent.appendChild(newLeaf)
   })
 }
@@ -502,7 +502,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const textVals: Record<string, string> = {}
         textEls.forEach((el) => {
           const id = el.getAttribute("id")
-          if (id) textVals[id] = el.textContent?.trim() ?? ""
+          if (id) textVals[id] = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
         })
         setTextValues(textVals)
 
@@ -734,7 +734,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         shiftTextEl(clone, dx, dy)
         src.parentNode?.appendChild(clone)
         nextTextFields.push({ id: newId, label: "copy" })
-        nextTextValues[newId] = (textValues[id] ?? src.textContent ?? "").toString()
+        nextTextValues[newId] = (textValues[id] ?? src.textContent?.replace(/\u200B/g, "") ?? "").toString()
         newTextIds.push(newId)
       })
 
@@ -802,7 +802,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       src.parentNode?.appendChild(clone)
 
-      const val = (textValues[selectedTid] ?? src.textContent ?? "").toString()
+      const val = (textValues[selectedTid] ?? src.textContent?.replace(/\u200B/g, "") ?? "").toString()
       setTextFields((prev) => [...prev, { id: newId, label: "copy" }])
       setTextValues((prev) => ({ ...prev, [newId]: val }))
       setSelectedStickerIdState(null)
@@ -1228,7 +1228,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const textVals: Record<string, string> = {}
     textEls.forEach((el) => {
       const id = el.getAttribute("id")
-      if (id) textVals[id] = el.textContent?.trim() ?? ""
+      if (id) textVals[id] = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
     })
     setTextValues(textVals)
     setPreviewVersion((v) => v + 1)
@@ -2180,8 +2180,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const leafTspans = getLeafTspans(liveText)
       // If a template has at least one leaf <tspan>, open a multiline editor so the user can add more lines.
       const isMultiline = leafTspans.length >= 1
-      const lines = leafTspans.map((t) => t.textContent || "")
-      const txt = isMultiline ? lines.join("\n") : (lines[0] || liveText.textContent || "")
+      const lines = leafTspans.map((t) => (t.textContent || "").replace(/\u200B/g, ""))
+      const txt = isMultiline ? lines.join("\n") : (lines[0] || (liveText.textContent || "").replace(/\u200B/g, ""))
       // Match the effective font-size of the visible SVG text.
       // Many Inkscape templates define font-size on leaf <tspan>s, so parent <text> can differ.
       const firstLeaf = leafTspans[0]
