@@ -2236,7 +2236,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       const editorEl = document.createElement(isMultiline ? "textarea" : "input")
-      if (!isMultiline) (editorEl as HTMLInputElement).type = "text"
+      if (!isMultiline) {
+        (editorEl as HTMLInputElement).type = "text"
+      } else {
+        (editorEl as HTMLTextAreaElement).rows = 1
+      }
       editorEl.value = txt
       const supportsTransliteration = transliterationLanguage !== null
       let suggestionItems: string[] = []
