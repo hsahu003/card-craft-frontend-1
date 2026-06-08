@@ -232,7 +232,7 @@ export function getClipBounds(doc: Document, clipAttr: string | null): { x: numb
       if (bb && Number.isFinite(bb.x) && Number.isFinite(bb.y) && bb.width > 0 && bb.height > 0) {
         return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }
       }
-    } catch {}
+    } catch { }
 
     // Fallback: measure in a temporary hidden SVG attached to the document.
     if (typeof document === "undefined") return null
@@ -261,7 +261,7 @@ export function getClipBounds(doc: Document, clipAttr: string | null): { x: numb
       if (bb && Number.isFinite(bb.x) && Number.isFinite(bb.y) && bb.width > 0 && bb.height > 0) {
         return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }
       }
-    } catch {}
+    } catch { }
     return null
   }
 

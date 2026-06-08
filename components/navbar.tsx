@@ -1,215 +1,156 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { useCart } from "@/contexts/cart-context"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useUser } from "@/contexts/user-context"
-import { useWishlist } from "@/contexts/wishlist-context"
-import { Menu, X, ShoppingCart, Heart, User, Search, Gift, HandHeart, Gem, HeartHandshake, PartyPopper, Flame, TreePine } from "lucide-react"
+import { Check } from "lucide-react"
+import { Suspense } from "react"
+import { Button } from "./ui/button"
 
 const categories = [
-  { name: "Birthday Cards", icon: Gift, href: "/templates?category=birthday" },
-  { name: "Thank You Cards", icon: HandHeart, href: "/templates?category=thank-you" },
-  { name: "Wedding Cards", icon: Gem, href: "/templates?category=wedding" },
-  { name: "Anniversary Cards", icon: HeartHandshake, href: "/templates?category=anniversary" },
-  { name: "Festival Cards", icon: PartyPopper, href: "/templates?category=festival" },
-  { name: "Diwali Cards", icon: Flame, href: "/templates?category=diwali" },
-  { name: "Christmas Cards", icon: TreePine, href: "/templates?category=christmas" },
+  "Wedding",
+  "Birthday",
+  "Naming ceremony",
+  "Baby shower",
+  "House warming"
 ]
 
-export function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
+function NavbarContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const { profile } = useUser()
-  const { items: wishlistItems } = useWishlist()
-  const { items: cartItems } = useCart()
+
   const accountHref = profile ? "/account" : "/login"
+  const buttonText = profile ? "Account" : "Log in"
+
+  const isTemplatesPage = pathname === "/templates"
+
+  // Active category is from search params, default to "Wedding" only on templates page.
+  const activeCategory = searchParams.get("category") || (isTemplatesPage ? "Wedding" : "")
+
+  const handleCategoryClick = (category: string) => {
+    router.push(`/templates?category=${encodeURIComponent(category)}`)
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="shrink-0">
-          <Image
-            src="/logo.svg"
-            alt="CardCraft"
-            width={130}
-            height={24}
-            className="h-6 w-auto"
-            priority
-          />
-        </Link>
-
-        {/* Search Bar - Desktop */}
-        <div className="hidden flex-1 items-center justify-center md:flex">
-          <div className="flex w-full max-w-md items-center">
-            <input
-              type="text"
-              placeholder="Search templates..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-l-md border border-r-0 border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0"
-            />
-            <button
-              className="flex h-10 items-center justify-center rounded-r-md bg-primary px-4 text-primary-foreground transition-colors hover:bg-primary/90"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Actions - Desktop */}
-        <div className="hidden items-center gap-4 md:flex">
-          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link href="/templates">Sample Button</Link>
-          </Button>
-
-          <Link
-            href="/wishlist"
-            className="relative p-2 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Wishlist"
-          >
-            <Heart className="h-5 w-5" />
-            {wishlistItems.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
-                {wishlistItems.length}
-              </span>
-            )}
+    <header className="w-full bg-white z-50 sticky top-0">
+      {/* Top Row */}
+      <div className="border-b border-[#E5E7EB]">
+        <div className="mx-5 flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="shrink-0">
+            <span className="text-[28px] font-black italic text-[#E13B30] tracking-tight font-sans select-none">
+              Cardcraft
+            </span>
           </Link>
 
+          {/* Action Button */}
           <Link
-            href="/cart"
-            className="relative p-2 text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Cart"
+            href={accountHref}
+            className="bg-[#E5E7EB] hover:bg-[#D1D5DB] text-zinc-800 rounded-full px-5 py-3 text-sm font-inter font-medium tracking-wide transition-all duration-200 text-lg"
           >
-            <ShoppingCart className="h-5 w-5" />
-            {cartItems.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
-                {cartItems.length}
-              </span>
-            )}
-          </Link>
-
-          <Link href={accountHref} className="p-2 text-muted-foreground transition-colors hover:text-foreground" aria-label={profile ? "Account" : "Login"}>
-            <User className="h-5 w-5" />
+            {buttonText}
           </Link>
         </div>
+      </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Menu className="h-6 w-6 text-foreground" />
-          )}
-        </button>
-      </nav>
-
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="border-t border-border bg-card md:hidden">
-          <div className="flex flex-col gap-4 px-4 py-4">
-            {/* Mobile Search */}
-            <div className="flex items-center">
-              <input
-                type="text"
-                placeholder="Search templates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-10 w-full rounded-l-md border border-r-0 border-border bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                className="flex h-10 items-center justify-center rounded-r-md bg-primary px-4 text-primary-foreground"
-                aria-label="Search"
-              >
-                <Search className="h-4 w-4" />
-              </button>
+      {/* Bottom Row */}
+      <div className="border-b border-[#E5E7EB] bg-white">
+        <div className="mx-auto flex h-12 items-stretch">
+          {/* Filters Header Tab for templates page on the extreme right */}
+          {isTemplatesPage && (
+            <div className="hidden md:flex w-64 items-center justify-center bg-[#EDEDED] border-l border-[#E5E7EB] shrink-0 font-semibold text-sm text-zinc-900 select-none">
+              Filters
             </div>
+          )}
 
-            <Link
-              href="/templates"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Templates
-            </Link>
-            <Link
-              href="/how-it-works"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              How It Works
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/wishlist"
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Heart className="h-4 w-4" />
-              Wishlist
-              {wishlistItems.length > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/cart"
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Cart
-              {cartItems.length > 0 && (
-                <span className="rounded-full bg-primary px-1.5 py-0.5 text-xs font-medium text-primary-foreground">
-                  {cartItems.length}
-                </span>
-              )}
-            </Link>
-            <Link
-              href={accountHref}
-              className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <User className="h-4 w-4" />
-              {profile ? "Account" : "Login"}
-            </Link>
-            <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              <Link href="/templates">Sample Button</Link>
-            </Button>
+          {/* Occasions Side Tab */}
+          <div className="flex items-center justify-center bg-[#F3F4F6] px-6 border-r border-[#E5E7EB] shrink-0 font-semibold text-sm text-zinc-900 select-none">
+            Occasions
           </div>
-        </div>
-      )}
 
-      {/* Category Navigation */}
-      <div className="hidden border-t border-border bg-card md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-8 px-4 py-3 sm:px-6 lg:px-8">
-          {categories.map((category) => (
-            <Link
-              key={category.name}
-              href={category.href}
-              className="group flex flex-col items-center gap-1 text-primary transition-colors hover:text-accent"
-            >
-              <category.icon className="h-5 w-5" strokeWidth={1.5} />
-              <span className="text-xs font-medium">{category.name}</span>
-            </Link>
-          ))}
+          {/* Horizontal scroll of Category pills */}
+          <div className="flex-1 overflow-x-auto scrollbar-none py-1.5 pl-4 sm:pl-6 flex items-center">
+            <div className="flex items-center gap-3 flex-nowrap">
+              {categories.map((category) => {
+                const isActive = activeCategory.toLowerCase() === category.toLowerCase()
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryClick(category)}
+                    className={`flex items-center gap-1.5 px-5 py-1.5 text-sm font-semibold tracking-wide transition-all duration-200 shrink-0 cursor-pointer ${isActive
+                      ? "rounded-full bg-zinc-950 text-white shadow-sm"
+                      : "rounded-sm bg-[#E5E7EB] hover:bg-[#D1D5DB] text-zinc-800"
+                      }`}
+                  >
+                    {isActive && <Check className="h-4 w-4 stroke-[3px]" />}
+                    {category}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
         </div>
       </div>
     </header>
+  )
+}
+
+function NavbarSkeleton() {
+  const pathname = usePathname()
+  const isTemplatesPage = pathname === "/templates"
+
+  return (
+    <header className="w-full bg-white z-50 sticky top-0">
+      {/* Top Row */}
+      <div className="border-b border-[#E5E7EB]">
+        <div className="mx-5 flex h-16 items-center justify-between">
+          <span className="text-[28px] font-black italic text-[#E13B30] tracking-tight font-sans select-none">
+            Cardcraft
+          </span>
+          <div className="bg-[#E5E7EB] text-zinc-800 rounded-full px-5 py-1.5 text-xs font-semibold tracking-wide">
+            Log in
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="border-b border-[#E5E7EB] bg-white">
+        <div className="flex h-12 items-stretch">
+          <div className="flex items-center justify-center bg-[#F3F4F6] px-6 border-r border-[#E5E7EB] shrink-0 font-semibold text-sm text-zinc-900 select-none">
+            Occasions
+          </div>
+          <div className="flex-1 overflow-x-auto scrollbar-none py-1.5 pl-4 sm:pl-6 flex items-center">
+            <div className="flex items-center gap-3 flex-nowrap">
+              {categories.map((category) => (
+                <div
+                  key={category}
+                  className="flex items-center gap-1.5 rounded-full px-5 py-1.5 text-sm font-semibold tracking-wide transition-all duration-200 shrink-0 cursor-pointer"
+                >
+                  {category}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Filters Header Tab for templates page on the extreme right */}
+          {isTemplatesPage && (
+            <div className="hidden md:flex w-64 items-center justify-center bg-[#EDEDED] border-l border-[#E5E7EB] shrink-0 font-semibold text-sm text-zinc-900 -mr-4 sm:-mr-6 lg:-mr-8 select-none">
+              Filters
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export function Navbar() {
+  return (
+    <Suspense fallback={<NavbarSkeleton />}>
+      <NavbarContent />
+    </Suspense>
   )
 }

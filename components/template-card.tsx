@@ -28,7 +28,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
       <div className="relative mb-4">
         {/* Back frame (envelope effect) */}
         <div className="absolute -right-3 top-3 h-[280px] w-[220px] rounded-lg bg-[#c9c9c9] shadow-md" />
-        
+
         {/* Main card */}
         <div
           className="relative z-10 flex h-[280px] w-[220px] -rotate-3 transform items-center justify-center overflow-hidden rounded-lg shadow-lg transition-transform hover:-rotate-1"
@@ -69,8 +69,8 @@ export function TemplateCard({ template }: TemplateCardProps) {
 
       {/* Buttons */}
       <div className="flex items-center gap-2">
-        <Button 
-          asChild 
+        <Button
+          asChild
           className="h-10 w-32 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Link href={`/editor/${template.id}`}>Buy</Link>

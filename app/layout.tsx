@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Inter, Roboto, Roboto_Condensed } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/contexts/cart-context'
 import { OrdersProvider } from '@/contexts/orders-context'
