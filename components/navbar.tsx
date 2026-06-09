@@ -66,12 +66,12 @@ function NavbarContent() {
           )}
 
           {/* Occasions Side Tab */}
-          <div className="flex items-center justify-center bg-[#F3F4F6] px-6 border-r border-[#E5E7EB] shrink-0 font-semibold text-sm text-zinc-900 select-none">
+          <div className="relative z-10 flex items-center justify-center bg-[#F3F4F6] px-6 border-r border-[#E5E7EB] shrink-0 font-inter font-semibold text-sm text-zinc-900 select-none shadow-[4px_0_8px_-3px_rgba(0,0,0,0.08)]">
             Occasions
           </div>
 
           {/* Horizontal scroll of Category pills */}
-          <div className="flex-1 overflow-x-auto scrollbar-none py-1.5 pl-4 sm:pl-6 flex items-center">
+          <div className="flex-1 bg-[#f9fafb] overflow-x-auto scrollbar-none py-1.5 pl-4 sm:pl-6 flex items-center">
             <div className="flex items-center gap-3 flex-nowrap">
               {categories.map((category) => {
                 const isActive = activeCategory.toLowerCase() === category.toLowerCase()
@@ -79,8 +79,8 @@ function NavbarContent() {
                   <button
                     key={category}
                     onClick={() => handleCategoryClick(category)}
-                    className={`flex items-center gap-1.5 px-5 py-1.5 text-sm font-semibold tracking-wide transition-all duration-200 shrink-0 cursor-pointer ${isActive
-                      ? "rounded-full bg-zinc-950 text-white shadow-sm"
+                    className={`flex items-center gap-1.5 px-5 py-2 text-sm font-inter font-normal tracking-wide transition-all duration-200 shrink-0 cursor-pointer ${isActive
+                      ? "rounded-full bg-zinc-950 text-white shadow-sm font-semibold"
                       : "rounded-sm bg-[#E5E7EB] hover:bg-[#D1D5DB] text-zinc-800"
                       }`}
                   >

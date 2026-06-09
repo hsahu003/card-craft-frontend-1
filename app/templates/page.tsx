@@ -72,14 +72,14 @@ function TemplatesContent() {
       <div className="flex flex-col gap-6">
         {/* Themes Group */}
         <div>
-          <span className="font-bold text-zinc-900 text-sm mb-4 block uppercase tracking-wider">
+          <span className="font-bold text-zinc-900 font-inter text-sm mb-4 block uppercase tracking-wider">
             Themes
           </span>
           <div className="flex flex-col gap-2">
             {["Floral", "Palace", "Peacock"].map((theme) => {
               const isChecked = selectedThemes.includes(theme)
               return (
-                <label key={theme} className="flex items-center gap-3 py-1 text-sm font-medium text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
+                <label key={theme} className="flex  items-center gap-3 py-1 text-sm font-inter font-normal text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -97,7 +97,7 @@ function TemplatesContent() {
 
         {/* Culture/Religion Group */}
         <div>
-          <span className="font-bold text-zinc-900 text-sm mb-4 block uppercase tracking-wider">
+          <span className="font-bold text-zinc-900 font-inter text-sm mb-4 block uppercase tracking-wider">
             Culture/Religion
           </span>
           <div className="flex flex-col gap-2">
@@ -113,7 +113,7 @@ function TemplatesContent() {
             ].map((culture) => {
               const isChecked = selectedCultures.includes(culture)
               return (
-                <label key={culture} className="flex items-center gap-3 py-1 text-sm font-medium text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
+                <label key={culture} className="flex items-center gap-3 py-1 text-sm font-inter font-normal text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -131,14 +131,14 @@ function TemplatesContent() {
 
         {/* Language Group */}
         <div>
-          <span className="font-bold text-zinc-900 text-sm mb-4 block uppercase tracking-wider">
+          <span className="font-bold text-zinc-900 font-inter text-sm mb-4 block uppercase tracking-wider">
             Language
           </span>
           <div className="flex flex-col gap-2">
             {["Hindi", "English", "Marathi"].map((lang) => {
               const isChecked = selectedLanguages.includes(lang.toLowerCase())
               return (
-                <label key={lang} className="flex items-center gap-3 py-1 text-sm font-medium text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
+                <label key={lang} className="flex items-center gap-3 py-1 text-sm font-inter font-normal text-zinc-700 hover:text-zinc-900 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={isChecked}
@@ -164,11 +164,11 @@ function TemplatesContent() {
         <div className="mx-auto px-4 md:px-0">
           <div className="flex">
             {/* Desktop Sidebar Filter (styled exactly as mock layout, on the right) */}
-            <aside className="hidden md:block w-64 bg-[#EDEDED] border-l border-[#E5E7EB] -mr-4 sm:-mr-6 lg:-mr-8 pl-6 pr-4 sm:pr-6 lg:pr-8 py-8 shrink-0 min-h-[calc(100vh-7rem)]">
+            <aside className="hidden border-r-1 md:block w-64 bg-[#EDEDED] border-l border-[#E5E7EB] -mr-4 sm:-mr-6 lg:-mr-8 pl-6 pr-4 sm:pr-6 lg:pr-8 py-8 shrink-0 min-h-[calc(100vh-7rem)]">
               {renderFilterSidebar()}
             </aside>
             {/* Main content grid area */}
-            <div className="flex-1 py-8 md:pr-8 lg:px-20">
+            <div className="flex-1 py-8 md:pr-8 lg:px-25">
               {/* Mobile Filter Toggle Button */}
               <div className="md:hidden flex items-center justify-between mb-4 bg-[#F3F4F6] p-3 rounded-lg border border-[#E5E7EB]">
                 <button
@@ -192,7 +192,7 @@ function TemplatesContent() {
               </div>
 
               {/* Templates Grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 2xl:gap-12">
                 {filteredTemplates.map((template) => (
                   <TemplateCard key={template.id} template={template} />
                 ))}
