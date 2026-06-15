@@ -563,6 +563,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             zoneH,
             hasClip,
             existingClipId: hasClip ? clipAttr : null,
+            flipH: false,
           }
         })
         setImageZones(zones)
@@ -920,6 +921,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           scale: 1,
           offsetX: 0,
           offsetY: 0,
+          flipH: false,
         },
       }))
       const el = svgDocRef.current?.querySelector(idSelector(zid)) as SVGImageElement | null
@@ -930,6 +932,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         el.setAttribute("y", String(zone.zoneY))
         el.setAttribute("width", String(zone.zoneW))
         el.setAttribute("height", String(zone.zoneH))
+        el.removeAttribute("transform")
       }
       setPreviewVersion((v) => v + 1)
       toast.success("Image removed")
@@ -1151,6 +1154,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           scale: 1,
           offsetX: 0,
           offsetY: 0,
+          flipH: false,
         },
       }))
       setSelectedTextIdState(null)
@@ -1176,6 +1180,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             scale: 1,
             offsetX: 0,
             offsetY: 0,
+            flipH: false,
           },
         }))
         setSelectedTextIdState(null)
@@ -1202,6 +1207,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         scale: 1,
         offsetX: 0,
         offsetY: 0,
+        flipH: false,
       },
     }))
     const el = svgDocRef.current?.querySelector(idSelector(zone.id)) as SVGImageElement | null
@@ -1212,6 +1218,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       el.setAttribute("y", String(zone.zoneY))
       el.setAttribute("width", String(zone.zoneW))
       el.setAttribute("height", String(zone.zoneH))
+      el.removeAttribute("transform")
     }
     setPreviewVersion((v) => v + 1)
     toast.success("Image removed")
@@ -1323,6 +1330,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (el.tagName?.toLowerCase() === "image") {
           (el as SVGImageElement).setAttribute("href", "")
           ;(el as SVGImageElement).setAttribute("xlink:href", "")
+          el.removeAttribute("transform")
         }
         return
       }
@@ -1334,6 +1342,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         el = img
       }
       const imgEl = el as SVGImageElement
+
+      // Wrap the image in a <g> to isolate the clip-path from the transform
+      let wrapper = imgEl.parentNode as SVGGElement | null
+      if (wrapper?.tagName?.toLowerCase() !== "g" || wrapper.getAttribute("data-clip-wrapper") !== "true") {
+        wrapper = doc.createElementNS(ns, "g")
+        wrapper.setAttribute("data-clip-wrapper", "true")
+        imgEl.parentNode?.insertBefore(wrapper, imgEl)
+        wrapper.appendChild(imgEl)
+      }
+
       const { zoneX, zoneY, zoneW, zoneH, scale, offsetX, offsetY, imgW, imgH } = st
       const sb = Math.max(zoneW / imgW, zoneH / imgH)
       const imgW2 = imgW * sb * scale
@@ -1347,8 +1365,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       imgEl.setAttribute("width", String(imgW2))
       imgEl.setAttribute("height", String(imgH2))
       imgEl.setAttribute("preserveAspectRatio", "none")
+      if (st.flipH) {
+        imgEl.setAttribute("transform", `translate(${cx * 2 + imgW2}, 0) scale(-1, 1)`)
+      } else {
+        imgEl.removeAttribute("transform")
+      }
       if (st.hasClip && st.existingClipId) {
-        imgEl.setAttribute("clip-path", st.existingClipId)
+        wrapper.setAttribute("clip-path", st.existingClipId)
+        imgEl.removeAttribute("clip-path")
       } else {
         // Create clipPath for zone bounds so image is clipped to zone
         const clipId = "clip_" + zoneId.replace(/[^a-z0-9_-]/gi, "_")
@@ -1368,7 +1392,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           clip.appendChild(r)
           defs.appendChild(clip)
         }
-        imgEl.setAttribute("clip-path", `url(#${clipId})`)
+        wrapper.setAttribute("clip-path", `url(#${clipId})`)
+        imgEl.removeAttribute("clip-path")
       }
     })
   }, [zoneStates])
@@ -3409,8 +3434,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           if (liveImage) {
             const sx0 = drag.startImgX ?? parseFloat(liveImage.getAttribute("x") || "0")
             const sy0 = drag.startImgY ?? parseFloat(liveImage.getAttribute("y") || "0")
-            liveImage.setAttribute("x", String(sx0 + (clampedOX - startOX)))
+            const newX = sx0 + (clampedOX - startOX)
+            liveImage.setAttribute("x", String(newX))
             liveImage.setAttribute("y", String(sy0 + (clampedOY - startOY)))
+            if (st.flipH) {
+              const imgW2 = parseFloat(liveImage.getAttribute("width") || "0")
+              liveImage.setAttribute("transform", `translate(${newX * 2 + imgW2}, 0) scale(-1, 1)`)
+            }
           }
         }
       }
@@ -4436,13 +4466,32 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                           </button>
                           {selectedImageHasImage && selectedImageState && (
                             <>
-                              <button
-                                type="button"
-                                className="mt-1 w-full rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                onClick={() => removeImageFromZone(selectedImageZone)}
-                              >
-                                Remove image
-                              </button>
+                              <div className="mt-1 flex gap-2">
+                                <button
+                                  type="button"
+                                  className="flex-1 rounded-md border border-border py-1 px-2.5 text-[11px] text-foreground hover:bg-muted dark:hover:bg-muted/50"
+                                  onClick={() => {
+                                    pushPastBeforeMutation()
+                                    setZoneStates((prev) => ({
+                                      ...prev,
+                                      [selectedImageZone.id]: {
+                                        ...prev[selectedImageZone.id],
+                                        flipH: !prev[selectedImageZone.id].flipH,
+                                      },
+                                    }))
+                                    setPreviewVersion((v) => v + 1)
+                                  }}
+                                >
+                                  Flip Image
+                                </button>
+                                <button
+                                  type="button"
+                                  className="flex-1 rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                  onClick={() => removeImageFromZone(selectedImageZone)}
+                                >
+                                  Remove image
+                                </button>
+                              </div>
                               <div className="mt-1 flex items-center gap-2">
                                 <label className="w-7 shrink-0 text-[11px] text-muted-foreground">Zoom</label>
                                 <input

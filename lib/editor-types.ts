@@ -13,4 +13,5 @@ export interface ImageZoneState {
   zoneH: number
   hasClip: boolean
   existingClipId?: string | null
+  flipH?: boolean
 }
