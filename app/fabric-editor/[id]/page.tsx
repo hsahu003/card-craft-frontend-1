@@ -286,27 +286,7 @@ export default function FabricEditorPage({ params }: { params: Promise<{ id: str
                 </p>
               ) : (
                 <>
-                  {textFields.length > 0 && (
-                    <>
-                      <p className="mb-1 mt-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Text fields</p>
-                      <p className="mb-2 text-[11px] text-muted-foreground">Click to edit on canvas • Drag to move</p>
-                      {textFields.map(({ id, label }) => (
-                        <div key={id} className="mb-2.5">
-                          <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                            {label}
-                            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                              text
-                            </span>
-                          </div>
-                          <Input
-                            className="rounded-md border-border px-2.5 py-1.5 text-[13px]"
-                            value={textValues[id] ?? ""}
-                            onChange={(e) => handleTextChange(id, e.target.value)}
-                          />
-                        </div>
-                      ))}
-                    </>
-                  )}
+
 
                   {imageZones.length > 0 && (
                     <>

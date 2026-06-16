@@ -169,13 +169,13 @@ function paintOverlayHandleVisibility(svg: SVGElement, input: OverlayHandleVisib
   const showMulti = isMulti
 
   Array.from(svg.querySelectorAll<SVGGElement>('[data-text-handles="1"]')).forEach((g) => {
-    ;(g as unknown as HTMLElement).style.display = showText ? "" : "none"
+    ; (g as unknown as HTMLElement).style.display = showText ? "" : "none"
   })
   Array.from(svg.querySelectorAll<SVGGElement>('[data-sticker-handles="1"]')).forEach((g) => {
-    ;(g as unknown as HTMLElement).style.display = showSticker ? "" : "none"
+    ; (g as unknown as HTMLElement).style.display = showSticker ? "" : "none"
   })
   Array.from(svg.querySelectorAll<SVGGElement>('[data-multi-handles="1"]')).forEach((g) => {
-    ;(g as unknown as HTMLElement).style.display = showMulti ? "" : "none"
+    ; (g as unknown as HTMLElement).style.display = showMulti ? "" : "none"
   })
 }
 
@@ -351,7 +351,7 @@ function applyEditableValueToTextEl(target: SVGElement, value: string, forceStep
             ? targetFontSizeSvg
             : Number.isFinite(computedFontSvg) && computedFontSvg > 0
               ? computedFontSvg
-            : 14
+              : 14
       stepY = fallbackFontSvg * 1.25
     }
   }
@@ -422,8 +422,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const panelImageZoomPushedRef = useRef<Record<string, boolean>>({})
   const textHistoryApiRef = useRef({
     captureHistoryEntry: (): EditorHistoryEntry => ({ svg: "", zoneStates: {} }),
-    pushPastBeforeMutation: () => {},
-    pushPastSnapshot: (_e: EditorHistoryEntry) => {},
+    pushPastBeforeMutation: () => { },
+    pushPastSnapshot: (_e: EditorHistoryEntry) => { },
     pendingDragSnapshot: null as EditorHistoryEntry | null,
   })
   const [historyTick, setHistoryTick] = useState(0)
@@ -631,11 +631,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     const applyFontSize = (target: SVGElement) => {
       target.setAttribute("font-size", String(newFont))
-      ;(target as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+        ; (target as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
       const tspans = Array.from(target.querySelectorAll("tspan")) as SVGElement[]
       tspans.forEach((t) => {
         if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(newFont))
-        ;(t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+          ; (t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
         const style = t.getAttribute("style")
         if (style && style.includes("font-size")) {
           const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
@@ -1327,7 +1327,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!st?.b64) {
         if (el.tagName?.toLowerCase() === "image") {
           (el as SVGImageElement).setAttribute("href", "")
-          ;(el as SVGImageElement).setAttribute("xlink:href", "")
+            ; (el as SVGImageElement).setAttribute("xlink:href", "")
           el.removeAttribute("transform")
         }
         return
@@ -1488,22 +1488,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         circ.setAttribute("stroke", "rgba(55,138,221,0.4)")
         circ.setAttribute("stroke-width", "1")
         g.appendChild(circ)
-        ;[
-          [cx, cy + is * 0.35, cx, cy - is * 0.45],
-          [cx, cy - is * 0.45, cx - is * 0.32, cy - is * 0.13],
-          [cx, cy - is * 0.45, cx + is * 0.32, cy - is * 0.13],
-          [cx - is * 0.38, cy + is * 0.38, cx + is * 0.38, cy + is * 0.38],
-        ].forEach(([x1, y1, x2, y2]) => {
-          const l = previewDoc.createElementNS(ns, "line")
-          l.setAttribute("x1", String(x1))
-          l.setAttribute("y1", String(y1))
-          l.setAttribute("x2", String(x2))
-          l.setAttribute("y2", String(y2))
-          l.setAttribute("stroke", "#378ADD")
-          l.setAttribute("stroke-width", "1.5")
-          l.setAttribute("stroke-linecap", "round")
-          g.appendChild(l)
-        })
+          ;[
+            [cx, cy + is * 0.35, cx, cy - is * 0.45],
+            [cx, cy - is * 0.45, cx - is * 0.32, cy - is * 0.13],
+            [cx, cy - is * 0.45, cx + is * 0.32, cy - is * 0.13],
+            [cx - is * 0.38, cy + is * 0.38, cx + is * 0.38, cy + is * 0.38],
+          ].forEach(([x1, y1, x2, y2]) => {
+            const l = previewDoc.createElementNS(ns, "line")
+            l.setAttribute("x1", String(x1))
+            l.setAttribute("y1", String(y1))
+            l.setAttribute("x2", String(x2))
+            l.setAttribute("y2", String(y2))
+            l.setAttribute("stroke", "#378ADD")
+            l.setAttribute("stroke-width", "1.5")
+            l.setAttribute("stroke-linecap", "round")
+            g.appendChild(l)
+          })
         svgEl.appendChild(g)
         const hotspot = previewDoc.createElementNS(ns, "rect")
         hotspot.setAttribute("x", String(zoneX))
@@ -1552,7 +1552,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             w = b.width
             h = b.height
           }
-        } catch {}
+        } catch { }
       }
       if (!(w > 0 && h > 0)) {
         // Keep an overlay node so bounds can be fixed after DOM insertion via getBBox.
@@ -2019,7 +2019,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         ov.setAttribute("y", String(b.y))
         ov.setAttribute("width", String(b.width))
         ov.setAttribute("height", String(b.height))
-      } catch {}
+      } catch { }
     })
 
     // Keep latest selection visuals across preview rebuilds.
@@ -2042,153 +2042,153 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     type DragState =
       | {
-          type: "img"
-          id: string
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startOX?: number
-          startOY?: number
-          startImgX?: number
-          startImgY?: number
-          moved: boolean
-        }
+        type: "img"
+        id: string
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startOX?: number
+        startOY?: number
+        startImgX?: number
+        startImgY?: number
+        moved: boolean
+      }
       | {
-          type: "txt"
-          id: string
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startTX?: number
-          startTY?: number
-          startOverlayX?: number
-          startOverlayY?: number
-          startOverlayW?: number
-          startOverlayH?: number
-          moved: boolean
-          /** True when this text was already selected before mousedown (second click opens caret). */
-          openEditorOnClick: boolean
-        }
+        type: "txt"
+        id: string
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startTX?: number
+        startTY?: number
+        startOverlayX?: number
+        startOverlayY?: number
+        startOverlayW?: number
+        startOverlayH?: number
+        moved: boolean
+        /** True when this text was already selected before mousedown (second click opens caret). */
+        openEditorOnClick: boolean
+      }
       | {
-          type: "resize"
-          id: string
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startMouseX: number
-          startMouseY: number
-          corner: "tl" | "tr" | "bl" | "br"
-          anchorX: number
-          anchorY: number
-          startCornerX: number
-          startCornerY: number
-          startFontSizePx: number
-          startBBox: { x: number; y: number; width: number; height: number }
-          startFirstTspanX: number
-          startFirstTspanY: number
-          startOverlayX: number
-          startOverlayY: number
-          startOverlayW: number
-          startOverlayH: number
-          moved: boolean
-        }
+        type: "resize"
+        id: string
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startMouseX: number
+        startMouseY: number
+        corner: "tl" | "tr" | "bl" | "br"
+        anchorX: number
+        anchorY: number
+        startCornerX: number
+        startCornerY: number
+        startFontSizePx: number
+        startBBox: { x: number; y: number; width: number; height: number }
+        startFirstTspanX: number
+        startFirstTspanY: number
+        startOverlayX: number
+        startOverlayY: number
+        startOverlayW: number
+        startOverlayH: number
+        moved: boolean
+      }
       | {
-          type: "sticker"
-          id: string
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startStickerX: number
-          startStickerY: number
-          moved: boolean
-        }
+        type: "sticker"
+        id: string
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startStickerX: number
+        startStickerY: number
+        moved: boolean
+      }
       | {
-          type: "stickerResize"
-          id: string
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          corner: "tl" | "tr" | "bl" | "br"
-          anchorX: number
-          anchorY: number
-          startCornerX: number
-          startCornerY: number
-          startW: number
-          startH: number
-          moved: boolean
-        }
+        type: "stickerResize"
+        id: string
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        corner: "tl" | "tr" | "bl" | "br"
+        anchorX: number
+        anchorY: number
+        startCornerX: number
+        startCornerY: number
+        startW: number
+        startH: number
+        moved: boolean
+      }
       | {
-          type: "rotate-sticker"
-          id: string
-          overlay: Element
-          startX: number
-          startY: number
-          pivotX: number
-          pivotY: number
-          startAngleDeg: number
-          startMouseAngleRad: number
-          moved: boolean
-        }
+        type: "rotate-sticker"
+        id: string
+        overlay: Element
+        startX: number
+        startY: number
+        pivotX: number
+        pivotY: number
+        startAngleDeg: number
+        startMouseAngleRad: number
+        moved: boolean
+      }
       | {
-          type: "multi"
-          idsTxt: string[]
-          idsSticker: string[]
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }>
-          startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }>
-          startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
-          startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
-          groupBox: { x: number; y: number; w: number; h: number }
-          moved: boolean
-        }
+        type: "multi"
+        idsTxt: string[]
+        idsSticker: string[]
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }>
+        startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+        startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
+        startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+        groupBox: { x: number; y: number; w: number; h: number }
+        moved: boolean
+      }
       | {
-          type: "multiResize"
-          idsTxt: string[]
-          idsSticker: string[]
-          overlay: Element
-          sx: number
-          sy: number
-          startX: number
-          startY: number
-          startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }>
-          startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }>
-          startTxtFontSize: Record<string, number>
-          startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
-          startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
-          groupBox: { x: number; y: number; w: number; h: number }
-          corner: "tl" | "tr" | "bl" | "br"
-          anchorX: number
-          anchorY: number
-          startCornerX: number
-          startCornerY: number
-          moved: boolean
-        }
+        type: "multiResize"
+        idsTxt: string[]
+        idsSticker: string[]
+        overlay: Element
+        sx: number
+        sy: number
+        startX: number
+        startY: number
+        startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }>
+        startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+        startTxtFontSize: Record<string, number>
+        startSticker: Record<string, { x: number; y: number; w: number; h: number; angle: number | null }>
+        startStickerOverlay: Record<string, { x: number; y: number; w: number; h: number }>
+        groupBox: { x: number; y: number; w: number; h: number }
+        corner: "tl" | "tr" | "bl" | "br"
+        anchorX: number
+        anchorY: number
+        startCornerX: number
+        startCornerY: number
+        moved: boolean
+      }
       | {
-          type: "marquee"
-          overlay: Element
-          startX: number
-          startY: number
-          startSvgX: number
-          startSvgY: number
-          rectEl: SVGRectElement
-          idsTxt: string[]
-          idsSticker: string[]
-          moved: boolean
-        }
+        type: "marquee"
+        overlay: Element
+        startX: number
+        startY: number
+        startSvgX: number
+        startSvgY: number
+        rectEl: SVGRectElement
+        idsTxt: string[]
+        idsSticker: string[]
+        moved: boolean
+      }
 
     let drag: DragState | null = null
     let hiddenTextEditorOverlay: HTMLElement | null = null
@@ -2314,10 +2314,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           const editorHeightPx = editorEl.getBoundingClientRect().height
           const editorHeightSvg = editorHeightPx / Math.max(scaleY, 0.0001)
           const nextHeight = Math.max(r.rh, editorHeightSvg)
-          ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
-          ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
-          ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
-          ;(ov as SVGRectElement).setAttribute("height", String(nextHeight))
+            ; (ov as SVGRectElement).setAttribute("x", String(r.rx))
+            ; (ov as SVGRectElement).setAttribute("y", String(r.ry))
+            ; (ov as SVGRectElement).setAttribute("width", String(r.rw))
+            ; (ov as SVGRectElement).setAttribute("height", String(nextHeight))
           renderTextHandles(tid)
         }
         setTextValues((prev) => ({ ...prev, [tid]: val }))
@@ -2496,11 +2496,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (panel && selectedTextIdState === tid) panel.value = val
         if (ov && liveText) {
           const r = textOverlayRect(liveText)
-          ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
-          ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
-          ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
-          ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
-          ;(ov as HTMLElement).style.display = ""
+            ; (ov as SVGRectElement).setAttribute("x", String(r.rx))
+            ; (ov as SVGRectElement).setAttribute("y", String(r.ry))
+            ; (ov as SVGRectElement).setAttribute("width", String(r.rw))
+            ; (ov as SVGRectElement).setAttribute("height", String(r.rh))
+            ; (ov as HTMLElement).style.display = ""
         }
         if (bumpPreview) setPreviewVersion((v) => v + 1)
       }
@@ -2617,7 +2617,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const startMouseAngleRad = Math.atan2(mouseSvgY - pivotY, mouseSvgX - pivotX)
 
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
-        ;(rotateHandle as unknown as HTMLElement).style.cursor = "grabbing"
+          ; (rotateHandle as unknown as HTMLElement).style.cursor = "grabbing"
 
         drag = {
           type: "rotate-sticker",
@@ -2690,7 +2690,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (!nextDrag) return
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         drag = nextDrag
-        ;(multiHandle as unknown as HTMLElement).style.cursor = getComputedStyle(multiHandle).cursor || "nwse-resize"
+          ; (multiHandle as unknown as HTMLElement).style.cursor = getComputedStyle(multiHandle).cursor || "nwse-resize"
         applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
         renderMultiSelectionHandles(multiTxt, multiStickers, nextDrag.groupBox)
         return
@@ -2763,8 +2763,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
 
         // Inline editor hides live text and overlay; restore so getBBox() returns valid bounds.
-        ;(liveText as unknown as HTMLElement).style.display = ""
-        ;(ov as unknown as HTMLElement).style.display = ""
+        ; (liveText as unknown as HTMLElement).style.display = ""
+          ; (ov as unknown as HTMLElement).style.display = ""
 
         let bbox: { x: number; y: number; width: number; height: number } | null = null
         try {
@@ -2772,7 +2772,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           if (b && b.width > 0 && b.height > 0) {
             bbox = { x: b.x, y: b.y, width: b.width, height: b.height }
           }
-        } catch {}
+        } catch { }
         if (!bbox) {
           suppressEditorCommitRef.current = false
           return
@@ -2833,7 +2833,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           moved: false,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
-        ;(handle as unknown as HTMLElement).style.cursor = getComputedStyle(handle).cursor || "nwse-resize"
+          ; (handle as unknown as HTMLElement).style.cursor = getComputedStyle(handle).cursor || "nwse-resize"
         return
       }
       if (imgOv) {
@@ -2868,7 +2868,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           moved: false,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
-        ;(imgOv as HTMLElement).style.cursor = "grabbing"
+          ; (imgOv as HTMLElement).style.cursor = "grabbing"
       }
       if (txtOv) {
         renderStickerHandles(null)
@@ -2918,7 +2918,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
           drag = buildMultiSelectionDragState(multiTxt, multiStickers, txtOv as Element, e.clientX, e.clientY)
           if (!drag) return
-          ;(txtOv as HTMLElement).style.cursor = "grabbing"
+            ; (txtOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
           renderMultiSelectionHandles(multiTxt, multiStickers)
           return
@@ -2954,7 +2954,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           openEditorOnClick: prevSelected === tid,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
-        ;(txtOv as HTMLElement).style.cursor = "grabbing"
+          ; (txtOv as HTMLElement).style.cursor = "grabbing"
       }
       if (stickerOv) {
         renderTextHandles(null)
@@ -3001,7 +3001,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
           drag = buildMultiSelectionDragState(multiTxt, multiStickers, stickerOv as Element, e.clientX, e.clientY)
           if (!drag) return
-          ;(stickerOv as HTMLElement).style.cursor = "grabbing"
+            ; (stickerOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
           renderMultiSelectionHandles(multiTxt, multiStickers)
           return
@@ -3024,7 +3024,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           moved: false,
         }
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
-        ;(stickerOv as HTMLElement).style.cursor = "grabbing"
+          ; (stickerOv as HTMLElement).style.cursor = "grabbing"
         renderStickerHandles(sid)
       }
 
@@ -3035,7 +3035,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
         drag = buildMultiSelectionDragState(multiTxt, multiStickers, (txtOv || stickerOv) as Element, e.clientX, e.clientY)
         if (!drag) return
-        ;((txtOv || stickerOv) as HTMLElement).style.cursor = "grabbing"
+          ; ((txtOv || stickerOv) as HTMLElement).style.cursor = "grabbing"
         return
       }
     }
@@ -3200,16 +3200,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           const ny = base.y + dySvg
           const live = svgEl.querySelector(idSelector(id)) as SVGElement | null
           const docEl = svgDocRef.current?.querySelector(idSelector(id)) as SVGElement | null
-          ;[live, docEl].forEach((el) => {
-            if (!el) return
-            el.setAttribute("x", String(nx))
-            el.setAttribute("y", String(ny))
-            if (base.w > 0 && base.h > 0 && base.angle !== null && Math.abs(base.angle) > 0.0001) {
-              const pivotX = nx + base.w / 2
-              const pivotY = ny + base.h / 2
-              el.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
-            }
-          })
+            ;[live, docEl].forEach((el) => {
+              if (!el) return
+              el.setAttribute("x", String(nx))
+              el.setAttribute("y", String(ny))
+              if (base.w > 0 && base.h > 0 && base.angle !== null && Math.abs(base.angle) > 0.0001) {
+                const pivotX = nx + base.w / 2
+                const pivotY = ny + base.h / 2
+                el.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
+              }
+            })
           const ov = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
           if (ov) {
             const baseOv = multiDrag.startStickerOverlay[id]
@@ -3268,11 +3268,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
         const applyScaledFont = (el: SVGElement, font: number) => {
           el.setAttribute("font-size", String(font))
-          ;(el as unknown as HTMLElement).style.fontSize = String(font) + "px"
+            ; (el as unknown as HTMLElement).style.fontSize = String(font) + "px"
           const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
           tspans.forEach((t) => {
             if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(font))
-            ;(t as unknown as HTMLElement).style.fontSize = String(font) + "px"
+              ; (t as unknown as HTMLElement).style.fontSize = String(font) + "px"
             const style = t.getAttribute("style")
             if (style && style.includes("font-size")) {
               const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
@@ -3332,19 +3332,19 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           const nh = Math.max(Math.abs(br.y - tl.y), 1)
           const live = svgEl.querySelector(idSelector(id)) as SVGElement | null
           const docEl = svgDocRef.current?.querySelector(idSelector(id)) as SVGElement | null
-          ;[live, docEl].forEach((el) => {
-            if (!el) return
-            el.setAttribute("x", String(nx))
-            el.setAttribute("y", String(ny))
-            el.setAttribute("width", String(nw))
-            el.setAttribute("height", String(nh))
-            if (base.angle !== null && Math.abs(base.angle) > 0.0001) {
-              const pivotX = nx + nw / 2
-              const pivotY = ny + nh / 2
-              el.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
-              el.setAttribute("data-rotation-angle", String(base.angle))
-            }
-          })
+            ;[live, docEl].forEach((el) => {
+              if (!el) return
+              el.setAttribute("x", String(nx))
+              el.setAttribute("y", String(ny))
+              el.setAttribute("width", String(nw))
+              el.setAttribute("height", String(nh))
+              if (base.angle !== null && Math.abs(base.angle) > 0.0001) {
+                const pivotX = nx + nw / 2
+                const pivotY = ny + nh / 2
+                el.setAttribute("transform", `rotate(${base.angle} ${pivotX} ${pivotY})`)
+                el.setAttribute("data-rotation-angle", String(base.angle))
+              }
+            })
           const ov = svgEl.querySelector("#sticker_overlay_" + id) as SVGRectElement | null
           if (ov) {
             ov.setAttribute("x", String(nx))
@@ -3402,11 +3402,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
         const el = svgEl.querySelector(idSelector(drag.id)) as SVGElement | null
         const docEl = svgDocRef.current?.querySelector(idSelector(drag.id)) as SVGElement | null
-        ;[el, docEl].forEach((target) => {
-          if (!target) return
-          target.setAttribute("data-rotation-angle", String(nextAngleDeg))
-          target.setAttribute("transform", rot)
-        })
+          ;[el, docEl].forEach((target) => {
+            if (!target) return
+            target.setAttribute("data-rotation-angle", String(nextAngleDeg))
+            target.setAttribute("transform", rot)
+          })
 
         const ov = svgEl.querySelector("#sticker_overlay_" + drag.id) as SVGRectElement | null
         ov?.setAttribute("transform", rot)
@@ -3560,13 +3560,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             : drag.anchorY - nextH
         const live = svgEl.querySelector(idSelector(sid)) as SVGImageElement | null
         const docEl = svgDocRef.current?.querySelector(idSelector(sid)) as SVGImageElement | null
-        ;[live, docEl].forEach((el) => {
-          if (!el) return
-          el.setAttribute("x", String(x))
-          el.setAttribute("y", String(y))
-          el.setAttribute("width", String(nextW))
-          el.setAttribute("height", String(nextH))
-        })
+          ;[live, docEl].forEach((el) => {
+            if (!el) return
+            el.setAttribute("x", String(x))
+            el.setAttribute("y", String(y))
+            el.setAttribute("width", String(nextW))
+            el.setAttribute("height", String(nextH))
+          })
         const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
         if (ov) {
           ov.setAttribute("x", String(x))
@@ -3671,10 +3671,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           const r = textOverlayRect(liveText)
           const ov = svgEl.querySelector("#overlay_" + dragId)
           if (ov) {
-            ;(ov as SVGRectElement).setAttribute("x", String(r.rx))
-            ;(ov as SVGRectElement).setAttribute("y", String(r.ry))
-            ;(ov as SVGRectElement).setAttribute("width", String(r.rw))
-            ;(ov as SVGRectElement).setAttribute("height", String(r.rh))
+            ; (ov as SVGRectElement).setAttribute("x", String(r.rx))
+              ; (ov as SVGRectElement).setAttribute("y", String(r.ry))
+              ; (ov as SVGRectElement).setAttribute("width", String(r.rw))
+              ; (ov as SVGRectElement).setAttribute("height", String(r.rh))
           }
 
           renderTextHandles(dragId)
@@ -3708,11 +3708,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
         const applyFontSize = (el: SVGElement) => {
           el.setAttribute("font-size", String(newFont))
-          ;(el as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+            ; (el as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
           const tspans = Array.from(el.querySelectorAll("tspan")) as SVGElement[]
           tspans.forEach((t) => {
             if (t.hasAttribute("font-size")) t.setAttribute("font-size", String(newFont))
-            ;(t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
+              ; (t as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
             const style = t.getAttribute("style")
             if (style && style.includes("font-size")) {
               const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
@@ -3826,9 +3826,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           bl: "nesw-resize",
           br: "nwse-resize",
         }
-        ;(drag.overlay as HTMLElement).style.cursor = cursorByCorner[drag.corner]
+          ; (drag.overlay as HTMLElement).style.cursor = cursorByCorner[drag.corner]
       } else {
-        ;(drag.overlay as HTMLElement).style.cursor = "grab"
+        ; (drag.overlay as HTMLElement).style.cursor = "grab"
       }
       if (type === "txt" || type === "sticker" || type === "multi" || type === "marquee") hideGuides(svgEl)
 
@@ -4283,40 +4283,37 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   {(selectedTextIdState ||
                     selectedStickerIdState ||
                     selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
-                    <div className="mb-2 mt-1 flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
-                      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selection</div>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 gap-1.5 px-2 text-xs"
-                          onClick={duplicateSelected}
-                          title="Duplicate selected element(s)"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                          Duplicate
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={deleteSelected}
-                          title="Delete selected text/sticker selection"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
-                        </Button>
+                      <div className="mb-2 mt-1 flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
+                        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selection</div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1.5 px-2 text-xs"
+                            onClick={duplicateSelected}
+                            title="Duplicate selected element(s)"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Duplicate
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={deleteSelected}
+                            title="Delete selected text/sticker selection"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                   {textFields.length > 0 && (
                     <>
-                      <p className="mb-1 mt-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Text fields</p>
-                      <p className="mb-2 text-[11px] text-muted-foreground">
-                        Click to select • Click again to edit • Drag to move • Delete/Backspace removes selection when not typing
-                      </p>
+
                       {selectedTextField ? (
                         <div className="mb-2.5">
                           <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
@@ -4347,59 +4344,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                               </button>
                             </div>
                           </div>
-                          {isSelectedTextMultiline ? (
-                            <textarea
-                              ref={(el) => {
-                                panelInputRef.current = el
-                              }}
-                              className="min-h-[52px] w-full resize-y rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground"
-                              value={selectedTextValue}
-                              onChange={(e) => {
-                                if (!selectedTextIdState) return
-                                if (!panelTextHistoryPushedRef.current) {
-                                  pushPastBeforeMutation()
-                                  panelTextHistoryPushedRef.current = true
-                                }
-                                const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState)) as SVGElement | null
-                                if (docEl) applyEditableValueToTextEl(docEl, v)
-                                setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
-                                setPreviewVersion((x) => x + 1)
-                              }}
-                              onBlur={() => {
-                                panelTextHistoryPushedRef.current = false
-                              }}
-                            />
-                          ) : (
-                            <Input
-                              ref={(el) => {
-                                panelInputRef.current = el
-                              }}
-                              className="rounded-md border-border px-2.5 py-1.5 text-[13px]"
-                              value={selectedTextValue}
-                              onChange={(e) => {
-                                if (!selectedTextIdState) return
-                                if (!panelTextHistoryPushedRef.current) {
-                                  pushPastBeforeMutation()
-                                  panelTextHistoryPushedRef.current = true
-                                }
-                                const v = e.target.value
-                                const docEl = svgDocRef.current?.querySelector(idSelector(selectedTextIdState)) as SVGElement | null
-                                if (docEl) applyEditableValueToTextEl(docEl, v)
-                                setTextValues((prev) => ({ ...prev, [selectedTextIdState]: v }))
-                                setPreviewVersion((x) => x + 1)
-                              }}
-                              onBlur={() => {
-                                panelTextHistoryPushedRef.current = false
-                              }}
-                            />
-                          )}
                         </div>
-                      ) : (
-                        <div className="mb-2.5 rounded-md border border-dashed border-border bg-muted/20 px-2.5 py-3 text-[12px] text-muted-foreground">
-                          Select a text element in the preview to edit it here.
-                        </div>
-                      )}
+                      ) : null}
                     </>
                   )}
 
