@@ -9,22 +9,33 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import type { CartItem } from "@/contexts/cart-context"
 import { useUser } from "@/contexts/user-context"
 import { getStorageKey } from "@/lib/user-storage-key"
+import type { TemplateLanguage } from "@/lib/templates"
+
+export interface OrderItem {
+  id: string
+  name: string
+  category: string
+  language: TemplateLanguage
+  price: number
+  colors: [string, string]
+  emoji: string
+  customMessage: string
+}
 
 const ORDERS_STORAGE_KEY = "cardcraft-orders"
 
 export interface Order {
   id: string
   date: string
-  items: CartItem[]
+  items: OrderItem[]
   total: number
 }
 
 interface OrdersContextValue {
   orders: Order[]
-  addOrder: (items: CartItem[], total: number) => void
+  addOrder: (items: OrderItem[], total: number) => void
 }
 
 const OrdersContext = createContext<OrdersContextValue | null>(null)
@@ -77,7 +88,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     saveToStorage(orders, currentKey)
   }, [isReady, currentKey, orders])
 
-  const addOrder = useCallback((items: CartItem[], total: number) => {
+  const addOrder = useCallback((items: OrderItem[], total: number) => {
     const order: Order = {
       id: `order-${Date.now()}`,
       date: new Date().toISOString(),

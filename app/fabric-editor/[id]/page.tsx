@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useCart } from "@/contexts/cart-context"
 import { allTemplates, getTemplateById } from "@/lib/templates"
-import { ShoppingCart } from "lucide-react"
 import { toast } from "sonner"
 
 const EDITABLE_PREFIX = "editable_"
@@ -34,7 +32,6 @@ interface ImageState {
 export default function FabricEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
-  const { add: addToCart } = useCart()
   const template = getTemplateById(resolvedParams.id) ?? allTemplates[0]
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -253,27 +250,6 @@ export default function FabricEditorPage({ params }: { params: Promise<{ id: str
     }
   }, [template.name])
 
-  const handleAddToCart = useCallback(() => {
-    const canvas = fabricCanvasRef.current
-    let customMessage = ""
-    if (canvas) {
-      const dataUrl = canvas.toDataURL({ format: "png", multiplier: 2 })
-      customMessage = dataUrl
-    }
-    const cartId = resolvedParams.id + "-fabric-" + Date.now()
-    addToCart({
-      id: cartId,
-      name: template.name,
-      category: template.category,
-      language: template.language,
-      price: template.price,
-      colors: template.colors,
-      emoji: template.emoji,
-      customMessage,
-    })
-    router.push("/cart")
-  }, [template, resolvedParams.id, addToCart, router])
-
   if (!template.svg) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -403,14 +379,6 @@ export default function FabricEditorPage({ params }: { params: Promise<{ id: str
                   )}
                 </>
               )}
-            </div>
-
-            {/* Left footer: Add to Cart */}
-            <div className="border-t border-border p-3">
-              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAddToCart}>
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to Cart – ₹{template.price}
-              </Button>
             </div>
           </div>
 

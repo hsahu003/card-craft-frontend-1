@@ -4,10 +4,9 @@ import { useState, use, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
-import { Copy, Redo2, ShoppingCart, Trash2, Undo2 } from "lucide-react"
+import { Copy, Redo2, Trash2, Undo2 } from "lucide-react"
 import {
   getSVGSize,
   getSVGSizePx,
@@ -402,7 +401,6 @@ function isRomanPhoneticWord(word: string) {
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
-  const { add: addToCart } = useCart()
   const template = getTemplateById(resolvedParams.id) ?? allTemplates[0]
   const transliterationLanguage = resolveTransliterationLanguage(template.language)
 
@@ -4216,26 +4214,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }, [template.name])
 
-  const handleAddToCart = useCallback(() => {
-    const doc = svgDocRef.current
-    let customMessage = ""
-    if (doc) {
-      const s = new XMLSerializer().serializeToString(doc)
-      customMessage = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(s)))
-    }
-    const cartId = resolvedParams.id + "-" + Date.now()
-    addToCart({
-      id: cartId,
-      name: template.name,
-      category: template.category,
-      language: template.language,
-      price: template.price,
-      colors: template.colors,
-      emoji: template.emoji,
-      customMessage,
-    })
-    router.push("/cart")
-  }, [template, resolvedParams.id, addToCart, router])
+
 
   if (!template.svg) {
     return (
@@ -4591,17 +4570,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   </details>
                 </>
               )}
-            </div>
-
-            {/* Left footer: Add to Cart */}
-            <div className="border-t border-border p-3">
-              <Button
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={handleAddToCart}
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to Cart – ₹{template.price}
-              </Button>
             </div>
           </div>
 
