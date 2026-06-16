@@ -2,11 +2,11 @@
 
 import { useState, use, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
-import { Copy, Redo2, Trash2, Undo2 } from "lucide-react"
+import { Copy, Redo2, Trash2, Undo2, Download } from "lucide-react"
 import {
   getSVGSize,
   getSVGSizePx,
@@ -4229,40 +4229,47 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Navbar />
-      <div id="app" className="flex flex-1 flex-col" style={{ minHeight: 620 }}>
-        {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h1 className="text-[15px] font-medium text-foreground">SVG Field Editor</h1>
-          <div className="flex items-center gap-2" data-history-tick={historyTick}>
-            <Button
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5">
+        <Link href="/" className="shrink-0">
+          <span className="select-none font-sans text-[28px] font-black italic tracking-tight text-[#E13B30]">
+            Cardcraft
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] p-1 shadow-sm" data-history-tick={historyTick}>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2.5"
               disabled={historyPastRef.current.length === 0}
               onClick={() => undo()}
               title="Undo (Ctrl+Z)"
+              className="flex h-8 w-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-[#E5E7EB] disabled:opacity-40"
             >
-              <Undo2 className="h-3.5 w-3.5" />
-              <span className="text-xs">Undo</span>
-            </Button>
-            <Button
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2.5"
               disabled={historyFutureRef.current.length === 0}
               onClick={() => redo()}
               title="Redo (Ctrl+Shift+Z)"
+              className="flex h-8 w-10 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-[#E5E7EB] disabled:opacity-40"
             >
-              <Redo2 className="h-3.5 w-3.5" />
-              <span className="text-xs">Redo</span>
-            </Button>
-            <span className="text-xs text-muted-foreground">{template.name}</span>
+              <Redo2 className="h-4 w-4" />
+            </button>
           </div>
-        </div>
 
+          <Button
+            onClick={handleExportPDF}
+            disabled={isExporting || !svgLoaded}
+            className="h-10 gap-2 rounded-full bg-[#10b981] px-6 font-medium text-white shadow-sm hover:bg-[#059669]"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Downloading…" : "Download"}
+          </Button>
+        </div>
+      </header>
+
+      <div id="app" className="flex flex-1 flex-col" style={{ minHeight: 620 }}>
         {/* Main: left + right — items-start so the preview column height does not track the
             left panel (each duplicated text adds rows there). Otherwise flex stretch + centered
             preview makes the SVG look like it "moves down" as the center shifts. */}
@@ -4521,17 +4528,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
           {/* Right panel: min height so preview stays usable; width still flex-1 */}
           <div className="flex min-h-[570px] min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+            <div className="flex h-[41px] items-center border-b border-border px-3">
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Live Preview</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                disabled={isExporting || !svgLoaded}
-                onClick={handleExportPDF}
-              >
-                {isExporting ? "Exporting…" : "Export PDF"}
-              </Button>
             </div>
             <div
               ref={previewContainerRef}
