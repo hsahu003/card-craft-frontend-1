@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
-import { Copy, Redo2, Trash2, Undo2, Download } from "lucide-react"
+import { Copy, Redo2, Trash2, Undo2, Download, Sticker, X, FlipHorizontal } from "lucide-react"
 import {
   getSVGSize,
   getSVGSizePx,
@@ -441,6 +441,39 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [isExporting, setIsExporting] = useState(false)
   const [svgLoaded, setSvgLoaded] = useState(false)
   const [stickerCategories, setStickerCategories] = useState<StickerCategory[]>([])
+  const [isStickerDialogOpen, setIsStickerDialogOpen] = useState(false)
+  const [stickerDialogPos, setStickerDialogPos] = useState({ x: 800, y: 100 })
+  const draggingDialogRef = useRef<{ startX: number; startY: number; initX: number; initY: number } | null>(null)
+  const stickerDialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Set reasonable default position once mounted to avoid SSR issues with window
+    setStickerDialogPos({ x: window.innerWidth - 320, y: 80 })
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isStickerDialogOpen &&
+        stickerDialogRef.current &&
+        !stickerDialogRef.current.contains(event.target as Node)
+      ) {
+        const target = event.target as Element
+        if (
+          !target.closest('[data-sticker-toggle="true"]') &&
+          !(previewContainerRef.current?.querySelector("svg")?.contains(target as Node))
+        ) {
+          setIsStickerDialogOpen(false)
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isStickerDialogOpen])
+
   const [selectedStickerCategory, setSelectedStickerCategory] = useState("")
   const [selectedStickerIdState, setSelectedStickerIdState] = useState<string | null>(null)
   const [selectedTextIdState, setSelectedTextIdState] = useState<string | null>(null)
@@ -4025,6 +4058,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       // Left panel (Duplicate, text inputs, stickers): mousedown must not clear selection before click.
       if (target.closest("#editor-left-panel")) return
 
+      // Header controls (Font size, Duplicate, Delete): mousedown must not clear selection
+      if (target.closest("#editor-header-controls")) return
+
       // Close active inline text editor immediately to avoid blur-then-commit flicker.
       if (activeInlineEditor) {
         activeInlineEditor.commit({ bumpPreview: false })
@@ -4229,14 +4265,200 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5">
+      <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5">
         <Link href="/" className="shrink-0">
           <span className="select-none font-sans text-[28px] font-black italic tracking-tight text-[#E13B30]">
             Cardcraft
           </span>
         </Link>
 
+        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center" id="editor-header-controls">
+          {(selectedTextIdState || selectedStickerIdState || (selectedImageZoneIdState && selectedImageHasImage) || selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
+            <div className="flex items-center gap-1 rounded-full border border-border bg-[#F9FAFB] p-1 shadow-sm">
+              {selectedImageZoneIdState && selectedImageZone && selectedImageHasImage && selectedImageState && (
+                <>
+                  <div className="flex items-center gap-2 px-2">
+                    <button
+                      type="button"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-xs text-muted-foreground hover:bg-muted"
+                      onClick={() => {
+                        if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                          pushPastBeforeMutation()
+                          panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                        }
+                        const scale = Math.max(1, (selectedImageState.scale || 1) - 0.1)
+                        setZoneStates((prev) => {
+                          const st = prev[selectedImageZoneIdState]
+                          const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                          return {
+                            ...prev,
+                            [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                          }
+                        })
+                        setPreviewVersion((v) => v + 1)
+                        setTimeout(() => delete panelImageZoomPushedRef.current[selectedImageZoneIdState], 100)
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min="100"
+                      max="300"
+                      value={Math.round((selectedImageState.scale || 1) * 100)}
+                      onChange={(e) => {
+                        if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                          pushPastBeforeMutation()
+                          panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                        }
+                        const scale = Math.max(1, Number(e.target.value) / 100)
+                        setZoneStates((prev) => {
+                          const st = prev[selectedImageZoneIdState]
+                          const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                          return {
+                            ...prev,
+                            [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                          }
+                        })
+                        setPreviewVersion((v) => v + 1)
+                      }}
+                      onPointerUp={() => {
+                        delete panelImageZoomPushedRef.current[selectedImageZoneIdState]
+                      }}
+                      onPointerCancel={() => {
+                        delete panelImageZoomPushedRef.current[selectedImageZoneIdState]
+                      }}
+                      className="h-1 w-24 accent-zinc-400"
+                    />
+                    <button
+                      type="button"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-xs text-muted-foreground hover:bg-muted"
+                      onClick={() => {
+                        if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                          pushPastBeforeMutation()
+                          panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                        }
+                        const scale = Math.max(1, (selectedImageState.scale || 1) + 0.1)
+                        setZoneStates((prev) => {
+                          const st = prev[selectedImageZoneIdState]
+                          const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                          return {
+                            ...prev,
+                            [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                          }
+                        })
+                        setPreviewVersion((v) => v + 1)
+                        setTimeout(() => delete panelImageZoomPushedRef.current[selectedImageZoneIdState], 100)
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="mx-1 h-4 w-px bg-border"></div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-7 gap-1.5 rounded-full px-2 text-xs text-zinc-600 hover:bg-[#E5E7EB]"
+                    onClick={() => {
+                      pushPastBeforeMutation()
+                      setZoneStates((prev) => ({
+                        ...prev,
+                        [selectedImageZone.id]: {
+                          ...prev[selectedImageZone.id],
+                          flipH: !prev[selectedImageZone.id].flipH,
+                        },
+                      }))
+                      setPreviewVersion((v) => v + 1)
+                    }}
+                    title="Flip"
+                  >
+                    <FlipHorizontal className="h-3.5 w-3.5" />
+                    Flip
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-7 gap-1.5 rounded-full px-2 text-xs text-zinc-600 hover:bg-[#E5E7EB]"
+                    onClick={() => removeImageFromZone(selectedImageZone)}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </Button>
+                </>
+              )}
+              {selectedTextIdState && !(selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
+                <>
+                  <div className="flex items-center gap-2 px-2">
+                    <button
+                      type="button"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-xs text-muted-foreground hover:bg-muted"
+                      onClick={() => nudgeSelectedTextFontSize(-1)}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min="8"
+                      max="144"
+                      value={Math.round(selectedTextFontSizeUi || 16)}
+                      onChange={(e) => setSelectedTextFontSize(Number(e.target.value))}
+                      className="h-1 w-24 accent-zinc-400"
+                    />
+                    <button
+                      type="button"
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-white text-xs text-muted-foreground hover:bg-muted"
+                      onClick={() => nudgeSelectedTextFontSize(1)}
+                    >
+                      +
+                    </button>
+                    <span className="ml-1 w-6 text-center text-xs font-medium text-zinc-600">
+                      {Math.round(selectedTextFontSizeUi || 16)}
+                    </span>
+                  </div>
+                  <div className="mx-1 h-4 w-px bg-border"></div>
+                </>
+              )}
+              
+              {!(selectedImageZoneIdState && selectedImageHasImage) && (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-7 gap-1.5 rounded-full px-2 text-xs text-zinc-600 hover:bg-[#E5E7EB]"
+                    onClick={duplicateSelected}
+                    title="Duplicate"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Duplicate
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-7 gap-1.5 rounded-full px-2 text-xs text-zinc-600 hover:bg-[#E5E7EB]"
+                    onClick={deleteSelected}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            data-sticker-toggle="true"
+            className="h-10 gap-2 rounded-full border-[#E5E7EB] bg-[#F9FAFB] px-4 font-medium text-zinc-700 shadow-sm hover:bg-[#E5E7EB]"
+            onClick={() => setIsStickerDialogOpen(!isStickerDialogOpen)}
+          >
+            <Sticker className="h-4 w-4" />
+            Stickers
+          </Button>
+
           <div className="flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] p-1 shadow-sm" data-history-tick={historyTick}>
             <button
               type="button"
@@ -4270,267 +4492,104 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       </header>
 
       <div id="app" className="flex flex-1 flex-col" style={{ minHeight: 620 }}>
-        {/* Main: left + right — items-start so the preview column height does not track the
-            left panel (each duplicated text adds rows there). Otherwise flex stretch + centered
-            preview makes the SVG look like it "moves down" as the center shifts. */}
-        <div className="flex min-h-[570px] flex-1 items-start">
-          {/* Left panel */}
-          <div id="editor-left-panel" className="flex w-[290px] min-w-[250px] flex-col border-r border-border">
-            <div className="flex-1 overflow-y-auto px-3 pb-4 pt-2">
-              {!svgLoaded ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
-              ) : textFields.length === 0 && imageZones.length === 0 && stickerCategories.length === 0 ? (
-                <p className="py-6 text-center text-sm leading-relaxed text-muted-foreground">
-                  No editable fields found.
-                  <br />
-                  <span className="text-xs">Use id=&quot;editable_*&quot; or id=&quot;image_zone_*&quot;</span>
-                </p>
-              ) : (
-                <>
-                  {(selectedTextIdState ||
-                    selectedStickerIdState ||
-                    selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
-                      <div className="mb-2 mt-1 flex items-center justify-between gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
-                        <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Selection</div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 gap-1.5 px-2 text-xs"
-                            onClick={duplicateSelected}
-                            title="Duplicate selected element(s)"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                            Duplicate
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            onClick={deleteSelected}
-                            title="Delete selected text/sticker selection"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  {textFields.length > 0 && (
-                    <>
+        {/* Hidden inputs for image uploads */}
+        {imageZones.map((zone) => (
+          <input
+            key={zone.id}
+            ref={(el) => {
+              if (el) fileInputRefs.current[zone.id] = el
+            }}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              await applyImageToZone(zone.id, file)
+              e.target.value = "" // Reset to allow selecting the same file again
+            }}
+          />
+        ))}
 
-                      {selectedTextField ? (
-                        <div className="mb-2.5">
-                          <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                            {selectedTextField.label}
-                            <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">text</span>
-                          </div>
-                          <div className="mb-2 flex items-center gap-2">
-                            <div className="w-9 shrink-0 text-[11px] text-muted-foreground">Size</div>
-                            <div className="flex flex-1 items-center justify-between rounded-md border border-border bg-background px-2 py-1.5">
-                              <button
-                                type="button"
-                                className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
-                                onClick={() => nudgeSelectedTextFontSize(-1)}
-                                title="Decrease font size"
-                              >
-                                -
-                              </button>
-                              <div className="min-w-10 text-center text-[12px] text-foreground">
-                                {Math.round(selectedTextFontSizeUi || 16)}
-                              </div>
-                              <button
-                                type="button"
-                                className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted"
-                                onClick={() => nudgeSelectedTextFontSize(1)}
-                                title="Increase font size"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-
-                  {imageZones.length > 0 && (
-                    <>
-                      <p className="mb-1 mt-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Image zones</p>
-                      {imageZones.map((zone) => (
-                        <input
-                          key={zone.id}
-                          ref={(el) => {
-                            if (el) fileInputRefs.current[zone.id] = el
-                          }}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0]
-                            if (!file) return
-                            await applyImageToZone(zone.id, file)
-                          }}
-                        />
-                      ))}
-                      {selectedImageZone ? (
-                        <div className="mb-2.5" data-image-zone-panel-id={selectedImageZone.id}>
-                          <div className="mb-1 flex items-center gap-1.5 text-xs capitalize text-muted-foreground">
-                            {selectedImageZone.label}
-                            <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">image</span>
-                          </div>
-                          <button
-                            type="button"
-                            className="flex w-full items-center gap-2 rounded-md border border-dashed border-border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
-                            disabled={!!zoneBusy[selectedImageZone.id]}
-                            onClick={() => fileInputRefs.current[selectedImageZone.id]?.click()}
-                          >
-                            <span className="text-sm">+</span>
-                            <span>
-                              {zoneBusy[selectedImageZone.id]
-                                ? "Compressing…"
-                                : selectedImageHasImage
-                                  ? fileInputRefs.current[selectedImageZone.id]?.files?.[0]?.name?.slice(0, 20) || "Image"
-                                  : "Choose image"}
-                            </span>
-                          </button>
-                          {selectedImageHasImage && selectedImageState && (
-                            <>
-                              <div className="mt-1 flex gap-2">
-                                <button
-                                  type="button"
-                                  className="flex-1 rounded-md border border-border py-1 px-2.5 text-[11px] text-foreground hover:bg-muted dark:hover:bg-muted/50"
-                                  onClick={() => {
-                                    pushPastBeforeMutation()
-                                    setZoneStates((prev) => ({
-                                      ...prev,
-                                      [selectedImageZone.id]: {
-                                        ...prev[selectedImageZone.id],
-                                        flipH: !prev[selectedImageZone.id].flipH,
-                                      },
-                                    }))
-                                    setPreviewVersion((v) => v + 1)
-                                  }}
-                                >
-                                  Flip Image
-                                </button>
-                                <button
-                                  type="button"
-                                  className="flex-1 rounded-md border border-border py-1 px-2.5 text-[11px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                  onClick={() => removeImageFromZone(selectedImageZone)}
-                                >
-                                  Remove image
-                                </button>
-                              </div>
-                              <div className="mt-1 flex items-center gap-2">
-                                <label className="w-7 shrink-0 text-[11px] text-muted-foreground">Zoom</label>
-                                <input
-                                  type="range"
-                                  min="100"
-                                  max="300"
-                                  value={Math.round((selectedImageState.scale || 1) * 100)}
-                                  onChange={(e) => {
-                                    if (!panelImageZoomPushedRef.current[selectedImageZone.id]) {
-                                      pushPastBeforeMutation()
-                                      panelImageZoomPushedRef.current[selectedImageZone.id] = true
-                                    }
-                                    const scale = Math.max(1, Number(e.target.value) / 100)
-                                    setZoneStates((prev) => {
-                                      const st = prev[selectedImageZone.id]
-                                      const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
-                                      return {
-                                        ...prev,
-                                        [selectedImageZone.id]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
-                                      }
-                                    })
-                                    setPreviewVersion((v) => v + 1)
-                                  }}
-                                  onPointerUp={() => {
-                                    delete panelImageZoomPushedRef.current[selectedImageZone.id]
-                                  }}
-                                  onPointerCancel={() => {
-                                    delete panelImageZoomPushedRef.current[selectedImageZone.id]
-                                  }}
-                                  className="h-0.5 flex-1"
-                                />
-                                <span className="min-w-8 text-right text-[11px] text-foreground">
-                                  {Math.round((selectedImageState.scale || 1) * 100)}%
-                                </span>
-                              </div>
-                              <p className="mt-1 text-[11px] text-muted-foreground">Drag image in preview to reposition</p>
-                            </>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="mb-2.5 rounded-md border border-dashed border-border bg-muted/20 px-2.5 py-3 text-[12px] text-muted-foreground">
-                          Select an image zone in the preview to control it here.
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  <details className="mt-3 rounded-md border border-border/70 bg-muted/20 p-2" open>
-                    <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Stickers
-                    </summary>
-                    <div className="mt-2 space-y-2">
-                      <div>
-                        <label className="mb-1 block text-[11px] text-muted-foreground">Category</label>
-                        <select
-                          className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground"
-                          value={selectedStickerCategory}
-                          onChange={(e) => setSelectedStickerCategory(e.target.value)}
-                          disabled={stickerCategories.length === 0}
-                        >
-                          {stickerCategories.map((cat) => (
-                            <option key={cat.name} value={cat.name}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {selectedCategoryStickers.length === 0 ? (
-                        <p className="rounded-md border border-dashed border-border px-2 py-2 text-[11px] text-muted-foreground">
-                          No stickers available
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {selectedCategoryStickers.map((sticker) => (
-                            <button
-                              key={sticker.path}
-                              type="button"
-                              title={sticker.name}
-                              className="flex h-16 items-center justify-center rounded-md border border-border bg-background p-1 transition-colors hover:bg-muted"
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData("application/x-sticker", JSON.stringify(sticker))
-                                e.dataTransfer.effectAllowed = "copy"
-                              }}
-                              onClick={() => addStickerToSvg(sticker)}
-                            >
-                              <img src={sticker.path || "/placeholder.svg"} alt={sticker.name} className="max-h-full max-w-full object-contain" />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-[11px] text-muted-foreground">
-                        Click a sticker to add it centered. Drag, resize, or press Delete / Backspace (or use Delete in Selection) to remove a sticker or selected text.
-                      </p>
-                    </div>
-                  </details>
-                </>
-              )}
+        <div className="flex min-h-[570px] flex-1 items-stretch justify-center">
+          {/* Draggable Sticker Dialog */}
+          {isStickerDialogOpen && (
+            <div
+              ref={stickerDialogRef}
+              className="fixed z-50 flex w-[280px] flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg"
+              style={{
+                left: stickerDialogPos.x,
+                top: stickerDialogPos.y,
+                maxHeight: 'calc(100vh - 100px)',
+              }}
+            >
+              <div
+                className="flex cursor-move items-center justify-between border-b border-border bg-muted/30 px-3 py-2"
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  draggingDialogRef.current = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    initX: stickerDialogPos.x,
+                    initY: stickerDialogPos.y,
+                  }
+                  const onMove = (me: PointerEvent) => {
+                    if (!draggingDialogRef.current) return
+                    const dx = me.clientX - draggingDialogRef.current.startX
+                    const dy = me.clientY - draggingDialogRef.current.startY
+                    setStickerDialogPos({
+                      x: draggingDialogRef.current.initX + dx,
+                      y: draggingDialogRef.current.initY + dy,
+                    })
+                  }
+                  const onUp = () => {
+                    draggingDialogRef.current = null
+                    window.removeEventListener('pointermove', onMove)
+                    window.removeEventListener('pointerup', onUp)
+                  }
+                  window.addEventListener('pointermove', onMove)
+                  window.addEventListener('pointerup', onUp)
+                }}
+              >
+                <span className="text-[13px] font-medium text-foreground">Stickers</span>
+                <button
+                  type="button"
+                  className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                  onClick={() => setIsStickerDialogOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3">
+                {stickerCategories.length === 0 ? (
+                  <p className="py-4 text-center text-[12px] text-muted-foreground">No stickers available</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {stickerCategories.flatMap((cat) => cat.stickers).map((sticker, idx) => (
+                      <button
+                        key={`${sticker.path}-${idx}`}
+                        type="button"
+                        title={sticker.name}
+                        className="flex h-16 items-center justify-center rounded-md border border-transparent bg-background p-1 transition-colors hover:border-border hover:bg-muted"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/x-sticker", JSON.stringify(sticker))
+                          e.dataTransfer.effectAllowed = "copy"
+                        }}
+                        onClick={() => {
+                          addStickerToSvg(sticker)
+                        }}
+                      >
+                        <img src={sticker.path || "/placeholder.svg"} alt={sticker.name} className="max-h-full max-w-full object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Right panel: min height so preview stays usable; width still flex-1 */}
-          <div className="flex min-h-[570px] min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex h-[41px] items-center border-b border-border px-3">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Live Preview</span>
-            </div>
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <div
               ref={previewContainerRef}
               className="flex flex-1 items-start justify-center overflow-auto bg-muted/30 p-5"
