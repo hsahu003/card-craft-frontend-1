@@ -445,10 +445,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [stickerDialogPos, setStickerDialogPos] = useState({ x: 800, y: 100 })
   const draggingDialogRef = useRef<{ startX: number; startY: number; initX: number; initY: number } | null>(null)
   const stickerDialogRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     // Set reasonable default position once mounted to avoid SSR issues with window
     setStickerDialogPos({ x: window.innerWidth - 320, y: 80 })
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   useEffect(() => {
@@ -545,6 +550,44 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const doc = parser.parseFromString(svgText, "image/svg+xml")
         svgDocRef.current = doc
 
+        const fontsToLoad = new Set<string>()
+        Array.from(doc.querySelectorAll("*")).forEach((el) => {
+          const ff = el.getAttribute("font-family")
+          if (ff) fontsToLoad.add(ff.replace(/['"]/g, "").trim())
+          const style = el.getAttribute("style")
+          if (style) {
+            const match = style.match(/font-family:\s*([^;]+)/)
+            if (match) {
+              fontsToLoad.add(match[1].replace(/['"]/g, "").trim())
+            }
+          }
+        })
+
+        const systemFonts = new Set([
+          "sans-serif", "serif", "monospace", "none",
+          "Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana", "Georgia", "Palatino", "Garamond", "Bookman", "Comic Sans MS", "Trebuchet MS", "Arial Black", "Impact"
+        ])
+        const fontImports = Array.from(fontsToLoad)
+          .filter((f) => f && !systemFonts.has(f))
+          .map((f) => `@import url('https://fonts.googleapis.com/css2?family=${f.replace(/ /g, "+")}&display=swap');`)
+          .join("\n")
+
+        if (fontImports) {
+          const styleId = `dynamic-fonts-${template.id}`
+          if (!document.getElementById(styleId)) {
+            const styleEl = document.createElement("style")
+            styleEl.id = styleId
+            styleEl.textContent = fontImports
+            document.head.appendChild(styleEl)
+
+            if (document.fonts && document.fonts.ready) {
+              document.fonts.ready.then(() => {
+                setPreviewVersion((v) => v + 1)
+              })
+            }
+          }
+        }
+
         const textEls = Array.from(doc.querySelectorAll<SVGElement>(`[id^="${EDITABLE_PREFIX}"]`))
         setTextFields(
           textEls.map((el) => ({
@@ -606,7 +649,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setHistoryTick((t) => t + 1)
       })
       .catch(() => setSvgLoaded(false))
-  }, [template.svg])
+  }, [template.svg, template.id])
 
   const captureHistoryEntry = useCallback((): EditorHistoryEntry => {
     const doc = svgDocRef.current
@@ -1446,7 +1489,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const previewDoc = cloneSvgDocument(doc)
     if (!previewDoc) return
     const svgEl = previewDoc.documentElement as unknown as SVGElement
-    svgEl.setAttribute("style", "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md)")
+    svgEl.setAttribute("style", "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:visible;")
     const { w: svgW, h: svgH } = getSVGElementSize(svgEl)
     // const { w: svgElW, h: svgElH } = getSVGElementSize(svgEl)
     if (!svgEl.getAttribute("viewBox")) {
@@ -1537,7 +1580,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             l.setAttribute("stroke-linecap", "round")
             g.appendChild(l)
           })
-        svgEl.appendChild(g)
         const hotspot = previewDoc.createElementNS(ns, "rect")
         hotspot.setAttribute("x", String(zoneX))
         hotspot.setAttribute("y", String(zoneY))
@@ -1549,7 +1591,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         hotspot.setAttribute("pointer-events", "all")
         hotspot.setAttribute("style", "cursor:pointer")
         if (st.hasClip && st.existingClipId) hotspot.setAttribute("clip-path", st.existingClipId)
-        svgEl.appendChild(hotspot)
+        const zoneEl = svgEl.querySelector('#' + CSS.escape(zoneId))
+        const next = zoneEl ? zoneEl.nextSibling : null
+        if (zoneEl && next) {
+          zoneEl.parentNode?.insertBefore(g, next)
+          zoneEl.parentNode?.insertBefore(hotspot, next)
+        } else if (zoneEl) {
+          zoneEl.parentNode?.appendChild(g)
+          zoneEl.parentNode?.appendChild(hotspot)
+        } else {
+          svgEl.appendChild(g)
+          svgEl.appendChild(hotspot)
+        }
       } else {
         const rect = previewDoc.createElementNS(ns, "rect")
         rect.setAttribute("x", String(zoneX))
@@ -1564,7 +1617,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         rect.setAttribute("rx", "2")
         rect.setAttribute("data-img-zone", zoneId)
         rect.setAttribute("style", "cursor:grab")
-        svgEl.appendChild(rect)
+
+        const zoneEl = svgEl.querySelector('#' + CSS.escape(zoneId))
+        const next = zoneEl ? zoneEl.nextSibling : null
+        if (zoneEl && next) {
+          zoneEl.parentNode?.insertBefore(rect, next)
+        } else if (zoneEl) {
+          zoneEl.parentNode?.appendChild(rect)
+        } else {
+          svgEl.appendChild(rect)
+        }
       }
     })
 
@@ -1660,9 +1722,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setSelectedImageZoneIdState(null)
       }
       applySelectionStrokeStyle({ txtIds: tid ? [tid] : [], stickerIds: [], imgId: null })
-      // Remove any existing handle groups
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
-        g.parentNode?.removeChild(g)
+      // Remove any handles not belonging to this selection
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-multi-handles="1"],[data-sticker-handles="1"]')).forEach((grp) => {
+        if (grp.id !== "handles_" + tid) grp.parentNode?.removeChild(grp)
       })
       if (!tid) return
       const ov = svgEl.querySelector("#overlay_" + tid) as SVGRectElement | null
@@ -1673,10 +1735,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const h = parseFloat(ov.getAttribute("height") || "0")
       if (!w || !h) return
 
-      const g = previewDoc.createElementNS(ns, "g")
-      g.setAttribute("id", "handles_" + tid)
-      g.setAttribute("data-text-handles", "1")
-      g.setAttribute("pointer-events", "none")
+      let g = svgEl.querySelector("#handles_" + tid) as SVGGElement | null
+      const isNew = !g
+      if (!g) {
+        g = previewDoc.createElementNS(ns, "g")
+        g.setAttribute("id", "handles_" + tid)
+        g.setAttribute("data-text-handles", "1")
+        g.setAttribute("pointer-events", "none")
+      }
 
       const HANDLE_SIZE = Math.max(Math.min(Math.min(w, h) * 0.12, 12), 5)
       const R = HANDLE_SIZE / 2
@@ -1688,24 +1754,103 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         { key: "br", cx: x + w, cy: y + h, cursor: "nwse-resize" },
       ]
 
+      const HIT_PADDING = isMobile ? 2 : 2
       corners.forEach(({ key, cx, cy, cursor }) => {
-        const r = previewDoc.createElementNS(ns, "rect")
-        r.setAttribute("x", String(cx - R))
-        r.setAttribute("y", String(cy - R))
-        r.setAttribute("width", String(HANDLE_SIZE))
-        r.setAttribute("height", String(HANDLE_SIZE))
-        r.setAttribute("rx", String(Math.max(1, HANDLE_SIZE * 0.25)))
-        r.setAttribute("fill", "#ffffff")
-        r.setAttribute("stroke", "#378ADD")
-        r.setAttribute("stroke-width", "0.8")
-        r.setAttribute("pointer-events", "all")
-        r.setAttribute("data-text-handle", key)
-        r.setAttribute("data-text-id", tid)
-        r.setAttribute("style", "cursor:" + cursor)
-        g.appendChild(r)
+        let visibleR = g!.querySelector(`rect.visible-handle[data-key="${key}"]`) as SVGRectElement | null
+        let hitR = g!.querySelector(`rect.hit-handle[data-text-handle="${key}"]`) as SVGRectElement | null
+
+        if (!visibleR || !hitR) {
+          const old = g!.querySelector(`[data-text-handle="${key}"]`)
+          if (old && !old.classList.contains("hit-handle")) old.parentNode?.removeChild(old)
+
+          visibleR = previewDoc.createElementNS(ns, "rect")
+          visibleR.setAttribute("class", "visible-handle")
+          visibleR.setAttribute("data-key", key)
+          visibleR.setAttribute("fill", "#ffffff")
+          visibleR.setAttribute("stroke", "#378ADD")
+          visibleR.setAttribute("stroke-width", "0.8")
+          visibleR.setAttribute("pointer-events", "none")
+          g!.appendChild(visibleR)
+
+          hitR = previewDoc.createElementNS(ns, "rect")
+          hitR.setAttribute("class", "hit-handle")
+          hitR.setAttribute("fill", "transparent")
+          hitR.setAttribute("pointer-events", "all")
+          hitR.setAttribute("data-text-handle", key)
+          hitR.setAttribute("data-text-id", tid)
+          g!.appendChild(hitR)
+        }
+
+        visibleR.setAttribute("x", String(cx - R))
+        visibleR.setAttribute("y", String(cy - R))
+        visibleR.setAttribute("width", String(HANDLE_SIZE))
+        visibleR.setAttribute("height", String(HANDLE_SIZE))
+        visibleR.setAttribute("rx", String(Math.max(1, HANDLE_SIZE * 0.25)))
+
+        hitR.setAttribute("x", String(cx - R - HIT_PADDING))
+        hitR.setAttribute("y", String(cy - R - HIT_PADDING))
+        hitR.setAttribute("width", String(HANDLE_SIZE + HIT_PADDING * 2))
+        hitR.setAttribute("height", String(HANDLE_SIZE + HIT_PADDING * 2))
+        hitR.setAttribute("style", "cursor:" + cursor)
       })
 
-      svgEl.appendChild(g)
+      if (isMobile) {
+        const mx = x + w / 2
+        const my = y + h + 25
+
+        let line = g!.querySelector("line[data-drag-line='1']") as SVGLineElement | null
+        if (!line) {
+          line = previewDoc.createElementNS(ns, "line")
+          line.setAttribute("data-drag-line", "1")
+          line.setAttribute("stroke", "#378ADD")
+          line.setAttribute("stroke-width", "1.5")
+          line.setAttribute("stroke-dasharray", "3 3")
+          g!.appendChild(line)
+        }
+        line.setAttribute("x1", String(mx))
+        line.setAttribute("y1", String(y + h + R))
+        line.setAttribute("x2", String(mx))
+        line.setAttribute("y2", String(my))
+
+        let dragG = g!.querySelector("[data-drag-handle='1']") as SVGGElement | null
+        if (!dragG) {
+          dragG = previewDoc.createElementNS(ns, "g")
+          dragG.setAttribute("data-drag-handle", "1")
+          dragG.setAttribute("data-drag-type", "txt")
+          dragG.setAttribute("data-drag-id", tid)
+          dragG.setAttribute("style", "cursor: move; pointer-events: all;")
+
+          const innerG = previewDoc.createElementNS(ns, "g")
+          innerG.setAttribute("class", "mobile-drag-icon")
+          innerG.setAttribute("style", "transform-origin: 0px 0px;")
+
+          const circ = previewDoc.createElementNS(ns, "circle")
+          circ.setAttribute("cx", "0")
+          circ.setAttribute("cy", "0")
+          circ.setAttribute("r", "10")
+          circ.setAttribute("fill", "rgba(255, 255, 255, 0.75)")
+          circ.setAttribute("stroke", "#378ADD")
+          circ.setAttribute("stroke-width", ".8")
+          innerG.appendChild(circ)
+
+          const iconPath = previewDoc.createElementNS(ns, "path")
+          iconPath.setAttribute("d", "M-4 -2 L-6 0 L-4 2 M-2 -4 L0 -6 L2 -4 M-2 4 L0 6 L2 4 M4 -2 L6 0 L4 2 M-6 0 L6 0 M0 -6 L0 6")
+          iconPath.setAttribute("fill", "none")
+          iconPath.setAttribute("stroke", "#378ADD")
+          iconPath.setAttribute("stroke-width", ".8")
+          iconPath.setAttribute("stroke-linecap", "round")
+          iconPath.setAttribute("stroke-linejoin", "round")
+          innerG.appendChild(iconPath)
+
+          dragG.appendChild(innerG)
+          g!.appendChild(dragG)
+        }
+        dragG.setAttribute("transform", `translate(${mx}, ${my})`)
+      }
+
+      if (isNew) {
+        svgEl.appendChild(g!)
+      }
     }
 
     const renderStickerHandles = (sid: string | null) => {
@@ -1718,8 +1863,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setSelectedImageZoneIdState(null)
       }
       applySelectionStrokeStyle({ txtIds: [], stickerIds: sid ? [sid] : [], imgId: null })
-      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
-        g.parentNode?.removeChild(g)
+      Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-multi-handles="1"],[data-sticker-handles="1"]')).forEach((grp) => {
+        if (grp.id !== "handles_sticker_" + sid) grp.parentNode?.removeChild(grp)
       })
       if (!sid) return
       const ov = svgEl.querySelector("#sticker_overlay_" + sid) as SVGRectElement | null
@@ -1741,10 +1886,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         ov.removeAttribute("transform")
       }
 
-      const g = previewDoc.createElementNS(ns, "g")
-      g.setAttribute("id", "handles_sticker_" + sid)
-      g.setAttribute("data-sticker-handles", "1")
-      g.setAttribute("pointer-events", "none")
+      let g = svgEl.querySelector("#handles_sticker_" + sid) as SVGGElement | null
+      const isNew = !g
+      if (!g) {
+        g = previewDoc.createElementNS(ns, "g")
+        g.setAttribute("id", "handles_sticker_" + sid)
+        g.setAttribute("data-sticker-handles", "1")
+        g.setAttribute("pointer-events", "none")
+      }
+
       const handleSize = Math.max(Math.min(Math.min(w, h) * 0.12, 12), 5)
       const r = handleSize / 2
       const corners: { key: "tl" | "tr" | "bl" | "br"; cx: number; cy: number; cursor: string }[] = [
@@ -1753,21 +1903,44 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         { key: "bl", cx: x, cy: y + h, cursor: "nesw-resize" },
         { key: "br", cx: x + w, cy: y + h, cursor: "nwse-resize" },
       ]
+      const HIT_PADDING = isMobile ? 2 : 2
       corners.forEach(({ key, cx, cy, cursor }) => {
-        const handle = previewDoc.createElementNS(ns, "rect")
-        handle.setAttribute("x", String(cx - r))
-        handle.setAttribute("y", String(cy - r))
-        handle.setAttribute("width", String(handleSize))
-        handle.setAttribute("height", String(handleSize))
-        handle.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
-        handle.setAttribute("fill", "#ffffff")
-        handle.setAttribute("stroke", "#378ADD")
-        handle.setAttribute("stroke-width", "0.8")
-        handle.setAttribute("pointer-events", "all")
-        handle.setAttribute("data-sticker-handle", key)
-        handle.setAttribute("data-sticker-id", sid)
-        handle.setAttribute("style", "cursor:" + cursor)
-        g.appendChild(handle)
+        let visibleR = g!.querySelector(`rect.visible-handle[data-key="${key}"]`) as SVGRectElement | null
+        let hitR = g!.querySelector(`rect.hit-handle[data-sticker-handle="${key}"]`) as SVGRectElement | null
+
+        if (!visibleR || !hitR) {
+          const old = g!.querySelector(`[data-sticker-handle="${key}"]`)
+          if (old && !old.classList.contains("hit-handle")) old.parentNode?.removeChild(old)
+
+          visibleR = previewDoc.createElementNS(ns, "rect")
+          visibleR.setAttribute("class", "visible-handle")
+          visibleR.setAttribute("data-key", key)
+          visibleR.setAttribute("fill", "#ffffff")
+          visibleR.setAttribute("stroke", "#378ADD")
+          visibleR.setAttribute("stroke-width", "0.8")
+          visibleR.setAttribute("pointer-events", "none")
+          g!.appendChild(visibleR)
+
+          hitR = previewDoc.createElementNS(ns, "rect")
+          hitR.setAttribute("class", "hit-handle")
+          hitR.setAttribute("fill", "transparent")
+          hitR.setAttribute("pointer-events", "all")
+          hitR.setAttribute("data-sticker-handle", key)
+          hitR.setAttribute("data-sticker-id", sid)
+          g!.appendChild(hitR)
+        }
+
+        visibleR.setAttribute("x", String(cx - r))
+        visibleR.setAttribute("y", String(cy - r))
+        visibleR.setAttribute("width", String(handleSize))
+        visibleR.setAttribute("height", String(handleSize))
+        visibleR.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
+
+        hitR.setAttribute("x", String(cx - r - HIT_PADDING))
+        hitR.setAttribute("y", String(cy - r - HIT_PADDING))
+        hitR.setAttribute("width", String(handleSize + HIT_PADDING * 2))
+        hitR.setAttribute("height", String(handleSize + HIT_PADDING * 2))
+        hitR.setAttribute("style", "cursor:" + cursor)
       })
 
       // Rotation handle (free rotation).
@@ -1775,26 +1948,107 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const rotR = ROT_SIZE / 2
       const rotCx = pivotX
       const rotCy = y - ROT_SIZE * 0.7
-      const rot = previewDoc.createElementNS(ns, "rect")
-      rot.setAttribute("x", String(rotCx - rotR))
-      rot.setAttribute("y", String(rotCy - rotR))
-      rot.setAttribute("width", String(ROT_SIZE))
-      rot.setAttribute("height", String(ROT_SIZE))
-      rot.setAttribute("rx", String(Math.max(1, ROT_SIZE * 0.25)))
-      rot.setAttribute("fill", "#ffffff")
-      rot.setAttribute("stroke", "#378ADD")
-      rot.setAttribute("stroke-width", "0.8")
-      rot.setAttribute("pointer-events", "all")
-      rot.setAttribute("data-rotate-handle", "1")
-      rot.setAttribute("data-rotate-kind", "sticker")
-      rot.setAttribute("data-rotate-id", sid)
-      rot.setAttribute("style", "cursor:grab")
-      g.appendChild(rot)
+      let visibleRot = g!.querySelector("rect.visible-handle[data-rotate-handle='1']") as SVGRectElement | null
+      let hitRot = g!.querySelector("rect.hit-handle[data-rotate-handle='1']") as SVGRectElement | null
+
+      if (!visibleRot || !hitRot) {
+        const old = g!.querySelector("rect[data-rotate-handle='1']")
+        if (old && !old.classList.contains("hit-handle")) old.parentNode?.removeChild(old)
+
+        visibleRot = previewDoc.createElementNS(ns, "rect")
+        visibleRot.setAttribute("class", "visible-handle")
+        visibleRot.setAttribute("fill", "#ffffff")
+        visibleRot.setAttribute("stroke", "#378ADD")
+        visibleRot.setAttribute("stroke-width", "0.8")
+        visibleRot.setAttribute("pointer-events", "none")
+        visibleRot.setAttribute("data-rotate-handle", "1")
+        g!.appendChild(visibleRot)
+
+        hitRot = previewDoc.createElementNS(ns, "rect")
+        hitRot.setAttribute("class", "hit-handle")
+        hitRot.setAttribute("fill", "transparent")
+        hitRot.setAttribute("pointer-events", "all")
+        hitRot.setAttribute("data-rotate-handle", "1")
+        hitRot.setAttribute("data-rotate-kind", "sticker")
+        hitRot.setAttribute("data-rotate-id", sid)
+        hitRot.setAttribute("style", "cursor:grab")
+        g!.appendChild(hitRot)
+      }
+
+      visibleRot.setAttribute("x", String(rotCx - rotR))
+      visibleRot.setAttribute("y", String(rotCy - rotR))
+      visibleRot.setAttribute("width", String(ROT_SIZE))
+      visibleRot.setAttribute("height", String(ROT_SIZE))
+      visibleRot.setAttribute("rx", String(Math.max(1, ROT_SIZE * 0.5))) // circular
+
+      hitRot.setAttribute("x", String(rotCx - rotR - HIT_PADDING))
+      hitRot.setAttribute("y", String(rotCy - rotR - HIT_PADDING))
+      hitRot.setAttribute("width", String(ROT_SIZE + HIT_PADDING * 2))
+      hitRot.setAttribute("height", String(ROT_SIZE + HIT_PADDING * 2))
+
+      if (isMobile) {
+        const mx = x + w / 2
+        const my = y + h + 25
+
+        let line = g!.querySelector("line[data-drag-line='1']") as SVGLineElement | null
+        if (!line) {
+          line = previewDoc.createElementNS(ns, "line")
+          line.setAttribute("data-drag-line", "1")
+          line.setAttribute("stroke", "#378ADD")
+          line.setAttribute("stroke-width", "1.5")
+          line.setAttribute("stroke-dasharray", "3 3")
+          g!.appendChild(line)
+        }
+        line.setAttribute("x1", String(mx))
+        line.setAttribute("y1", String(y + h + r))
+        line.setAttribute("x2", String(mx))
+        line.setAttribute("y2", String(my))
+
+        let dragG = g!.querySelector("[data-drag-handle='1']") as SVGGElement | null
+        if (!dragG) {
+          dragG = previewDoc.createElementNS(ns, "g")
+          dragG.setAttribute("data-drag-handle", "1")
+          dragG.setAttribute("data-drag-type", "sticker")
+          dragG.setAttribute("data-drag-id", sid)
+          dragG.setAttribute("style", "cursor: move; pointer-events: all;")
+
+          const innerG = previewDoc.createElementNS(ns, "g")
+          innerG.setAttribute("class", "mobile-drag-icon")
+          innerG.setAttribute("style", "transform-origin: 0px 0px;")
+
+          const circ = previewDoc.createElementNS(ns, "circle")
+          circ.setAttribute("cx", "0")
+          circ.setAttribute("cy", "0")
+          circ.setAttribute("r", "10")
+          circ.setAttribute("fill", "rgba(255, 255, 255, 0.75)")
+          circ.setAttribute("stroke", "#378ADD")
+          circ.setAttribute("stroke-width", "0.8")
+          innerG.appendChild(circ)
+
+          const iconPath = previewDoc.createElementNS(ns, "path")
+          iconPath.setAttribute("d", "M-4 -2 L-6 0 L-4 2 M-2 -4 L0 -6 L2 -4 M-2 4 L0 6 L2 4 M4 -2 L6 0 L4 2 M-6 0 L6 0 M0 -6 L0 6")
+          iconPath.setAttribute("fill", "none")
+          iconPath.setAttribute("stroke", "#378ADD")
+          iconPath.setAttribute("stroke-width", "0.8")
+          iconPath.setAttribute("stroke-linecap", "round")
+          iconPath.setAttribute("stroke-linejoin", "round")
+          innerG.appendChild(iconPath)
+
+          dragG.appendChild(innerG)
+          g!.appendChild(dragG)
+        }
+        dragG.setAttribute("transform", `translate(${mx}, ${my})`)
+      }
 
       if (Math.abs(angle) > 0.0001) {
-        g.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+        g!.setAttribute("transform", `rotate(${angle} ${pivotX} ${pivotY})`)
+      } else {
+        g!.removeAttribute("transform")
       }
-      svgEl.appendChild(g)
+
+      if (isNew) {
+        svgEl.appendChild(g!)
+      }
     }
 
     const getMultiSelectionBox = (idsTxt: string[], idsSticker: string[]) => {
@@ -1840,17 +2094,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     ) => {
       Array.from(
         svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')
-      ).forEach((g) => {
-        g.parentNode?.removeChild(g)
+      ).forEach((grp) => {
+        if (grp.id !== "handles_multi") grp.parentNode?.removeChild(grp)
       })
       if (idsTxt.length + idsSticker.length <= 1) return
       const box = boxOverride || getMultiSelectionBox(idsTxt, idsSticker)
       if (!box || !box.w || !box.h) return
 
-      const g = previewDoc.createElementNS(ns, "g")
-      g.setAttribute("id", "handles_multi")
-      g.setAttribute("data-multi-handles", "1")
-      g.setAttribute("pointer-events", "none")
+      let g = svgEl.querySelector("#handles_multi") as SVGGElement | null
+      const isNew = !g
+      if (!g) {
+        g = previewDoc.createElementNS(ns, "g")
+        g.setAttribute("id", "handles_multi")
+        g.setAttribute("data-multi-handles", "1")
+        g.setAttribute("pointer-events", "none")
+      }
 
       const handleSize = Math.max(Math.min(Math.min(box.w, box.h) * 0.12, 14), 6)
       const r = handleSize / 2
@@ -1860,22 +2118,102 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         { key: "bl", cx: box.x, cy: box.y + box.h, cursor: "nesw-resize" },
         { key: "br", cx: box.x + box.w, cy: box.y + box.h, cursor: "nwse-resize" },
       ]
+      const HIT_PADDING = isMobile ? 2 : 2
       corners.forEach(({ key, cx, cy, cursor }) => {
-        const handle = previewDoc.createElementNS(ns, "rect")
-        handle.setAttribute("x", String(cx - r))
-        handle.setAttribute("y", String(cy - r))
-        handle.setAttribute("width", String(handleSize))
-        handle.setAttribute("height", String(handleSize))
-        handle.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
-        handle.setAttribute("fill", "#ffffff")
-        handle.setAttribute("stroke", "#378ADD")
-        handle.setAttribute("stroke-width", "0.9")
-        handle.setAttribute("pointer-events", "all")
-        handle.setAttribute("data-multi-handle", key)
-        handle.setAttribute("style", "cursor:" + cursor)
-        g.appendChild(handle)
+        let visibleR = g!.querySelector(`rect.visible-handle[data-key="${key}"]`) as SVGRectElement | null
+        let hitR = g!.querySelector(`rect.hit-handle[data-multi-handle="${key}"]`) as SVGRectElement | null
+
+        if (!visibleR || !hitR) {
+          const old = g!.querySelector(`[data-multi-handle="${key}"]`)
+          if (old && !old.classList.contains("hit-handle")) old.parentNode?.removeChild(old)
+
+          visibleR = previewDoc.createElementNS(ns, "rect")
+          visibleR.setAttribute("class", "visible-handle")
+          visibleR.setAttribute("data-key", key)
+          visibleR.setAttribute("fill", "#ffffff")
+          visibleR.setAttribute("stroke", "#378ADD")
+          visibleR.setAttribute("stroke-width", "0.9")
+          visibleR.setAttribute("pointer-events", "none")
+          g!.appendChild(visibleR)
+
+          hitR = previewDoc.createElementNS(ns, "rect")
+          hitR.setAttribute("class", "hit-handle")
+          hitR.setAttribute("fill", "transparent")
+          hitR.setAttribute("pointer-events", "all")
+          hitR.setAttribute("data-multi-handle", key)
+          g!.appendChild(hitR)
+        }
+
+        visibleR.setAttribute("x", String(cx - r))
+        visibleR.setAttribute("y", String(cy - r))
+        visibleR.setAttribute("width", String(handleSize))
+        visibleR.setAttribute("height", String(handleSize))
+        visibleR.setAttribute("rx", String(Math.max(1, handleSize * 0.25)))
+
+        hitR.setAttribute("x", String(cx - r - HIT_PADDING))
+        hitR.setAttribute("y", String(cy - r - HIT_PADDING))
+        hitR.setAttribute("width", String(handleSize + HIT_PADDING * 2))
+        hitR.setAttribute("height", String(handleSize + HIT_PADDING * 2))
+        hitR.setAttribute("style", "cursor:" + cursor)
       })
-      svgEl.appendChild(g)
+
+      if (isMobile) {
+        const mx = box.x + box.w / 2
+        const my = box.y + box.h + 25
+
+        let line = g!.querySelector("line[data-drag-line='1']") as SVGLineElement | null
+        if (!line) {
+          line = previewDoc.createElementNS(ns, "line")
+          line.setAttribute("data-drag-line", "1")
+          line.setAttribute("stroke", "#378ADD")
+          line.setAttribute("stroke-width", "1.5")
+          line.setAttribute("stroke-dasharray", "3 3")
+          g!.appendChild(line)
+        }
+        line.setAttribute("x1", String(mx))
+        line.setAttribute("y1", String(box.y + box.h + r))
+        line.setAttribute("x2", String(mx))
+        line.setAttribute("y2", String(my))
+
+        let dragG = g!.querySelector("[data-drag-handle='1']") as SVGGElement | null
+        if (!dragG) {
+          dragG = previewDoc.createElementNS(ns, "g")
+          dragG.setAttribute("data-drag-handle", "1")
+          dragG.setAttribute("data-drag-type", "multi")
+          dragG.setAttribute("data-drag-id", "multi")
+          dragG.setAttribute("style", "cursor: move; pointer-events: all;")
+
+          const innerG = previewDoc.createElementNS(ns, "g")
+          innerG.setAttribute("class", "mobile-drag-icon")
+          innerG.setAttribute("style", "transform-origin: 0px 0px;")
+
+          const circ = previewDoc.createElementNS(ns, "circle")
+          circ.setAttribute("cx", "0")
+          circ.setAttribute("cy", "0")
+          circ.setAttribute("r", "10")
+          circ.setAttribute("fill", "rgba(255, 255, 255, 0.75)")
+          circ.setAttribute("stroke", "#378ADD")
+          circ.setAttribute("stroke-width", "0.8")
+          innerG.appendChild(circ)
+
+          const iconPath = previewDoc.createElementNS(ns, "path")
+          iconPath.setAttribute("d", "M-4 -2 L-6 0 L-4 2 M-2 -4 L0 -6 L2 -4 M-2 4 L0 6 L2 4 M4 -2 L6 0 L4 2 M-6 0 L6 0 M0 -6 L0 6")
+          iconPath.setAttribute("fill", "none")
+          iconPath.setAttribute("stroke", "#378ADD")
+          iconPath.setAttribute("stroke-width", "0.8")
+          iconPath.setAttribute("stroke-linecap", "round")
+          iconPath.setAttribute("stroke-linejoin", "round")
+          innerG.appendChild(iconPath)
+
+          dragG.appendChild(innerG)
+          g!.appendChild(dragG)
+        }
+        dragG.setAttribute("transform", `translate(${mx}, ${my})`)
+      }
+
+      if (isNew) {
+        svgEl.appendChild(g!)
+      }
     }
 
     const buildMultiSelectionDragState = (
@@ -2386,7 +2724,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           chip.style.borderColor = idx === activeSuggestionIndex ? "rgb(59 130 246)" : "rgb(203 213 225)"
           chip.style.background = idx === activeSuggestionIndex ? "rgb(219 234 254)" : "white"
           chip.style.color = "rgb(15 23 42)"
-          chip.addEventListener("mousedown", (evt) => {
+          chip.addEventListener("pointerdown", (evt) => {
             evt.preventDefault()
             applySuggestion(idx)
             editorEl.focus()
@@ -2605,16 +2943,56 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       editorEl.focus()
     }
 
-    const onMouseDown = (e: MouseEvent) => {
+    const onMouseDown = (e: MouseEvent | PointerEvent) => {
       const target = e.target as Element
       const isMultiToggle = e.ctrlKey || e.metaKey
       const handle = target.closest("[data-text-handle]") as SVGElement | null
       const stickerHandle = target.closest("[data-sticker-handle]") as SVGElement | null
       const multiHandle = target.closest("[data-multi-handle]") as SVGElement | null
       const rotateHandle = target.closest("[data-rotate-handle='1']") as SVGElement | null
-      const imgOv = target.closest("[data-img-zone]")
-      const txtOv = target.closest("[data-text-zone]")
-      const stickerOv = target.closest("[data-sticker-zone]")
+      let imgOv = target.closest("[data-img-zone]")
+      let txtOv = target.closest("[data-text-zone]")
+      let stickerOv = target.closest("[data-sticker-zone]")
+
+      const dragHandle = target.closest("[data-drag-handle='1']") as SVGElement | null
+      if (dragHandle) {
+        const type = dragHandle.getAttribute("data-drag-type") || "txt"
+        const id = dragHandle.getAttribute("data-drag-id") || dragHandle.getAttribute("data-text-id")
+
+        if (type === "txt" && id) {
+          txtOv = svgEl.querySelector(`[data-text-zone="${id}"]`)
+        } else if (type === "sticker" && id) {
+          stickerOv = svgEl.querySelector(`[data-sticker-zone="${id}"]`)
+        } else if (type === "multi") {
+          const firstTxt = selectedTextIdsRef.current[0]
+          const firstSticker = selectedStickerIdsRef.current[0]
+          if (firstTxt) txtOv = svgEl.querySelector(`[data-text-zone="${firstTxt}"]`)
+          else if (firstSticker) stickerOv = svgEl.querySelector(`[data-sticker-zone="${firstSticker}"]`)
+        }
+      }
+
+      // On touch devices without hover, overlays might be hidden. Fallback to actual elements.
+      if (!txtOv) {
+        const textEl = target.closest('text') || target.closest('tspan') || target.closest('[id^="editable_"]')
+        if (textEl) {
+          const tid = textEl.id || textEl.closest('[id^="editable_"]')?.id
+          if (tid && tid.startsWith("editable_")) {
+            txtOv = svgEl.querySelector(`[data-text-zone="${tid}"]`)
+          }
+        }
+      }
+      if (!stickerOv) {
+        const imgEl = target.closest('image[id^="sticker_"]')
+        if (imgEl && imgEl.id) {
+          stickerOv = svgEl.querySelector(`[data-sticker-zone="${imgEl.id}"]`)
+        }
+      }
+      if (!imgOv) {
+        const imgZoneEl = target.closest('[id^="image_zone_"]')
+        if (imgZoneEl && imgZoneEl.id) {
+          imgOv = svgEl.querySelector(`[data-img-zone="${imgZoneEl.id}"]`)
+        }
+      }
       const up = target.closest("[data-upload-zone]")
       if (up) {
         const zoneId = up.getAttribute("data-upload-zone")
@@ -2904,7 +3282,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           ; (imgOv as HTMLElement).style.cursor = "grabbing"
       }
       if (txtOv) {
-        renderStickerHandles(null)
         const tid = txtOv.getAttribute("data-text-zone")!
         const prevSelected = selectedTextId
         const multiTxt = selectedTextIdsRef.current
@@ -2916,8 +3293,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           e.preventDefault()
           setSelectedImageZoneIdState(null)
           setSelectedStickerIdState(null)
-          renderTextHandles(null)
-          renderStickerHandles(null)
 
           setSelectedTextIdsState((prev) => {
             const set = new Set(prev)
@@ -2961,7 +3336,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setSelectedStickerIdsState([])
         renderTextHandles(tid)
         const docEl = svgDocRef.current?.querySelector(idSelector(tid))
-        if (!docEl) return
+        if (!docEl) {
+          return
+        }
         const firstTspan = (docEl as SVGElement).querySelector("tspan") as SVGElement | null
         const startTX = parseFloat(firstTspan?.getAttribute("x") || docEl.getAttribute("x") || "0")
         const startTY = parseFloat(firstTspan?.getAttribute("y") || docEl.getAttribute("y") || "0")
@@ -2990,7 +3367,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           ; (txtOv as HTMLElement).style.cursor = "grabbing"
       }
       if (stickerOv) {
-        renderTextHandles(null)
         const sid = stickerOv.getAttribute("data-sticker-zone")!
         const multiTxt = selectedTextIdsRef.current
         const multiStickers = selectedStickerIdsRef.current
@@ -3000,8 +3376,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           e.preventDefault()
           setSelectedImageZoneIdState(null)
           setSelectedTextIdState(null)
-          renderTextHandles(null)
-          renderStickerHandles(null)
 
           setSelectedStickerIdsState((prev) => {
             const set = new Set(prev)
@@ -3073,7 +3447,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
     }
 
-    const onMouseMove = (e: MouseEvent) => {
+    const onMouseMove = (e: MouseEvent | PointerEvent) => {
       if (!drag) return
 
       const dx = e.clientX - drag.startX
@@ -3846,7 +4220,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
     }
 
-    const onMouseUp = (e: MouseEvent) => {
+    const onMouseUp = (e: MouseEvent | PointerEvent) => {
       if (!drag) return
       const wasDrag = drag.moved
       const type = drag.type
@@ -4040,11 +4414,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (!wasDrag && type === "txt" && openEditorOnClick) openEditor(tid)
     }
 
-    const onWindowMouseDown = (e: MouseEvent) => {
+    const onWindowMouseDown = (e: MouseEvent | PointerEvent) => {
       const target = e.target as Element | null
       if (!target) return
       // Ignore clicks that are inside the preview svg itself.
-      if (svgEl.contains(target)) return
+      if (svgEl.contains(target)) {
+        return
+      }
       // Ignore clicks in active inline editor overlay (textarea/input on top of svg).
       if (target.closest("#txt-editor-overlay")) return
       // Keep selected image-zone active while using its controls in the field editor panel
@@ -4086,16 +4462,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       applySelectionStrokeStyle({ txtIds: [], stickerIds: [], imgId: null })
     }
 
-    svgEl.addEventListener("mousedown", onMouseDown)
-    window.addEventListener("mousemove", onMouseMove)
-    window.addEventListener("mouseup", onMouseUp)
-    window.addEventListener("mousedown", onWindowMouseDown)
+    svgEl.addEventListener("pointerdown", onMouseDown as any)
+    window.addEventListener("pointermove", onMouseMove as any)
+    window.addEventListener("pointerup", onMouseUp as any)
+    window.addEventListener("pointercancel", onMouseUp as any)
+    window.addEventListener("pointerdown", onWindowMouseDown as any)
 
     return () => {
-      svgEl.removeEventListener("mousedown", onMouseDown)
-      window.removeEventListener("mousemove", onMouseMove)
-      window.removeEventListener("mouseup", onMouseUp)
-      window.removeEventListener("mousedown", onWindowMouseDown)
+      svgEl.removeEventListener("pointerdown", onMouseDown as any)
+      window.removeEventListener("pointermove", onMouseMove as any)
+      window.removeEventListener("pointerup", onMouseUp as any)
+      window.removeEventListener("pointercancel", onMouseUp as any)
+      window.removeEventListener("pointerdown", onWindowMouseDown as any)
     }
   }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
 
@@ -4146,7 +4524,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom
     }
 
-    const onMove = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent | PointerEvent) => {
       // When editing text, an invisible textarea sits above the SVG and can trigger svg mouseleave.
       // Using the SVG bounding box keeps hover state stable while the pointer is visually inside.
       const inside = isPointInsideSvg(e.clientX, e.clientY)
@@ -4165,11 +4543,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setHoveredElementId(null)
     }
 
-    container.addEventListener("mousemove", onMove, { passive: true })
-    container.addEventListener("mouseleave", onLeaveContainer)
+    container.addEventListener("pointermove", onMove as any, { passive: true })
+    container.addEventListener("pointerleave", onLeaveContainer)
     return () => {
-      container.removeEventListener("mousemove", onMove as any)
-      container.removeEventListener("mouseleave", onLeaveContainer)
+      container.removeEventListener("pointermove", onMove as any)
+      container.removeEventListener("pointerleave", onLeaveContainer)
     }
   }, [previewVersion])
 
@@ -4264,17 +4642,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5">
+    <div className="flex h-[100dvh] flex-col bg-background overflow-hidden">
+      <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-3 sm:px-5">
         <Link href="/" className="shrink-0">
-          <span className="select-none font-sans text-[28px] font-black italic tracking-tight text-[#E13B30]">
+          <span className="select-none font-sans text-[20px] sm:text-[28px] font-black italic tracking-tight text-[#E13B30]">
             Cardcraft
           </span>
         </Link>
 
-        <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center" id="editor-header-controls">
+        <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center sm:absolute sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2" id="editor-header-controls">
           {(selectedTextIdState || selectedStickerIdState || (selectedImageZoneIdState && selectedImageHasImage) || selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
-            <div className="flex items-center gap-1 rounded-full border border-border bg-[#F9FAFB] p-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-full border border-border bg-[#F9FAFB] p-1 shadow-md sm:shadow-sm">
               {selectedImageZoneIdState && selectedImageZone && selectedImageHasImage && selectedImageState && (
                 <>
                   <div className="flex items-center gap-2 px-2">
@@ -4419,7 +4797,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   <div className="mx-1 h-4 w-px bg-border"></div>
                 </>
               )}
-              
+
               {!(selectedImageZoneIdState && selectedImageHasImage) && (
                 <>
                   <Button
@@ -4448,15 +4826,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Button
             variant="outline"
             data-sticker-toggle="true"
-            className="h-10 gap-2 rounded-full border-[#E5E7EB] bg-[#F9FAFB] px-4 font-medium text-zinc-700 shadow-sm hover:bg-[#E5E7EB]"
+            className="h-10 gap-2 rounded-full border-[#E5E7EB] bg-[#F9FAFB] px-3 sm:px-4 font-medium text-zinc-700 shadow-sm hover:bg-[#E5E7EB]"
             onClick={() => setIsStickerDialogOpen(!isStickerDialogOpen)}
           >
             <Sticker className="h-4 w-4" />
-            Stickers
+            <span className="hidden sm:inline">Stickers</span>
           </Button>
 
           <div className="flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-[#F9FAFB] p-1 shadow-sm" data-history-tick={historyTick}>
@@ -4483,15 +4861,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           <Button
             onClick={handleExportPDF}
             disabled={isExporting || !svgLoaded}
-            className="h-10 gap-2 rounded-full bg-[#10b981] px-6 font-medium text-white shadow-sm hover:bg-[#059669]"
+            className="h-10 gap-2 rounded-full bg-[#10b981] px-3 sm:px-6 font-medium text-white shadow-sm hover:bg-[#059669]"
           >
             <Download className="h-4 w-4" />
-            {isExporting ? "Downloading…" : "Download"}
+            <span className="hidden sm:inline">{isExporting ? "Downloading…" : "Download"}</span>
           </Button>
         </div>
       </header>
 
-      <div id="app" className="flex flex-1 flex-col" style={{ minHeight: 620 }}>
+      <div id="app" className="flex flex-1 flex-col overflow-hidden" style={isMobile ? undefined : { minHeight: 620 }}>
         {/* Hidden inputs for image uploads */}
         {imageZones.map((zone) => (
           <input
@@ -4511,21 +4889,22 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           />
         ))}
 
-        <div className="flex min-h-[570px] flex-1 items-stretch justify-center">
+        <div className={`flex flex-1 items-stretch justify-center overflow-hidden ${isMobile ? "" : "min-h-[570px]"}`}>
           {/* Draggable Sticker Dialog */}
           {isStickerDialogOpen && (
             <div
               ref={stickerDialogRef}
-              className="fixed z-50 flex w-[280px] flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg"
-              style={{
+              className={`fixed z-50 flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg ${isMobile ? "bottom-24 left-4 right-4 max-h-[40vh]" : "w-[280px]"}`}
+              style={isMobile ? undefined : {
                 left: stickerDialogPos.x,
                 top: stickerDialogPos.y,
                 maxHeight: 'calc(100vh - 100px)',
               }}
             >
               <div
-                className="flex cursor-move items-center justify-between border-b border-border bg-muted/30 px-3 py-2"
+                className={`flex items-center justify-between border-b border-border bg-muted/30 px-3 py-2 ${isMobile ? "" : "cursor-move"}`}
                 onPointerDown={(e) => {
+                  if (isMobile) return
                   e.preventDefault()
                   draggingDialogRef.current = {
                     startX: e.clientX,
@@ -4592,7 +4971,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <div
               ref={previewContainerRef}
-              className="flex flex-1 items-start justify-center overflow-auto bg-muted/30 p-5"
+              className="flex flex-1 items-start justify-center overflow-auto bg-muted/30 p-2 sm:p-5 pb-24 sm:pb-5"
               onDragOver={(e) => {
                 if (e.dataTransfer.types.includes("application/x-sticker")) {
                   e.preventDefault()

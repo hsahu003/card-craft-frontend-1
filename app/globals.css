@@ -142,3 +142,11 @@
   scrollbar-width: none;
   /* Firefox */
 }
+
+.mobile-drag-icon {
+  transition: opacity 0.15s ease;
+  opacity: 0.65;
+}
+.mobile-drag-icon:active {
+  opacity: 1;
+}
