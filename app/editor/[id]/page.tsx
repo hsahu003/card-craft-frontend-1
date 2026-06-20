@@ -6,7 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
-import { Copy, Redo2, Trash2, Undo2, Download, Sticker, X, FlipHorizontal } from "lucide-react"
+import { Copy, Redo2, Trash2, Undo2, Download, Sticker, X, FlipHorizontal, ListChecks } from "lucide-react"
+import { Navbar } from "@/components/navbar"
 import {
   getSVGSize,
   getSVGSizePx,
@@ -72,7 +73,7 @@ const LINE_HEIGHT_RATIO = 1.25
 const OVERLAY_DASH = "2 1"
 const OVERLAY_OPACITY_DASH_NORMAL = 0.6
 const OVERLAY_OPACITY_DASH_SUBTLE = 0.15
-const OVERLAY_OPACITY_DASH_HOVER = 0.78
+const OVERLAY_OPACITY_DASH_HOVER = 1
 
 type OverlayBoundingPaintInput = {
   pointerInsidePreview: boolean
@@ -80,6 +81,7 @@ type OverlayBoundingPaintInput = {
   solidTextIds: string[]
   solidStickerIds: string[]
   solidImgId: string | null
+  forceShowHint?: boolean
 }
 
 /** Stroke / dash / opacity for text, sticker, and image-zone overlay rects only. */
@@ -104,13 +106,14 @@ function paintOverlayBoundingPresentation(svg: SVGElement, input: OverlayBoundin
 
     const el = r as unknown as HTMLElement
 
-    if (!input.pointerInsidePreview && !hasSelection) {
+    if (!input.pointerInsidePreview && !hasSelection && !input.forceShowHint) {
       el.style.display = "none"
       continue
     }
 
     // Selection active but pointer left the preview: only the selected solid ring(s) stay visible.
-    if (!input.pointerInsidePreview && hasSelection && !isSolid) {
+    // If we're forcing the hint, we should still show the idle ones.
+    if (!input.pointerInsidePreview && hasSelection && !isSolid && !input.forceShowHint) {
       el.style.display = "none"
       continue
     }
@@ -126,7 +129,8 @@ function paintOverlayBoundingPresentation(svg: SVGElement, input: OverlayBoundin
     r.setAttribute("stroke-dasharray", OVERLAY_DASH)
 
     if (!hasSelection) {
-      const op = id === input.hoveredElementId ? OVERLAY_OPACITY_DASH_HOVER : OVERLAY_OPACITY_DASH_NORMAL
+      const isHinting = input.forceShowHint && !input.pointerInsidePreview
+      const op = id === input.hoveredElementId ? OVERLAY_OPACITY_DASH_HOVER : (isHinting ? OVERLAY_OPACITY_DASH_HOVER : OVERLAY_OPACITY_DASH_NORMAL)
       r.setAttribute("stroke-opacity", String(op))
       continue
     }
@@ -134,7 +138,8 @@ function paintOverlayBoundingPresentation(svg: SVGElement, input: OverlayBoundin
     if (input.pointerInsidePreview && id === input.hoveredElementId) {
       r.setAttribute("stroke-opacity", String(OVERLAY_OPACITY_DASH_NORMAL))
     } else {
-      r.setAttribute("stroke-opacity", String(OVERLAY_OPACITY_DASH_SUBTLE))
+      const isHinting = input.forceShowHint && !input.pointerInsidePreview
+      r.setAttribute("stroke-opacity", String(isHinting ? OVERLAY_OPACITY_DASH_HOVER : OVERLAY_OPACITY_DASH_SUBTLE))
     }
   }
 
@@ -282,11 +287,19 @@ function getLeafTspansInDomOrder(textEl: SVGElement) {
   )
 }
 
+
+
+function enforceWesternNumerals(value: string) {
+  const devanagariDigits = "०१२३४५६७८९"
+  return value.replace(/[०-९]/g, (match) => devanagariDigits.indexOf(match).toString())
+}
+
 function normalizeEditableValue(value: string) {
-  const hasVisibleContent = value
-    .split("\n")
-    .some((line) => line.trim().length > 0)
-  return hasVisibleContent ? value : "text here"
+  let val = enforceWesternNumerals(value)
+  const lines = val.split("\n")
+  const hasVisibleContent = lines.some((line) => line.trim().length > 0)
+  if (!hasVisibleContent) return "text here"
+  return lines.map(line => line.replace(/ +$/, match => "\u00A0".repeat(match.length))).join("\n")
 }
 
 function applyEditableValueToTextEl(target: SVGElement, value: string, forceStepY?: number) {
@@ -369,6 +382,22 @@ function applyEditableValueToTextEl(target: SVGElement, value: string, forceStep
     node.parentNode?.removeChild(node)
   })
 
+  // Remove lingering whitespace text nodes from the entire target hierarchy.
+  // Inkscape's xml:space="preserve" causes these to be rendered as trailing spaces,
+  // artificially inflating the getBBox() and thus the selection box.
+  const removeWhitespaceTextNodes = (el: Node) => {
+    Array.from(el.childNodes).forEach((child) => {
+      if (child.nodeType === 3) { // Node.TEXT_NODE
+        if (!child.textContent?.trim()) {
+          el.removeChild(child)
+        }
+      } else if (child.nodeType === 1) { // Node.ELEMENT_NODE
+        removeWhitespaceTextNodes(child)
+      }
+    })
+  }
+  removeWhitespaceTextNodes(target)
+
   parts.forEach((line, i) => {
     const newLeaf = templateLeaf.cloneNode(false) as SVGElement
     newLeaf.removeAttribute("id")
@@ -381,11 +410,15 @@ function applyEditableValueToTextEl(target: SVGElement, value: string, forceStep
 
 function getCurrentWordRange(value: string, caretIndex: number) {
   const safeCaret = Math.max(0, Math.min(caretIndex, value.length))
-  let start = safeCaret
+  const isAfterSingleSpace = safeCaret > 0 && /\s/.test(value[safeCaret - 1] || "") && (safeCaret === 1 || !/\s/.test(value[safeCaret - 2] || ""))
+  const lookupCaret = isAfterSingleSpace ? safeCaret - 1 : safeCaret
+
+  let start = lookupCaret
   while (start > 0 && !/\s/.test(value[start - 1] || "")) start -= 1
-  let end = safeCaret
+  let end = lookupCaret
   while (end < value.length && !/\s/.test(value[end] || "")) end += 1
-  return { start, end, word: value.slice(start, safeCaret) }
+
+  return { start, end, word: value.slice(start, lookupCaret), isAfterSingleSpace }
 }
 
 function resolveTransliterationLanguage(language: TemplateLanguage): "hindi" | "marathi" | null {
@@ -446,6 +479,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const draggingDialogRef = useRef<{ startX: number; startY: number; initX: number; initY: number } | null>(null)
   const stickerDialogRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [mobileEditTextDialog, setMobileEditTextDialog] = useState<{ isOpen: boolean; tid: string | null }>({ isOpen: false, tid: null })
+  const mobileDialogOpenedAtRef = useRef<number>(0)
+  const [mobileTransliteration, setMobileTransliteration] = useState<{ suggestions: string[]; wordRange: { start: number; end: number; word: string; isAfterSingleSpace?: boolean } | null }>({ suggestions: [], wordRange: null })
+  const mobileSuggestionDebounceRef = useRef<number>(0)
+  const mobileSuggestionReqIdRef = useRef<number>(0)
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
+  const isMultiSelectModeRef = useRef(isMultiSelectMode)
+  isMultiSelectModeRef.current = isMultiSelectMode
 
   useEffect(() => {
     // Set reasonable default position once mounted to avoid SSR issues with window
@@ -498,6 +539,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const previewPointerRef = useRef({ pointerInside: false, hoverId: null as string | null })
   previewPointerRef.current.pointerInside = isPreviewHovering
   previewPointerRef.current.hoverId = hoveredElementId
+  const showInitialHintRef = useRef(false)
+  const hintTimeoutRef = useRef<number | null>(null)
+
+  const triggerInitialHint = useCallback(() => {
+    showInitialHintRef.current = true
+    setPreviewVersion(v => v + 1)
+    if (hintTimeoutRef.current) window.clearTimeout(hintTimeoutRef.current)
+    hintTimeoutRef.current = window.setTimeout(() => {
+      showInitialHintRef.current = false
+      setPreviewVersion(v => v + 1)
+    }, 1500)
+  }, [])
 
   const selectedCategoryStickers = stickerCategories.find((c) => c.name === selectedStickerCategory)?.stickers ?? []
   const selectedTextField = selectedTextIdState ? textFields.find((field) => field.id === selectedTextIdState) ?? null : null
@@ -580,8 +633,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             styleEl.textContent = fontImports
             document.head.appendChild(styleEl)
 
-            if (document.fonts && document.fonts.ready) {
-              document.fonts.ready.then(() => {
+            if (document.fonts) {
+              const fontPromises = Array.from(fontsToLoad)
+                .filter((f) => f && !systemFonts.has(f))
+                .map((f) => document.fonts.load(`16px "${f}"`).catch(() => []))
+
+              Promise.all(fontPromises).then(() => {
+                setPreviewVersion((v) => v + 1)
+              }).catch(() => {
                 setPreviewVersion((v) => v + 1)
               })
             }
@@ -598,8 +657,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const textVals: Record<string, string> = {}
         textEls.forEach((el) => {
           const id = el.getAttribute("id")
-          if (id) textVals[id] = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+          if (id) {
+            // Safely convert numerals in the DOM without destroying <tspan> layout
+            const walk = (node: Node) => {
+              if (node.nodeType === 3 && node.nodeValue) {
+                node.nodeValue = enforceWesternNumerals(node.nodeValue)
+              }
+              node.childNodes.forEach(walk)
+            }
+            walk(el)
+
+            const rawVal = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+            textVals[id] = enforceWesternNumerals(rawVal)
+          }
         })
+
         setTextValues(textVals)
 
         const imageEls = Array.from(doc.querySelectorAll<SVGElement>(`[id^="${IMAGE_ZONE_PREFIX}"]`))
@@ -647,9 +719,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         setPreviewVersion((v) => v + 1)
         setSvgLoaded(true)
         setHistoryTick((t) => t + 1)
+        triggerInitialHint()
       })
       .catch(() => setSvgLoaded(false))
-  }, [template.svg, template.id])
+  }, [template.svg, template.id, triggerInitialHint])
 
   const captureHistoryEntry = useCallback((): EditorHistoryEntry => {
     const doc = svgDocRef.current
@@ -1332,11 +1405,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const textVals: Record<string, string> = {}
     textEls.forEach((el) => {
       const id = el.getAttribute("id")
-      if (id) textVals[id] = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+      if (id) {
+        const walk = (node: Node) => {
+          if (node.nodeType === 3 && node.nodeValue) {
+            node.nodeValue = enforceWesternNumerals(node.nodeValue)
+          }
+          node.childNodes.forEach(walk)
+        }
+        walk(el)
+
+        const rawVal = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+        textVals[id] = enforceWesternNumerals(rawVal)
+      }
     })
     setTextValues(textVals)
     setPreviewVersion((v) => v + 1)
-  }, [])
+    triggerInitialHint()
+  }, [triggerInitialHint])
 
   const undo = useCallback(() => {
     if (isApplyingHistoryRef.current) return
@@ -1611,22 +1696,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         rect.setAttribute("height", String(zoneH))
         rect.setAttribute("fill", "transparent")
         // Selection box for image zones: draw around the effective clip bounds when clip-path exists.
-        rect.setAttribute("stroke", "red")
-        rect.setAttribute("stroke-width", ".3")
+        rect.setAttribute("stroke", "#378ADD")
+        rect.setAttribute("stroke-width", ".5")
         rect.setAttribute("stroke-dasharray", OVERLAY_DASH)
         rect.setAttribute("rx", "2")
         rect.setAttribute("data-img-zone", zoneId)
         rect.setAttribute("style", "cursor:grab")
 
-        const zoneEl = svgEl.querySelector('#' + CSS.escape(zoneId))
-        const next = zoneEl ? zoneEl.nextSibling : null
-        if (zoneEl && next) {
-          zoneEl.parentNode?.insertBefore(rect, next)
-        } else if (zoneEl) {
-          zoneEl.parentNode?.appendChild(rect)
-        } else {
-          svgEl.appendChild(rect)
-        }
+        svgEl.appendChild(rect)
       }
     })
 
@@ -1660,8 +1737,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("width", String(w))
       ov.setAttribute("height", String(h))
       ov.setAttribute("fill", "transparent")
-      ov.setAttribute("stroke", "#323f4b")
-      ov.setAttribute("stroke-width", ".3")
+      ov.setAttribute("stroke", "#378ADD")
+      ov.setAttribute("stroke-width", ".5")
       ov.setAttribute("stroke-dasharray", OVERLAY_DASH)
       ov.setAttribute("rx", "1")
       ov.setAttribute("style", "cursor:grab")
@@ -1683,8 +1760,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       ov.setAttribute("width", String(rw))
       ov.setAttribute("height", String(rh))
       ov.setAttribute("fill", "transparent")
-      ov.setAttribute("stroke", "red")
-      ov.setAttribute("stroke-width", ".3")
+      ov.setAttribute("stroke", "#378ADD")
+      ov.setAttribute("stroke-width", ".5")
       ov.setAttribute("stroke-dasharray", OVERLAY_DASH)
       ov.setAttribute("rx", "2")
       ov.setAttribute("style", "cursor:grab")
@@ -1709,6 +1786,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         solidTextIds: txtIds,
         solidStickerIds: stickerIds,
         solidImgId: imgId,
+        forceShowHint: showInitialHintRef.current
       })
     }
 
@@ -1754,7 +1832,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         { key: "br", cx: x + w, cy: y + h, cursor: "nwse-resize" },
       ]
 
-      const HIT_PADDING = isMobile ? 2 : 2
+      const HIT_PADDING = isMobile ? 3 : 2
       corners.forEach(({ key, cx, cy, cursor }) => {
         let visibleR = g!.querySelector(`rect.visible-handle[data-key="${key}"]`) as SVGRectElement | null
         let hitR = g!.querySelector(`rect.hit-handle[data-text-handle="${key}"]`) as SVGRectElement | null
@@ -2225,7 +2303,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     ): Extract<DragState, { type: "multi" }> | null => {
       const { sx, sy } = getScale()
       Array.from(svgEl.querySelectorAll<SVGGElement>('[data-text-handles="1"],[data-sticker-handles="1"],[data-multi-handles="1"]')).forEach((g) => {
-        g.parentNode?.removeChild(g)
+        if (g.id !== "handles_multi") g.parentNode?.removeChild(g)
       })
       const startTxt: Record<string, { tspanXY: { x: number; y: number }[]; x: number; y: number }> = {}
       const startTxtOverlay: Record<string, { x: number; y: number; w: number; h: number }> = {}
@@ -2581,6 +2659,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     function openEditor(tid: string) {
+      if (activeInlineEditor) {
+        activeInlineEditor.commit()
+        activeInlineEditor = null
+      }
       let inlineHistoryPushed = false
       const docEl = svgDocRef.current?.querySelector(idSelector(tid))
       if (!docEl) return
@@ -2589,8 +2671,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const ov = svgEl.querySelector("#overlay_" + tid)
       const bbox = svgEl.getBoundingClientRect()
       const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
-      const scaleX = bbox.width / vb[2]
-      const scaleY = bbox.height / vb[3]
+      const ctm = (liveText as unknown as SVGGraphicsElement).getScreenCTM?.()
+      const scaleX = ctm ? Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b) : (bbox.width / vb[2])
+      const scaleY = ctm ? Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d) : (bbox.height / vb[3])
       const st = textOverlayRect(liveText)
       const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : (null as any)
 
@@ -2700,7 +2783,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const suggestion = suggestionItems[index]
         if (!suggestion) return
         const value = editorEl.value
-        const nextValue = value.slice(0, transliterationWordRange.start) + suggestion + value.slice(transliterationWordRange.end)
+        const isAfterSingleSpace = (transliterationWordRange as any).isAfterSingleSpace
+        const actualEnd = isAfterSingleSpace ? transliterationWordRange.end + 1 : transliterationWordRange.end
+        const nextValue = value.slice(0, transliterationWordRange.start) + suggestion + value.slice(actualEnd)
         const nextCaret = transliterationWordRange.start + suggestion.length
         isApplyingSuggestion = true
         editorEl.value = nextValue
@@ -2891,7 +2976,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             renderSuggestions()
             return
           }
-          if (ke.key === "Enter") {
+          if (ke.key === "Enter" || ke.key === "Tab") {
             e.preventDefault()
             applySuggestion(activeSuggestionIndex)
             return
@@ -2945,7 +3030,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
     const onMouseDown = (e: MouseEvent | PointerEvent) => {
       const target = e.target as Element
-      const isMultiToggle = e.ctrlKey || e.metaKey
+      let isMultiToggle = e.ctrlKey || e.metaKey || isMultiSelectModeRef.current
       const handle = target.closest("[data-text-handle]") as SVGElement | null
       const stickerHandle = target.closest("[data-sticker-handle]") as SVGElement | null
       const multiHandle = target.closest("[data-multi-handle]") as SVGElement | null
@@ -2993,6 +3078,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           imgOv = svgEl.querySelector(`[data-img-zone="${imgZoneEl.id}"]`)
         }
       }
+
+      if (isMultiSelectModeRef.current) {
+        if (dragHandle || multiHandle || handle || stickerHandle || rotateHandle) {
+          setIsMultiSelectMode(false)
+          isMultiSelectModeRef.current = false
+          isMultiToggle = e.ctrlKey || e.metaKey
+        }
+      }
+
       const up = target.closest("[data-upload-zone]")
       if (up) {
         const zoneId = up.getAttribute("data-upload-zone")
@@ -3046,6 +3140,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
       if (!imgOv && !txtOv && !handle && !stickerOv && !stickerHandle && !multiHandle) {
         // Clicked empty SVG area -> start marquee selection.
+        if (isMultiSelectModeRef.current) {
+          setIsMultiSelectMode(false)
+          isMultiSelectModeRef.current = false
+          isMultiToggle = e.ctrlKey || e.metaKey
+        }
         if (activeInlineEditor) {
           activeInlineEditor.commit({ bumpPreview: false })
           activeInlineEditor = null
@@ -3287,9 +3386,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const multiTxt = selectedTextIdsRef.current
         const multiStickers = selectedStickerIdsRef.current
         const isInExistingMultiSelection =
-          multiTxt.length + multiStickers.length > 1 && (multiTxt.includes(tid) || multiStickers.length > 0)
+          multiTxt.length + multiStickers.length > 1 && multiTxt.includes(tid)
 
-        if (isMultiToggle) {
+        if (isMultiToggle && !isInExistingMultiSelection) {
           e.preventDefault()
           setSelectedImageZoneIdState(null)
           setSelectedStickerIdState(null)
@@ -3321,12 +3420,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           return
         }
 
+
         if (isInExistingMultiSelection) {
           e.preventDefault()
           textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
           drag = buildMultiSelectionDragState(multiTxt, multiStickers, txtOv as Element, e.clientX, e.clientY)
           if (!drag) return
-            ; (txtOv as HTMLElement).style.cursor = "grabbing"
+          if (isMultiToggle) {
+            ; (drag as any).isToggleCandidate = true
+              ; (drag as any).toggleId = tid
+              ; (drag as any).toggleType = "txt"
+          }
+          ; (txtOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
           renderMultiSelectionHandles(multiTxt, multiStickers)
           return
@@ -3371,8 +3476,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const multiTxt = selectedTextIdsRef.current
         const multiStickers = selectedStickerIdsRef.current
         const isInExistingMultiSelection =
-          multiTxt.length + multiStickers.length > 1 && (multiStickers.includes(sid) || multiTxt.length > 0)
-        if (isMultiToggle) {
+          multiTxt.length + multiStickers.length > 1 && multiStickers.includes(sid)
+        if (isMultiToggle && !isInExistingMultiSelection) {
           e.preventDefault()
           setSelectedImageZoneIdState(null)
           setSelectedTextIdState(null)
@@ -3403,12 +3508,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           return
         }
 
+
         if (isInExistingMultiSelection) {
           e.preventDefault()
           textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
           drag = buildMultiSelectionDragState(multiTxt, multiStickers, stickerOv as Element, e.clientX, e.clientY)
           if (!drag) return
-            ; (stickerOv as HTMLElement).style.cursor = "grabbing"
+          if (isMultiToggle) {
+            ; (drag as any).isToggleCandidate = true
+              ; (drag as any).toggleId = sid
+              ; (drag as any).toggleType = "sticker"
+          }
+          ; (stickerOv as HTMLElement).style.cursor = "grabbing"
           applySelectionStrokeStyle({ txtIds: multiTxt, stickerIds: multiStickers, imgId: null })
           renderMultiSelectionHandles(multiTxt, multiStickers)
           return
@@ -3452,7 +3563,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       const dx = e.clientX - drag.startX
       const dy = e.clientY - drag.startY
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        drag.moved = true
+        if (isMultiSelectModeRef.current) {
+          setIsMultiSelectMode(false)
+          isMultiSelectModeRef.current = false
+        }
+      }
       if (!drag.moved) return
 
       if (drag.type === "marquee") {
@@ -4304,6 +4421,53 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
       }
 
+      if (type === "multi" && !wasDrag) {
+        const toggleCandidate = (drag as any).isToggleCandidate
+        const toggleId = (drag as any).toggleId
+        const toggleType = (drag as any).toggleType
+        if (toggleCandidate) {
+          if (toggleType === "txt") {
+            setSelectedTextIdsState((prev) => {
+              const set = new Set(prev)
+              set.delete(toggleId)
+              const next = Array.from(set)
+              if (next.length + selectedStickerIdsRef.current.length > 1) {
+                applySelectionStrokeStyle({ txtIds: next, stickerIds: selectedStickerIdsRef.current, imgId: null })
+                renderMultiSelectionHandles(next, selectedStickerIdsRef.current)
+              } else if (next.length === 1 && selectedStickerIdsRef.current.length === 0) {
+                renderTextHandles(next[0]!)
+                setSelectedStickerIdsState([])
+              } else if (next.length === 0 && selectedStickerIdsRef.current.length === 1) {
+                renderStickerHandles(selectedStickerIdsRef.current[0]!)
+                setSelectedTextIdsState([])
+              } else {
+                applySelectionStrokeStyle({ txtIds: next, stickerIds: selectedStickerIdsRef.current, imgId: null })
+              }
+              return next
+            })
+          } else if (toggleType === "sticker") {
+            setSelectedStickerIdsState((prev) => {
+              const set = new Set(prev)
+              set.delete(toggleId)
+              const next = Array.from(set)
+              if (next.length + selectedTextIdsRef.current.length > 1) {
+                applySelectionStrokeStyle({ txtIds: selectedTextIdsRef.current, stickerIds: next, imgId: null })
+                renderMultiSelectionHandles(selectedTextIdsRef.current, next)
+              } else if (next.length === 1 && selectedTextIdsRef.current.length === 0) {
+                setSelectedTextIdsState([])
+                renderStickerHandles(next[0]!)
+              } else if (next.length === 0 && selectedTextIdsRef.current.length === 1) {
+                setSelectedStickerIdsState([])
+                renderTextHandles(selectedTextIdsRef.current[0]!)
+              } else {
+                applySelectionStrokeStyle({ txtIds: selectedTextIdsRef.current, stickerIds: next, imgId: null })
+              }
+              return next
+            })
+          }
+        }
+      }
+
       if (type === "multiResize") {
         const idsTxt = [...drag.idsTxt]
         const idsSticker = [...drag.idsSticker]
@@ -4411,7 +4575,15 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       }
 
       if (wasDrag && type === "txt") setPreviewVersion((v) => v + 1)
-      if (!wasDrag && type === "txt" && openEditorOnClick) openEditor(tid)
+      if (!wasDrag && type === "txt" && openEditorOnClick) {
+        if (isMobile) {
+          mobileDialogOpenedAtRef.current = Date.now()
+
+          setMobileEditTextDialog({ isOpen: true, tid })
+        } else {
+          openEditor(tid)
+        }
+      }
     }
 
     const onWindowMouseDown = (e: MouseEvent | PointerEvent) => {
@@ -4495,6 +4667,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       solidTextIds,
       solidStickerIds,
       solidImgId: selectedImageZoneIdState,
+      forceShowHint: showInitialHintRef.current
     })
     paintOverlayHandleVisibility(svg, {
       selectedTextId: selectedTextIdState,
@@ -4562,8 +4735,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       // complex templates (Inkscape, emoji, etc.) do not break re-parse like preview/export.
       const exportDoc = cloneSvgDocument(doc)
       if (!exportDoc) throw new Error("Could not clone SVG for export")
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
-      const scale = Math.max(4, Math.min(12, dpr * 4))
+
+      // Limit scale to 3 to prevent excessively large PDFs (e.g. 190MB on mobile devices)
+      const scale = 3
+
       const stickerEls = Array.from(exportDoc.querySelectorAll<SVGImageElement>(`image[id^="${STICKER_PREFIX}"]`))
       await Promise.all(
         stickerEls.map(async (el) => {
@@ -4585,6 +4760,78 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         })
       )
 
+
+      // Embed Google Fonts as Base64 to ensure they render in the PDF export canvas (fixes iOS/mobile Safari export font bug)
+      try {
+        const fontsToLoad = new Set<string>()
+        Array.from(exportDoc.querySelectorAll("*")).forEach((el) => {
+          const ffAttr = el.getAttribute("font-family") || (el as unknown as HTMLElement).style?.fontFamily
+          if (ffAttr) {
+            ffAttr.split(",").forEach(f => fontsToLoad.add(f.replace(/['"]/g, "").trim()))
+          }
+          const style = el.getAttribute("style")
+          if (style) {
+            const match = style.match(/font-family\s*:\s*([^;]+)/)
+            if (match && match[1]) {
+              match[1].split(",").forEach(f => fontsToLoad.add(f.replace(/['"]/g, "").trim()))
+            }
+          }
+        })
+        const systemFonts = new Set([
+          "sans-serif", "serif", "monospace", "none",
+          "Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana", "Georgia", "Palatino", "Garamond", "Bookman", "Comic Sans MS", "Trebuchet MS", "Arial Black", "Impact"
+        ])
+        const fontImports = Array.from(fontsToLoad).filter((f) => f && !systemFonts.has(f))
+
+
+        if (fontImports.length > 0) {
+          const cssUrl = `https://fonts.googleapis.com/css2?${fontImports.map(f => `family=${f.replace(/ /g, "+")}`).join("&")}&display=swap`
+
+
+          // Use a modern User-Agent so Google Fonts always returns WOFF2 formats with full subsets
+          const cssRes = await fetch(cssUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+            }
+          })
+
+
+          if (cssRes.ok) {
+            const cssText = await cssRes.text()
+            const urlMatches = Array.from(cssText.matchAll(/url\((https:\/\/[^)]+)\)/g))
+
+
+            let finalCss = cssText
+            await Promise.all(urlMatches.map(async (match) => {
+              const rawUrl = match[1]
+              const fontUrl = rawUrl.replace(/['"]/g, "")
+              try {
+                const fontRes = await fetch(fontUrl)
+                if (!fontRes.ok) throw new Error("Bad response")
+                const blob = await fontRes.blob()
+                const base64 = await new Promise<string>((resolve) => {
+                  const reader = new FileReader()
+                  reader.onload = () => resolve(reader.result as string)
+                  reader.readAsDataURL(blob)
+                })
+
+
+                // Ensure correct MIME type for iOS/Android SVG rendering
+                const safeBase64 = base64.replace(/^data:[^;]+;base64,/, "data:font/woff2;base64,")
+                finalCss = finalCss.replace(rawUrl, safeBase64)
+              } catch (e: any) {
+                console.warn("Failed to embed font", fontUrl)
+              }
+            }))
+            const styleEl = exportDoc.createElementNS("http://www.w3.org/2000/svg", "style")
+            styleEl.textContent = finalCss
+            exportDoc.documentElement.insertBefore(styleEl, exportDoc.documentElement.firstChild)
+          }
+        }
+      } catch (e: any) {
+        console.warn("Failed to embed fonts for PDF export")
+      }
+
       const s = new XMLSerializer().serializeToString(exportDoc)
       const { wPx: w, hPx: h } = getSVGSizePx(doc)
       // Render the SVG into a higher-resolution canvas so the resulting PDF PNG looks sharper.
@@ -4601,10 +4848,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       try {
         await new Promise<void>((resolve, reject) => {
           img.onload = () => {
-            ctx.drawImage(img, 0, 0, w, h)
-            resolve()
+
+            // Wait 1.5 seconds for base64 fonts inside the SVG to be fully decoded 
+            // by the browser before drawing to canvas.
+            setTimeout(() => {
+              ctx.drawImage(img, 0, 0, w, h)
+              resolve()
+            }, 1500)
           }
-          img.onerror = () => reject(new Error("Composite SVG failed to rasterize"))
+          img.onerror = () => {
+            reject(new Error("Composite SVG failed to rasterize"))
+          }
           img.src = svgObjectUrl
         })
       } finally {
@@ -4629,6 +4883,69 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [template.name])
 
 
+
+  const handleMobileTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const rawVal = e.target.value
+    const val = enforceWesternNumerals(rawVal)
+    
+    if (val !== rawVal) {
+      const caret = e.target.selectionStart
+      e.target.value = val
+      e.target.setSelectionRange(caret, caret)
+    }
+
+    const caret = e.target.selectionStart ?? val.length
+
+    if (mobileSuggestionDebounceRef.current) window.clearTimeout(mobileSuggestionDebounceRef.current)
+
+    const supportsTransliteration = !!transliterationLanguage
+    if (!supportsTransliteration) return
+
+    const range = getCurrentWordRange(val, caret)
+    const word = range.word.trim()
+
+    if (!word || !isRomanPhoneticWord(word)) {
+      setMobileTransliteration({ suggestions: [], wordRange: null })
+      return
+    }
+
+    mobileSuggestionDebounceRef.current = window.setTimeout(async () => {
+      const currentReq = ++mobileSuggestionReqIdRef.current
+      try {
+        const params = new URLSearchParams({ word, language: transliterationLanguage! })
+        const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" })
+        const payload = await response.json()
+        if (currentReq !== mobileSuggestionReqIdRef.current) return
+        const apiSuggestions: string[] = Array.isArray(payload?.suggestions) ? payload.suggestions : []
+        const topSuggestions = Array.from(new Set(apiSuggestions.filter((s) => s !== word))).slice(0, 5)
+        setMobileTransliteration({
+          suggestions: [...topSuggestions, word],
+          wordRange: range
+        })
+      } catch {
+        if (currentReq !== mobileSuggestionReqIdRef.current) return
+        setMobileTransliteration({ suggestions: [], wordRange: null })
+      }
+    }, 300)
+  }
+
+  const applyMobileSuggestion = (suggestion: string) => {
+    const textarea = document.getElementById("mobile-edit-text-textarea") as HTMLTextAreaElement
+    if (!textarea || !mobileTransliteration.wordRange) return
+
+    const val = textarea.value
+    const { start, end, isAfterSingleSpace } = mobileTransliteration.wordRange
+    const actualEnd = isAfterSingleSpace ? end + 1 : end
+    const nextValue = val.slice(0, start) + suggestion + val.slice(actualEnd)
+    const nextCaret = start + suggestion.length
+
+    textarea.value = nextValue
+    textarea.setSelectionRange(nextCaret, nextCaret)
+    textarea.focus()
+
+    setMobileTransliteration({ suggestions: [], wordRange: null })
+    handleMobileTextareaChange({ target: textarea } as any)
+  }
 
   if (!template.svg) {
     return (
@@ -4803,6 +5120,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   <Button
                     type="button"
                     variant="ghost"
+                    className={`h-7 gap-1.5 rounded-full px-2 text-xs hover:bg-[#E5E7EB] ${isMultiSelectMode ? "bg-[#E5E7EB] text-blue-600" : "text-zinc-600"}`}
+                    onClick={() => setIsMultiSelectMode(!isMultiSelectMode)}
+                    title="Multi Select"
+                  >
+                    <ListChecks className="h-3.5 w-3.5" />
+                    Multi Select
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
                     className="h-7 gap-1.5 rounded-full px-2 text-xs text-zinc-600 hover:bg-[#E5E7EB]"
                     onClick={duplicateSelected}
                     title="Duplicate"
@@ -4831,7 +5158,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             variant="outline"
             data-sticker-toggle="true"
             className="h-10 gap-2 rounded-full border-[#E5E7EB] bg-[#F9FAFB] px-3 sm:px-4 font-medium text-zinc-700 shadow-sm hover:bg-[#E5E7EB]"
-            onClick={() => setIsStickerDialogOpen(!isStickerDialogOpen)}
+            onClick={() => {
+              setIsStickerDialogOpen(!isStickerDialogOpen)
+              setIsMultiSelectMode(false)
+            }}
           >
             <Sticker className="h-4 w-4" />
             <span className="hidden sm:inline">Stickers</span>
@@ -5002,6 +5332,96 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
         </div>
+
+        {mobileEditTextDialog.isOpen && mobileEditTextDialog.tid && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-xl">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+                <h3 className="font-normal text-zinc-700 text-lg">Edit Text</h3>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    if (Date.now() - mobileDialogOpenedAtRef.current < 500) { e.preventDefault(); return }
+                    setMobileTransliteration({ suggestions: [], wordRange: null })
+                    setMobileEditTextDialog({ isOpen: false, tid: null })
+                  }}
+                  className="text-zinc-400 hover:text-zinc-600"
+                >
+                  <X className="h-5 w-5" strokeWidth={1.5} />
+                </button>
+              </div>
+              <div className="p-5 pb-4">
+                <textarea
+                  autoFocus
+                  key={mobileEditTextDialog.tid}
+                  className="w-full resize-none rounded-lg border border-zinc-300 p-3 text-[17px] text-zinc-800 focus:border-[#2587E1] focus:outline-none focus:ring-1 focus:ring-[#2587E1]"
+                  rows={4}
+                  defaultValue={textValues[mobileEditTextDialog.tid] || ""}
+                  id="mobile-edit-text-textarea"
+                  onChange={handleMobileTextareaChange}
+                />
+                {mobileTransliteration.suggestions.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {mobileTransliteration.suggestions.map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault()
+                          applyMobileSuggestion(suggestion)
+                        }}
+                        className={`rounded-full border px-3 py-1.5 text-sm transition-colors focus:outline-none ${idx === 0
+                          ? "border-blue-500 bg-blue-100 text-slate-900"
+                          : "border-slate-200 bg-white text-slate-900"
+                          }`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center gap-3 px-5 pb-5">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={(e) => {
+                    if (Date.now() - mobileDialogOpenedAtRef.current < 500) { e.preventDefault(); return }
+                    setMobileTransliteration({ suggestions: [], wordRange: null })
+                    setMobileEditTextDialog({ isOpen: false, tid: null })
+                  }}
+                  className="h-10 flex-1 rounded-md border-zinc-300 bg-zinc-200/50 px-6 font-normal text-zinc-600 hover:bg-zinc-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="h-10 flex-1 rounded-md bg-[#2587E1] px-8 font-normal text-white hover:bg-[#1A73C9]"
+                  onClick={(e) => {
+                    if (Date.now() - mobileDialogOpenedAtRef.current < 500) { e.preventDefault(); return }
+                    const textarea = document.getElementById("mobile-edit-text-textarea") as HTMLTextAreaElement
+                    const tid = mobileEditTextDialog.tid!
+                    const val = enforceWesternNumerals(textarea ? textarea.value : (textValues[tid] || ""))
+                    const docEl2 = svgDocRef.current?.querySelector(`[id="${tid}"]`) as SVGElement | null
+                    const liveText = previewContainerRef.current?.querySelector(`[id="${tid}"]`) as SVGElement | null
+                    if (docEl2) {
+                      pushPastBeforeMutation()
+                      if (liveText) applyEditableValueToTextEl(liveText, val)
+                      const liveStep = liveText ? parseFloat(liveText.getAttribute("data-editor-line-step") || "") : NaN
+                      applyEditableValueToTextEl(docEl2, val, Number.isFinite(liveStep) && liveStep > 0 ? liveStep : undefined)
+                      setTextValues((prev) => ({ ...prev, [tid]: val }))
+                      setPreviewVersion((v) => v + 1)
+                    }
+                    setMobileTransliteration({ suggestions: [], wordRange: null })
+                    setMobileEditTextDialog({ isOpen: false, tid: null })
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
