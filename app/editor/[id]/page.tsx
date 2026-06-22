@@ -1574,7 +1574,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const previewDoc = cloneSvgDocument(doc)
     if (!previewDoc) return
     const svgEl = previewDoc.documentElement as unknown as SVGElement
-    svgEl.setAttribute("style", "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:visible;")
+    svgEl.setAttribute("style", "max-width:100%;max-height:100%;display:block;border-radius:var(--rounded-md);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden;")
     const { w: svgW, h: svgH } = getSVGElementSize(svgEl)
     // const { w: svgElW, h: svgElH } = getSVGElementSize(svgEl)
     if (!svgEl.getAttribute("viewBox")) {
