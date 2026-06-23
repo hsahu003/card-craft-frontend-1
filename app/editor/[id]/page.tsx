@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { allTemplates, getTemplateById, type TemplateLanguage } from "@/lib/templates"
-import { Copy, Redo2, Trash2, Undo2, Download, Sticker, X, FlipHorizontal, ListChecks } from "lucide-react"
+import { Copy, Redo2, Trash2, Undo2, Download, Sticker, X, FlipHorizontal, ListChecks, Pencil, Type, Maximize2, MoveVertical, Loader2 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import {
   getSVGSize,
@@ -31,6 +31,7 @@ import {
   type EditorHistoryEntry,
 } from "@/lib/editor-text-history"
 import { toast } from "sonner"
+
 
 const EDITABLE_PREFIX = "editable_"
 const IMAGE_ZONE_PREFIX = "image_zone_"
@@ -480,6 +481,11 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const stickerDialogRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileEditTextDialog, setMobileEditTextDialog] = useState<{ isOpen: boolean; tid: string | null }>({ isOpen: false, tid: null })
+  const [isMobileSizeDialogOpen, setIsMobileSizeDialogOpen] = useState(false)
+  const [mobileSizeDialogY, setMobileSizeDialogY] = useState<number | null>(null)
+
+
+  const draggingSizeDialogRef = useRef<{ startY: number; initY: number } | null>(null)
   const mobileDialogOpenedAtRef = useRef<number>(0)
   const [mobileTransliteration, setMobileTransliteration] = useState<{ suggestions: string[]; wordRange: { start: number; end: number; word: string; isAfterSingleSpace?: boolean } | null }>({ suggestions: [], wordRange: null })
   const mobileSuggestionDebounceRef = useRef<number>(0)
@@ -529,6 +535,18 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [isPreviewHovering, setIsPreviewHovering] = useState(false)
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null)
   const [selectedTextFontSizeUi, setSelectedTextFontSizeUi] = useState<number>(16)
+  const [multiSelectScaleUi, setMultiSelectScaleUi] = useState<number>(100)
+  useEffect(() => {
+    setMultiSelectScaleUi(100)
+  }, [selectedTextIdsState, selectedStickerIdsState])
+  const multiScaleStartRef = useRef<{
+    baseSlider: number
+    anchorX: number
+    anchorY: number
+    startTxt: Record<string, { x: number; y: number; tspanXY: { x: number; y: number }[] }>
+    startTxtFontSize: Record<string, number>
+    startSticker: Record<string, { x: number; y: number; w: number; h: number }>
+  } | null>(null)
   const selectedTextIdRef = useRef<string | null>(null)
   selectedTextIdRef.current = selectedTextIdState
   const selectedTextIdsRef = useRef<string[]>([])
@@ -559,6 +577,33 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const selectedImageZone = selectedImageZoneIdState ? imageZones.find((zone) => zone.id === selectedImageZoneIdState) ?? null : null
   const selectedImageState = selectedImageZone ? zoneStates[selectedImageZone.id] ?? null : null
   const selectedImageHasImage = !!selectedImageState?.b64
+
+  useEffect(() => {
+    if (isMobile && isMobileSizeDialogOpen) {
+      let targetEl: Element | null = null
+      if (selectedImageZoneIdState && selectedImageHasImage) {
+        targetEl = document.getElementById(selectedImageZoneIdState)
+      } else if (selectedTextIdState) {
+        targetEl = document.getElementById(selectedTextIdState)
+      }
+
+      if (targetEl) {
+        const rect = targetEl.getBoundingClientRect()
+        const cy = rect.top + rect.height / 2
+        if (cy > window.innerHeight / 2) {
+          // Element is in the lower half -> put dialog near top
+          setMobileSizeDialogY(80)
+        } else {
+          // Element is in the upper half -> put dialog near bottom
+          setMobileSizeDialogY(window.innerHeight - 200)
+        }
+      } else {
+        setMobileSizeDialogY(window.innerHeight - 200)
+      }
+    } else {
+      setMobileSizeDialogY(null)
+    }
+  }, [isMobile, isMobileSizeDialogOpen, selectedTextIdState, selectedImageZoneIdState, selectedImageHasImage])
 
   useEffect(() => {
     panelTextHistoryPushedRef.current = false
@@ -770,11 +815,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [selectedTextIdState])
 
   const setSelectedTextFontSize = useCallback((nextFontSize: number) => {
-    const tid = selectedTextIdState
+    const tids = selectedTextIdsState.length > 0 ? selectedTextIdsState : (selectedTextIdState ? [selectedTextIdState] : [])
     const doc = svgDocRef.current
-    if (!tid || !doc) return
-    const el = doc.querySelector(idSelector(tid)) as SVGElement | null
-    if (!el) return
+    if (tids.length === 0 || !doc) return
 
     const newFont = Math.max(4, Math.min(200, nextFontSize))
 
@@ -794,10 +837,93 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     pushPastBeforeMutation()
-    applyFontSize(el)
+    tids.forEach(tid => {
+      const el = doc.querySelector(idSelector(tid)) as SVGElement | null
+      if (el) applyFontSize(el)
+    })
     setPreviewVersion((v) => v + 1)
     setSelectedTextFontSizeUi(newFont)
-  }, [pushPastBeforeMutation, selectedTextIdState])
+  }, [selectedTextIdState, selectedTextIdsState, pushPastBeforeMutation])
+
+  const setMultiSelectScale = useCallback((val: number) => {
+
+    if (!multiScaleStartRef.current) return
+    const { anchorX, anchorY, startTxt, startTxtFontSize, startSticker, baseSlider } = multiScaleStartRef.current
+    const scale = val / baseSlider
+
+    const doc = svgDocRef.current
+    const liveSvg = previewContainerRef.current?.querySelector("svg")
+    if (!doc || !liveSvg) return
+
+    pushPastBeforeMutation()
+
+    const scalePoint = (x: number, y: number) => ({
+      x: anchorX + (x - anchorX) * scale,
+      y: anchorY + (y - anchorY) * scale
+    })
+
+    Object.entries(startTxt).forEach(([id, base]: [string, any]) => {
+      const docEl = doc.querySelector(idSelector(id)) as SVGElement | null
+      const liveEl = liveSvg.querySelector(idSelector(id)) as SVGElement | null
+
+      const targets = [docEl, liveEl]
+      targets.forEach(el => {
+        if (!el) return
+        const tspans = Array.from(el.querySelectorAll("tspan"))
+        if (tspans.length && base.tspanXY.length) {
+          tspans.forEach((t, i) => {
+            const pt = base.tspanXY[i]; if (!pt) return;
+            const next = scalePoint(pt.x, pt.y)
+            t.setAttribute("x", String(next.x))
+            t.setAttribute("y", String(next.y))
+          })
+        } else {
+          const next = scalePoint(base.x, base.y)
+          el.setAttribute("x", String(next.x))
+          el.setAttribute("y", String(next.y))
+        }
+
+        const bFont = startTxtFontSize[id]
+        if (bFont) {
+          const newFont = Math.max(4, Math.min(200, bFont * scale))
+
+          el.setAttribute("font-size", String(newFont))
+            ; (el as any).style.fontSize = `${newFont}px`
+          tspans.forEach(t => {
+            if (t.hasAttribute("font-size")) {
+              t.setAttribute("font-size", String(newFont))
+                ; (t as any).style.fontSize = `${newFont}px`
+            }
+            const style = t.getAttribute("style")
+            if (style && style.includes("font-size")) {
+              const withoutSize = style.replace(/font-size\s*:[^;]+;?/g, "")
+              t.setAttribute("style", withoutSize ? `${withoutSize}font-size:${newFont}px;` : `font-size:${newFont}px;`)
+            }
+          })
+        }
+      })
+
+    })
+
+    Object.entries(startSticker).forEach(([id, b]: [string, any]) => {
+      const liveEl = liveSvg.querySelector(idSelector(id)) as SVGGElement | null
+      const docEl = doc.querySelector(idSelector(id)) as SVGGElement | null
+      const targets = [liveEl, docEl]
+
+      targets.forEach(el => {
+        if (!el) return
+        const image = el.querySelector("image")
+        if (!image) return
+        const next = scalePoint(b.x, b.y)
+        image.setAttribute("x", String(next.x))
+        image.setAttribute("y", String(next.y))
+        image.setAttribute("width", String(b.w * scale))
+        image.setAttribute("height", String(b.h * scale))
+      })
+    })
+
+    setPreviewVersion(v => v + 1)
+  }, [pushPastBeforeMutation])
 
   const nudgeSelectedTextFontSize = useCallback((delta: number) => {
     const current = getSelectedTextFontSize()
@@ -1263,6 +1389,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     img.setAttribute("preserveAspectRatio", "xMidYMid meet")
     svgRoot.appendChild(img)
     setSelectedStickerIdState(nextId)
+    if (isMobile) setIsStickerDialogOpen(false)
     setPreviewVersion((v) => v + 1)
   }, [pushPastBeforeMutation])
 
@@ -1390,7 +1517,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }, [])
 
-  const applyHistoryEntry = useCallback((entry: EditorHistoryEntry) => {
+  const applyHistoryEntry = useCallback((entry: EditorHistoryEntry, isInitialLoad = false) => {
     const parser = new DOMParser()
     const doc = parser.parseFromString(entry.svg, "image/svg+xml")
     svgDocRef.current = doc
@@ -1420,7 +1547,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     })
     setTextValues(textVals)
     setPreviewVersion((v) => v + 1)
-    triggerInitialHint()
+    if (isInitialLoad) triggerInitialHint()
   }, [triggerInitialHint])
 
   const undo = useCallback(() => {
@@ -1432,7 +1559,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     isApplyingHistoryRef.current = true
     try {
       previewContainerRef.current?.querySelector("#txt-editor-overlay")?.remove()
-      applyHistoryEntry(previous)
+      applyHistoryEntry(previous, false)
     } finally {
       isApplyingHistoryRef.current = false
     }
@@ -1448,7 +1575,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     isApplyingHistoryRef.current = true
     try {
       previewContainerRef.current?.querySelector("#txt-editor-overlay")?.remove()
-      applyHistoryEntry(next)
+      applyHistoryEntry(next, false)
     } finally {
       isApplyingHistoryRef.current = false
     }
@@ -2644,6 +2771,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     let hiddenTextEditorForTid: string | null = null
     let activeInlineEditor: null | { tid: string; commit: (opts?: { bumpPreview?: boolean }) => void } = null
 
+
+
     function getScale() {
       const bbox = svgEl.getBoundingClientRect()
       const vb = (svgEl.getAttribute("viewBox") || "0 0 800 600").split(/[\s,]+/).map(Number)
@@ -3029,6 +3158,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
 
     const onMouseDown = (e: MouseEvent | PointerEvent) => {
+
       const target = e.target as Element
       let isMultiToggle = e.ctrlKey || e.metaKey || isMultiSelectModeRef.current
       const handle = target.closest("[data-text-handle]") as SVGElement | null
@@ -3342,6 +3472,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startOverlayH: parseFloat(ov.getAttribute("height") || "0"),
           moved: false,
         }
+
         textHistoryApiRef.current.pendingDragSnapshot = textHistoryApiRef.current.captureHistoryEntry()
           ; (handle as unknown as HTMLElement).style.cursor = getComputedStyle(handle).cursor || "nwse-resize"
         return
@@ -4342,6 +4473,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const wasDrag = drag.moved
       const type = drag.type
       const tid = "id" in drag ? (drag as any).id : ""
+
       const openEditorOnClick = type === "txt" && drag.type === "txt" ? drag.openEditorOnClick : false
       if (type === "multiResize" && "corner" in drag) {
         const cursorByCorner: Record<"tl" | "tr" | "bl" | "br", string> = {
@@ -4589,8 +4721,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const onWindowMouseDown = (e: MouseEvent | PointerEvent) => {
       const target = e.target as Element | null
       if (!target) return
+
       // Ignore clicks that are inside the preview svg itself.
       if (svgEl.contains(target)) {
+        if (isMobile && !target.closest("[data-text-handle], [data-sticker-handle], [data-multi-handle], [data-rotate-handle]")) {
+          setIsMobileSizeDialogOpen(false)
+          setIsStickerDialogOpen(false)
+        }
         return
       }
       // Ignore clicks in active inline editor overlay (textarea/input on top of svg).
@@ -4607,7 +4744,12 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       if (target.closest("#editor-left-panel")) return
 
       // Header controls (Font size, Duplicate, Delete): mousedown must not clear selection
-      if (target.closest("#editor-header-controls")) return
+      if (
+        target.closest("#editor-header-controls") ||
+        target.closest("#mobile-header-controls") ||
+        target.closest("#mobile-size-dialog") ||
+        target.closest("#mobile-bottom-actions")
+      ) return
 
       // Close active inline text editor immediately to avoid blur-then-commit flicker.
       if (activeInlineEditor) {
@@ -4620,6 +4762,10 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       previewPointerRef.current.hoverId = null
       setHoveredElementId(null)
       setIsPreviewHovering(false)
+      if (isMobile) {
+        setIsMobileSizeDialogOpen(false)
+        setIsStickerDialogOpen(false)
+      }
 
       // After we hide overlays, clear selection state (prevents the dashed/dotted stroke
       // from flashing before the overlay disappears).
@@ -4647,7 +4793,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       window.removeEventListener("pointercancel", onMouseUp as any)
       window.removeEventListener("pointerdown", onWindowMouseDown as any)
     }
-  }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation])
+  }, [previewVersion, textFields, zoneStates, pushPastBeforeMutation, isMobile])
 
   // Preview overlay stroke/opacity + handle visibility from pointer + hover + selection (no SVG re-clone).
   useEffect(() => {
@@ -4887,7 +5033,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const handleMobileTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const rawVal = e.target.value
     const val = enforceWesternNumerals(rawVal)
-    
+
     if (val !== rawVal) {
       const caret = e.target.selectionStart
       e.target.value = val
@@ -4961,13 +5107,85 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   return (
     <div className="flex h-[100dvh] flex-col bg-background overflow-hidden">
       <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-3 sm:px-5">
-        <Link href="/" className="shrink-0">
-          <span className="select-none font-sans text-[20px] sm:text-[28px] font-black italic tracking-tight text-[#E13B30]">
-            Cardcraft
-          </span>
-        </Link>
+        <div className="flex flex-1 min-w-0 items-center gap-4">
+          <Link href="/" className="shrink-0">
+            <span className="select-none font-sans text-[20px] sm:text-[28px] font-black italic tracking-tight text-[#E13B30]">
+              Cardcraft
+            </span>
+          </Link>
 
-        <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center sm:absolute sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2" id="editor-header-controls">
+          {/* Mobile Element Controls (beside logo) */}
+          {isMobile && (selectedTextIdState || selectedStickerIdState || (selectedImageZoneIdState && selectedImageHasImage) || selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
+            <div id="mobile-header-controls" className="flex flex-1 overflow-x-auto scrollbar-none sm:hidden items-center gap-5 ml-2 pr-4 pb-1">
+              {/* Image Controls */}
+              {selectedImageZoneIdState && selectedImageHasImage && (
+                <>
+                  <button onClick={() => setIsMobileSizeDialogOpen(true)} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Maximize2 className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">resize</span>
+                  </button>
+                  <button onClick={() => { pushPastBeforeMutation(); setZoneStates(p => ({ ...p, [selectedImageZoneIdState]: { ...p[selectedImageZoneIdState], flipH: !p[selectedImageZoneIdState].flipH } })); setPreviewVersion(v => v + 1) }} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><FlipHorizontal className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">flip</span>
+                  </button>
+                  <button onClick={() => selectedImageZone && removeImageFromZone(selectedImageZone)} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Trash2 className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">delete</span>
+                  </button>
+                </>
+              )}
+              {/* Text Controls */}
+              {selectedTextIdState && !(selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
+                <>
+                  <button onClick={() => setMobileEditTextDialog({ isOpen: true, tid: selectedTextIdState })} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Pencil className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">edit</span>
+                  </button>
+                  <button onClick={duplicateSelected} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Copy className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">duplicate</span>
+                  </button>
+                  <button onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={`flex flex-col items-center gap-0.5 ${isMultiSelectMode ? 'text-blue-600' : 'text-zinc-600'}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isMultiSelectMode ? 'bg-blue-100' : 'bg-zinc-100'}`}><ListChecks className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">multi</span>
+                  </button>
+                  <button onClick={() => setIsMobileSizeDialogOpen(true)} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Type className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">size</span>
+                  </button>
+                  <button onClick={deleteSelected} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Trash2 className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">delete</span>
+                  </button>
+                </>
+              )}
+              {/* Sticker / Multi-Select Controls */}
+              {(!selectedImageZoneIdState || !selectedImageHasImage) && (!selectedTextIdState || selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
+                <>
+                  <button onClick={duplicateSelected} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Copy className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">duplicate</span>
+                  </button>
+                  <button onClick={() => setIsMultiSelectMode(!isMultiSelectMode)} className={`flex flex-col items-center gap-0.5 ${isMultiSelectMode ? 'text-blue-600' : 'text-zinc-600'}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isMultiSelectMode ? 'bg-blue-100' : 'bg-zinc-100'}`}><ListChecks className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">multi</span>
+                  </button>
+                  <button onClick={() => setIsMobileSizeDialogOpen(true)} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Maximize2 className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">size</span>
+                  </button>
+                  <button onClick={deleteSelected} className="flex flex-col items-center gap-0.5 text-zinc-600">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100"><Trash2 className="h-5 w-5" /></div>
+                    <span className="text-[11px] leading-tight">delete</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Controls (hidden on mobile) */}
+        <div className="hidden sm:flex absolute top-1/2 left-1/2 z-40 -translate-x-1/2 -translate-y-1/2 justify-center" id="editor-header-controls">
           {(selectedTextIdState || selectedStickerIdState || (selectedImageZoneIdState && selectedImageHasImage) || selectedTextIdsState.length + selectedStickerIdsState.length > 1) && (
             <div className="flex items-center gap-1 rounded-full border border-border bg-[#F9FAFB] p-1 shadow-md sm:shadow-sm">
               {selectedImageZoneIdState && selectedImageZone && selectedImageHasImage && selectedImageState && (
@@ -5153,7 +5371,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        {/* Desktop Global Actions */}
+        <div className="hidden sm:flex items-center gap-2 sm:gap-4">
           <Button
             variant="outline"
             data-sticker-toggle="true"
@@ -5193,11 +5412,351 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             disabled={isExporting || !svgLoaded}
             className="h-10 gap-2 rounded-full bg-[#10b981] px-3 sm:px-6 font-medium text-white shadow-sm hover:bg-[#059669]"
           >
-            <Download className="h-4 w-4" />
+            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             <span className="hidden sm:inline">{isExporting ? "Downloading…" : "Download"}</span>
           </Button>
         </div>
       </header>
+
+
+      {/* Mobile Global Actions Bottom Pill */}
+      {isMobile && (
+        <div id="mobile-bottom-actions" className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-white/90 p-2 shadow-lg backdrop-blur-md border border-zinc-200/50">
+          <button
+            type="button"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+            onClick={() => {
+              setIsStickerDialogOpen(!isStickerDialogOpen)
+              setIsMultiSelectMode(false)
+            }}
+          >
+            <Sticker className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-1 rounded-full bg-zinc-100 p-1">
+            <button
+              type="button"
+              disabled={historyPastRef.current.length === 0}
+              onClick={() => undo()}
+              className="flex h-8 w-10 items-center justify-center rounded-full text-zinc-600 disabled:opacity-40"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              disabled={historyFutureRef.current.length === 0}
+              onClick={() => redo()}
+              className="flex h-8 w-10 items-center justify-center rounded-full text-zinc-600 disabled:opacity-40"
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting || !svgLoaded}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#10b981] text-white hover:bg-[#059669] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+          >
+            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Size/Resize Dialog */}
+      {isMobile && isMobileSizeDialogOpen && (
+        <div
+          id="mobile-size-dialog"
+          className="fixed left-4 right-4 z-[60] flex flex-col overflow-hidden rounded-xl border border-zinc-200/50 bg-white/70 shadow-xl animate-bounce-short"
+          style={{ bottom: mobileSizeDialogY === null ? '120px' : 'auto', top: mobileSizeDialogY !== null ? mobileSizeDialogY : 'auto' }}
+        >
+          <div
+            className="flex items-center justify-between border-b border-zinc-200/50 bg-transparent px-4 py-3 touch-none select-none cursor-grab active:cursor-grabbing"
+            onPointerDown={(e) => {
+              e.preventDefault()
+              const target = e.currentTarget
+              target.setPointerCapture(e.pointerId)
+
+              const rect = (target.parentNode as HTMLElement).getBoundingClientRect()
+              draggingSizeDialogRef.current = {
+                startY: e.clientY,
+                initY: rect.top,
+              }
+
+              const onMove = (me: PointerEvent) => {
+                if (!draggingSizeDialogRef.current) return
+                const dy = me.clientY - draggingSizeDialogRef.current.startY
+                const newY = draggingSizeDialogRef.current.initY + dy
+                const dialog = document.getElementById("mobile-size-dialog")
+                if (dialog) {
+                  dialog.style.bottom = 'auto'
+                  dialog.style.top = `${newY}px`
+                }
+              }
+
+              const onUp = (me: PointerEvent) => {
+                const dialog = document.getElementById("mobile-size-dialog")
+                if (dialog) {
+                  setMobileSizeDialogY(parseFloat(dialog.style.top) || 0)
+                }
+                draggingSizeDialogRef.current = null
+                target.releasePointerCapture(me.pointerId)
+                target.removeEventListener('pointermove', onMove as any)
+                target.removeEventListener('pointerup', onUp as any)
+                target.removeEventListener('pointercancel', onUp as any)
+              }
+
+              target.addEventListener('pointermove', onMove as any)
+              target.addEventListener('pointerup', onUp as any)
+              target.addEventListener('pointercancel', onUp as any)
+            }}
+          >
+            <div className="flex items-center gap-2 font-medium text-zinc-800">
+              <MoveVertical className="h-4 w-4 text-zinc-400" />
+              <span>Size</span>
+            </div>
+            <button
+              type="button"
+              className="p-1 text-zinc-400 hover:text-zinc-600"
+              onClick={() => setIsMobileSizeDialogOpen(false)}
+            >
+              <X className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+          </div>
+          <div className="flex items-center justify-center gap-4 p-6">
+            {selectedImageZoneIdState && selectedImageHasImage && selectedImageState ? (
+              <>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                  onClick={() => {
+                    if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                      pushPastBeforeMutation()
+                      panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                    }
+                    const scale = Math.max(1, (selectedImageState.scale || 1) - 0.1)
+                    setZoneStates((prev) => {
+                      const st = prev[selectedImageZoneIdState]
+                      const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                      return {
+                        ...prev,
+                        [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                      }
+                    })
+                    setPreviewVersion((v) => v + 1)
+                    setTimeout(() => delete panelImageZoomPushedRef.current[selectedImageZoneIdState], 100)
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="100"
+                  max="300"
+                  value={Math.round((selectedImageState.scale || 1) * 100)}
+                  onChange={(e) => {
+                    if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                      pushPastBeforeMutation()
+                      panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                    }
+                    const scale = Math.max(1, Number(e.target.value) / 100)
+                    setZoneStates((prev) => {
+                      const st = prev[selectedImageZoneIdState]
+                      const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                      return {
+                        ...prev,
+                        [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                      }
+                    })
+                    setPreviewVersion((v) => v + 1)
+                  }}
+                  onPointerUp={() => { delete panelImageZoomPushedRef.current[selectedImageZoneIdState] }}
+                  onPointerCancel={() => { delete panelImageZoomPushedRef.current[selectedImageZoneIdState] }}
+                  className="h-1 flex-1 accent-zinc-800"
+                />
+                <span className="text-xs font-medium text-zinc-600 w-8 text-center">{Math.round((selectedImageState.scale || 1) * 100)}%</span>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                  onClick={() => {
+                    if (!panelImageZoomPushedRef.current[selectedImageZoneIdState]) {
+                      pushPastBeforeMutation()
+                      panelImageZoomPushedRef.current[selectedImageZoneIdState] = true
+                    }
+                    const scale = Math.max(1, (selectedImageState.scale || 1) + 0.1)
+                    setZoneStates((prev) => {
+                      const st = prev[selectedImageZoneIdState]
+                      const { clampedOX, clampedOY } = clampImageOffsets(st.offsetX || 0, st.offsetY || 0, scale, st.zoneW, st.zoneH, st.imgW, st.imgH)
+                      return {
+                        ...prev,
+                        [selectedImageZoneIdState]: { ...st, scale, offsetX: clampedOX, offsetY: clampedOY },
+                      }
+                    })
+                    setPreviewVersion((v) => v + 1)
+                    setTimeout(() => delete panelImageZoomPushedRef.current[selectedImageZoneIdState], 100)
+                  }}
+                >
+                  +
+                </button>
+              </>
+            ) : selectedTextIdsState.length + selectedStickerIdsState.length > 1 ? (
+              (() => {
+                const initMultiScale = () => {
+                  if (multiScaleStartRef.current) return
+                  const liveSvg = previewContainerRef.current?.querySelector("svg")
+                  if (!liveSvg) return
+
+                  const txtBoxes = selectedTextIdsState.map((id) => {
+                    const ov = liveSvg.querySelector("#overlay_" + id)
+                    if (!ov) return null
+                    const x = parseFloat(ov.getAttribute("x") || "")
+                    const y = parseFloat(ov.getAttribute("y") || "")
+                    const w = parseFloat(ov.getAttribute("width") || "")
+                    const h = parseFloat(ov.getAttribute("height") || "")
+                    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h)) return null
+                    return { x, y, w, h }
+                  }).filter((b): b is { x: number; y: number; w: number; h: number } => Boolean(b))
+
+                  const stickerBoxes = selectedStickerIdsState.map((id) => {
+                    const ov = liveSvg.querySelector("#sticker_overlay_" + id)
+                    if (!ov) return null
+                    const x = parseFloat(ov.getAttribute("x") || "")
+                    const y = parseFloat(ov.getAttribute("y") || "")
+                    const w = parseFloat(ov.getAttribute("width") || "")
+                    const h = parseFloat(ov.getAttribute("height") || "")
+                    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(w) || !Number.isFinite(h)) return null
+                    return { x, y, w, h }
+                  }).filter((b): b is { x: number; y: number; w: number; h: number } => Boolean(b))
+
+                  const all = [...txtBoxes, ...stickerBoxes]
+                  if (all.length === 0) return
+                  const left = Math.min(...all.map((b) => b.x))
+                  const top = Math.min(...all.map((b) => b.y))
+                  const right = Math.max(...all.map((b) => b.x + b.w))
+                  const bottom = Math.max(...all.map((b) => b.y + b.h))
+                  const anchorX = left + (right - left) / 2
+                  const anchorY = top + (bottom - top) / 2
+
+                  const startTxt: any = {}
+                  const startTxtFontSize: any = {}
+                  selectedTextIdsState.forEach(id => {
+                    const live = liveSvg.querySelector(idSelector(id))
+                    if (!live) return
+                    const tspans = Array.from(live.querySelectorAll("tspan"))
+                    startTxt[id] = {
+                      x: parseFloat(live.getAttribute("x") || "0"),
+                      y: parseFloat(live.getAttribute("y") || "0"),
+                      tspanXY: tspans.map(t => ({ x: parseFloat(t.getAttribute("x") || "0"), y: parseFloat(t.getAttribute("y") || "0") }))
+                    }
+
+                    let baseFont = NaN
+                    const leaf = Array.from(live.querySelectorAll("tspan")) as SVGElement[]
+                    if (leaf[0] && leaf[0].hasAttribute("font-size")) {
+                      baseFont = parseFloat(leaf[0].getAttribute("font-size") || "0")
+                    } else if (live.hasAttribute("font-size")) {
+                      baseFont = parseFloat(live.getAttribute("font-size") || "0")
+                    } else {
+                      const cs = window.getComputedStyle(leaf[0] ?? live)
+                      baseFont = parseFloat(cs.fontSize || "16")
+                    }
+                    startTxtFontSize[id] = Number.isFinite(baseFont) && baseFont > 0 ? baseFont : 16
+                  })
+                  const startSticker: any = {}
+                  selectedStickerIdsState.forEach(id => {
+                    const live = liveSvg.querySelector(idSelector(id))
+                    if (!live) return
+                    startSticker[id] = {
+                      x: parseFloat(live.getAttribute("x") || "0"),
+                      y: parseFloat(live.getAttribute("y") || "0"),
+                      w: parseFloat(live.getAttribute("width") || "0"),
+                      h: parseFloat(live.getAttribute("height") || "0")
+                    }
+                  })
+                  multiScaleStartRef.current = { anchorX, anchorY, startTxt, startTxtFontSize, startSticker, baseSlider: multiSelectScaleUi }
+                }
+
+                const endMultiScale = () => {
+                  multiScaleStartRef.current = null
+                }
+
+                return (
+                  <>
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                      onClick={() => {
+                        initMultiScale()
+                        setMultiSelectScaleUi(prev => {
+                          const next = Math.max(10, prev - 10)
+                          setMultiSelectScale(next)
+                          return next
+                        })
+                        setTimeout(endMultiScale, 100)
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="range"
+                      min="10"
+                      max="300"
+                      value={multiSelectScaleUi}
+                      onChange={(e) => {
+                        initMultiScale()
+                        const val = Number(e.target.value)
+                        setMultiSelectScaleUi(val)
+                        setMultiSelectScale(val)
+                      }}
+                      onPointerDown={initMultiScale}
+                      onPointerUp={endMultiScale}
+                      onPointerCancel={endMultiScale}
+                      className="h-1 flex-1 accent-zinc-800"
+                    />
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                      onClick={() => {
+                        initMultiScale()
+                        setMultiSelectScaleUi(prev => {
+                          const next = Math.min(300, prev + 10)
+                          setMultiSelectScale(next)
+                          return next
+                        })
+                        setTimeout(endMultiScale, 100)
+                      }}
+                    >
+                      +
+                    </button>
+                  </>
+                )
+              })()
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                  onClick={() => selectedTextIdState ? nudgeSelectedTextFontSize(-1) : null}
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min="8"
+                  max="144"
+                  value={Math.round(selectedTextFontSizeUi || 16)}
+                  onChange={(e) => setSelectedTextFontSize(Number(e.target.value))}
+                  className="h-1 flex-1 accent-zinc-800"
+                />
+                <span className="text-xs font-medium text-zinc-600 w-6 text-center">{Math.round(selectedTextFontSizeUi || 16)}</span>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-300 bg-white text-zinc-600 shadow-sm"
+                  onClick={() => selectedTextIdState ? nudgeSelectedTextFontSize(1) : null}
+                >
+                  +
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div id="app" className="flex flex-1 flex-col overflow-hidden" style={isMobile ? undefined : { minHeight: 620 }}>
         {/* Hidden inputs for image uploads */}
