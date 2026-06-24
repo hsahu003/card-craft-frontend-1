@@ -303,6 +303,29 @@ function normalizeEditableValue(value: string) {
   return lines.map(line => line.replace(/ +$/, match => "\u00A0".repeat(match.length))).join("\n")
 }
 
+function extractMultilineText(el: SVGElement) {
+  const leafTspans = getLeafTspansInDomOrder(el)
+  if (leafTspans.length <= 1) {
+    return el.textContent?.replace(/\u200B/g, "") ?? ""
+  }
+  let lastY: number | null = null
+  const lines: string[] = []
+  leafTspans.forEach(t => {
+    const y = parseFloat(t.getAttribute("y") || "")
+    const text = t.textContent?.replace(/\u200B/g, "") || ""
+    if (lastY === null) {
+      lines.push(text)
+      lastY = Number.isFinite(y) ? y : null
+    } else if (Number.isFinite(y) && Math.abs(y - lastY) > 2) {
+      lines.push(text)
+      lastY = y
+    } else {
+      lines[lines.length - 1] += text
+    }
+  })
+  return lines.join("\n")
+}
+
 function applyEditableValueToTextEl(target: SVGElement, value: string, forceStepY?: number) {
   const normalizedVal = normalizeEditableValue(value)
   const leaf = getLeafTspansInDomOrder(target)
@@ -712,7 +735,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             }
             walk(el)
 
-            const rawVal = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+            const rawVal = extractMultilineText(el).trimEnd()
             textVals[id] = enforceWesternNumerals(rawVal)
           }
         })
@@ -1582,7 +1605,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         }
         walk(el)
 
-        const rawVal = el.textContent?.replace(/\u200B/g, "").trim() ?? ""
+        const rawVal = extractMultilineText(el).trimEnd()
         textVals[id] = enforceWesternNumerals(rawVal)
       }
     })
@@ -5943,7 +5966,27 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
 
-        {mobileEditTextDialog.isOpen && mobileEditTextDialog.tid && (
+        {(() => {
+          if (!mobileEditTextDialog.isOpen || !mobileEditTextDialog.tid) return null;
+          let mobileTextAlign: "left" | "center" | "right" = "left";
+          try {
+            const liveSvg = previewContainerRef.current?.querySelector("svg");
+            if (liveSvg) {
+              const el = liveSvg.querySelector(idSelector(mobileEditTextDialog.tid));
+              if (el) {
+                const anchor = el.getAttribute("text-anchor") || el.querySelector("tspan")?.getAttribute("text-anchor");
+                if (anchor === "middle") mobileTextAlign = "center";
+                else if (anchor === "end") mobileTextAlign = "right";
+                else if (!anchor) {
+                  const cs = window.getComputedStyle(el);
+                  if (cs.textAnchor === "middle" || cs.textAlign === "center") mobileTextAlign = "center";
+                  else if (cs.textAnchor === "end" || cs.textAlign === "right" || cs.textAlign === "end") mobileTextAlign = "right";
+                }
+              }
+            }
+          } catch {}
+
+          return (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
             <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-xl">
               <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
@@ -5965,6 +6008,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   autoFocus
                   key={mobileEditTextDialog.tid}
                   className="w-full resize-none rounded-lg border border-zinc-300 p-3 text-[17px] text-zinc-800 focus:border-[#2587E1] focus:outline-none focus:ring-1 focus:ring-[#2587E1]"
+                  style={{ textAlign: mobileTextAlign }}
                   rows={4}
                   defaultValue={textValues[mobileEditTextDialog.tid] || ""}
                   id="mobile-edit-text-textarea"
@@ -6031,7 +6075,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   )
