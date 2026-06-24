@@ -906,13 +906,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     })
 
     Object.entries(startSticker).forEach(([id, b]: [string, any]) => {
-      const liveEl = liveSvg.querySelector(idSelector(id)) as SVGGElement | null
-      const docEl = doc.querySelector(idSelector(id)) as SVGGElement | null
+      const liveEl = liveSvg.querySelector(idSelector(id)) as SVGImageElement | null
+      const docEl = doc.querySelector(idSelector(id)) as SVGImageElement | null
       const targets = [liveEl, docEl]
 
       targets.forEach(el => {
         if (!el) return
-        const image = el.querySelector("image")
+        const image = el.tagName.toLowerCase() === "image" ? el : el.querySelector("image")
         if (!image) return
         const next = scalePoint(b.x, b.y)
         image.setAttribute("x", String(next.x))
@@ -5597,14 +5597,17 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   +
                 </button>
               </>
-            ) : selectedTextIdsState.length + selectedStickerIdsState.length > 1 ? (
+            ) : selectedTextIdsState.length + selectedStickerIdsState.length > 1 || (selectedStickerIdState && !selectedTextIdState) ? (
               (() => {
                 const initMultiScale = () => {
                   if (multiScaleStartRef.current) return
                   const liveSvg = previewContainerRef.current?.querySelector("svg")
                   if (!liveSvg) return
 
-                  const txtBoxes = selectedTextIdsState.map((id) => {
+                  const activeTxtIds = Array.from(new Set([...selectedTextIdsState, ...(selectedTextIdState ? [selectedTextIdState] : [])]))
+                  const activeStickerIds = Array.from(new Set([...selectedStickerIdsState, ...(selectedStickerIdState ? [selectedStickerIdState] : [])]))
+
+                  const txtBoxes = activeTxtIds.map((id) => {
                     const ov = liveSvg.querySelector("#overlay_" + id)
                     if (!ov) return null
                     const x = parseFloat(ov.getAttribute("x") || "")
@@ -5615,7 +5618,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                     return { x, y, w, h }
                   }).filter((b): b is { x: number; y: number; w: number; h: number } => Boolean(b))
 
-                  const stickerBoxes = selectedStickerIdsState.map((id) => {
+                  const stickerBoxes = activeStickerIds.map((id) => {
                     const ov = liveSvg.querySelector("#sticker_overlay_" + id)
                     if (!ov) return null
                     const x = parseFloat(ov.getAttribute("x") || "")
@@ -5637,7 +5640,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
                   const startTxt: any = {}
                   const startTxtFontSize: any = {}
-                  selectedTextIdsState.forEach(id => {
+                  activeTxtIds.forEach(id => {
                     const live = liveSvg.querySelector(idSelector(id))
                     if (!live) return
                     const tspans = Array.from(live.querySelectorAll("tspan"))
@@ -5660,7 +5663,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                     startTxtFontSize[id] = Number.isFinite(baseFont) && baseFont > 0 ? baseFont : 16
                   })
                   const startSticker: any = {}
-                  selectedStickerIdsState.forEach(id => {
+                  activeStickerIds.forEach(id => {
                     const live = liveSvg.querySelector(idSelector(id))
                     if (!live) return
                     startSticker[id] = {
