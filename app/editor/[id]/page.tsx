@@ -822,6 +822,25 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     const newFont = Math.max(4, Math.min(200, nextFontSize))
 
     const applyFontSize = (target: SVGElement) => {
+      let currentFont = NaN
+      const leafForFont = target.querySelector("tspan") || target
+      const leafFontSizeSvg = parseFloat(leafForFont.getAttribute("font-size") || "")
+      if (Number.isFinite(leafFontSizeSvg) && leafFontSizeSvg > 0) {
+        currentFont = leafFontSizeSvg
+      } else {
+        const targetFontSizeSvg = parseFloat(target.getAttribute("font-size") || "")
+        if (Number.isFinite(targetFontSizeSvg) && targetFontSizeSvg > 0) {
+          currentFont = targetFontSizeSvg
+        } else {
+          try {
+            const cs = typeof window !== "undefined" ? window.getComputedStyle(leafForFont as any) : null
+            const v = cs ? parseFloat(cs.fontSize || "") : NaN
+            if (Number.isFinite(v) && v > 0) currentFont = v
+          } catch {}
+        }
+      }
+      if (!(currentFont > 0)) currentFont = 16
+
       target.setAttribute("font-size", String(newFont))
         ; (target as unknown as HTMLElement).style.fontSize = String(newFont) + "px"
       const tspans = Array.from(target.querySelectorAll("tspan")) as SVGElement[]
@@ -834,6 +853,28 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           t.setAttribute("style", withoutSize ? `${withoutSize}font-size:${newFont}px;` : `font-size:${newFont}px;`)
         }
       })
+
+      const leafTspans = tspans.filter((t) => t.querySelectorAll("tspan").length === 0)
+      if (leafTspans.length > 1) {
+        leafTspans.sort((a, b) => {
+          const ay = parseFloat(a.getAttribute("y") || "0")
+          const by = parseFloat(b.getAttribute("y") || "0")
+          if (ay !== by) return ay - by
+          const ax = parseFloat(a.getAttribute("x") || "0")
+          const bx = parseFloat(b.getAttribute("x") || "0")
+          return ax - bx
+        })
+        const firstY = parseFloat(leafTspans[0].getAttribute("y") || "0")
+        const persistedStep = parseFloat(target.getAttribute("data-editor-line-step") || "")
+        const stepY = Number.isFinite(persistedStep) && persistedStep > 0
+          ? (persistedStep * newFont) / currentFont
+          : newFont * LINE_HEIGHT_RATIO
+        
+        leafTspans.forEach((t, i) => {
+          t.setAttribute("y", String(firstY + i * stepY))
+        })
+        target.setAttribute("data-editor-line-step", String(stepY))
+      }
     }
 
     pushPastBeforeMutation()
@@ -2665,6 +2706,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         startCornerX: number
         startCornerY: number
         startFontSizePx: number
+        startLineStep: number
         startBBox: { x: number; y: number; width: number; height: number }
         startFirstTspanX: number
         startFirstTspanY: number
@@ -3425,6 +3467,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         const cs = typeof window !== "undefined" ? window.getComputedStyle(liveText as any) : null
         const fsAttr = cs?.fontSize || liveText.getAttribute("font-size") || docEl.getAttribute("font-size") || "16"
         const startFontSizePx = parseFloat(fsAttr)
+        const startLineStep = parseFloat(liveText.getAttribute("data-editor-line-step") || "")
 
         const corners: Record<"tl" | "tr" | "bl" | "br", { x: number; y: number }> = {
           tl: { x: bbox.x, y: bbox.y },
@@ -3463,6 +3506,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           startCornerX: startCorner.x,
           startCornerY: startCorner.y,
           startFontSizePx,
+          startLineStep,
           startBBox: bbox,
           startFirstTspanX,
           startFirstTspanY,
@@ -4394,7 +4438,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             return ax - bx
           })
           const firstY = parseFloat(leaf[0].getAttribute("y") || "0")
-          const persistedStep = parseFloat(el.getAttribute("data-editor-line-step") || "")
+          const persistedStep = resizeDrag.startLineStep
           // Preserve the user's established line spacing (from Enter/new lines) by scaling it
           // with the current font size during resize. Fallback to ratio-based spacing.
           const stepY =
@@ -4404,6 +4448,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           leaf.forEach((t, i) => {
             t.setAttribute("y", String(firstY + i * stepY))
           })
+          el.setAttribute("data-editor-line-step", String(stepY))
         }
         respaceTspansByFontSize(docEl)
         respaceTspansByFontSize(liveText)
@@ -5313,8 +5358,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                     </button>
                     <input
                       type="range"
-                      min="8"
-                      max="144"
+                      min="4"
+                      max="200"
                       value={Math.round(selectedTextFontSizeUi || 16)}
                       onChange={(e) => setSelectedTextFontSize(Number(e.target.value))}
                       className="h-1 w-24 accent-zinc-400"
@@ -5742,8 +5787,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 </button>
                 <input
                   type="range"
-                  min="8"
-                  max="144"
+                  min="4"
+                  max="200"
                   value={Math.round(selectedTextFontSizeUi || 16)}
                   onChange={(e) => setSelectedTextFontSize(Number(e.target.value))}
                   className="h-1 flex-1 accent-zinc-800"
