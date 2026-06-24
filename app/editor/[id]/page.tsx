@@ -1391,7 +1391,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setSelectedStickerIdState(nextId)
     if (isMobile) setIsStickerDialogOpen(false)
     setPreviewVersion((v) => v + 1)
-  }, [pushPastBeforeMutation])
+  }, [pushPastBeforeMutation, isMobile])
 
   const applyImageToZone = useCallback(async (zoneId: string, file: File) => {
     pushPastBeforeMutation()
@@ -4748,7 +4748,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         target.closest("#editor-header-controls") ||
         target.closest("#mobile-header-controls") ||
         target.closest("#mobile-size-dialog") ||
-        target.closest("#mobile-bottom-actions")
+        target.closest("#mobile-bottom-actions") ||
+        target.closest("#sticker-dialog")
       ) return
 
       // Close active inline text editor immediately to avoid blur-then-commit flicker.
@@ -5782,6 +5783,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           {/* Draggable Sticker Dialog */}
           {isStickerDialogOpen && (
             <div
+              id="sticker-dialog"
               ref={stickerDialogRef}
               className={`fixed z-50 flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-lg ${isMobile ? "bottom-24 left-4 right-4 max-h-[40vh]" : "w-[280px]"}`}
               style={isMobile ? undefined : {
@@ -5839,8 +5841,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                         type="button"
                         title={sticker.name}
                         className="flex h-16 items-center justify-center rounded-md border border-transparent bg-background p-1 transition-colors hover:border-border hover:bg-muted"
-                        draggable
+                        draggable={!isMobile}
                         onDragStart={(e) => {
+                          if (isMobile) return
                           e.dataTransfer.setData("application/x-sticker", JSON.stringify(sticker))
                           e.dataTransfer.effectAllowed = "copy"
                         }}
