@@ -289,7 +289,7 @@ export function getClipBounds(doc: Document, clipAttr: string | null): { x: numb
 }
 
 // Snap threshold: how close (in SVG units) before snapping engages
-const SNAP = 3
+const SNAP = 1.5
 
 export function hideGuides(svgEl: SVGElement) {
   ;["guide-cx", "guide-cy", "guide-left", "guide-right", "guide-top", "guide-bottom"].forEach((id) => {
