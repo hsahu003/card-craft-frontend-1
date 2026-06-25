@@ -2915,6 +2915,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       editorEl.value = txt
       const supportsTransliteration = transliterationLanguage !== null
       let suggestionItems: string[] = []
+      let suggestionItemsWord = ""
       let activeSuggestionIndex = 0
       let transliterationWordRange = { start: 0, end: 0, word: "" }
       let isApplyingSuggestion = false
@@ -2929,6 +2930,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
       const closeSuggestions = () => {
         suggestionItems = []
+        suggestionItemsWord = ""
         activeSuggestionIndex = 0
         suggestionsEl.style.display = "none"
         suggestionsEl.replaceChildren()
@@ -3039,6 +3041,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             const apiSuggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : []
             const topSuggestions = Array.from(new Set(apiSuggestions.filter((s) => s !== currentWord))).slice(0, 5)
             suggestionItems = [...topSuggestions, currentWord]
+            suggestionItemsWord = currentWord
             activeSuggestionIndex = 0
             renderSuggestions()
           } catch {
@@ -3155,8 +3158,54 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         if (bumpPreview) setPreviewVersion((v) => v + 1)
       }
       activeInlineEditor = { tid, commit }
-      editorEl.addEventListener("keydown", (e) => {
+      editorEl.addEventListener("keydown", async (e) => {
         const ke = e as unknown as KeyboardEvent
+
+        // Intercept fast Enter/Space before suggestions load
+        // Intercept fast Enter/Space before suggestions load
+        const caret = editorEl.selectionStart ?? editorEl.value.length;
+        const range = getCurrentWordRange(editorEl.value, caret);
+        const word = range.word.trim();
+        const isStale = suggestionItemsWord === "" || word !== suggestionItemsWord.trim();
+
+        if (supportsTransliteration && (suggestionItems.length === 0 || isStale) && (ke.key === "Enter" || ke.key === " ")) {
+           if (word && isRomanPhoneticWord(word)) {
+               e.preventDefault();
+               try {
+                   const params = new URLSearchParams({ word, language: transliterationLanguage! });
+                   const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" });
+                   const payload = await response.json();
+                   const apiSuggestions: string[] = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+                   if (apiSuggestions.length > 0) {
+                       const suggestion = apiSuggestions[0];
+                       const actualEnd = (range as any).isAfterSingleSpace ? range.end + 1 : range.end;
+                       editorEl.value = editorEl.value.slice(0, range.start) + suggestion + editorEl.value.slice(actualEnd);
+                       editorEl.setSelectionRange(range.start + suggestion.length, range.start + suggestion.length);
+                       syncModelFromEditor();
+                   }
+               } catch (err) {}
+               
+               if (ke.key === "Enter") {
+                   if (!isMultiline) {
+                       commit();
+                   } else if (ke.metaKey || ke.ctrlKey) {
+                       commit();
+                   } else {
+                       const c = editorEl.selectionStart ?? editorEl.value.length;
+                       editorEl.value = editorEl.value.slice(0, c) + "\n" + editorEl.value.slice(c);
+                       editorEl.setSelectionRange(c + 1, c + 1);
+                       syncModelFromEditor();
+                   }
+               } else if (ke.key === " ") {
+                   const c = editorEl.selectionStart ?? editorEl.value.length;
+                   editorEl.value = editorEl.value.slice(0, c) + " " + editorEl.value.slice(c);
+                   editorEl.setSelectionRange(c + 1, c + 1);
+                   syncModelFromEditor();
+               }
+               return;
+           }
+        }
+
         if (supportsTransliteration && suggestionItems.length > 0) {
           if (ke.key === "ArrowDown") {
             e.preventDefault()
@@ -5100,6 +5149,74 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
 
   const handleMobileTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nativeEvent = e.nativeEvent as any || {};
+    const textarea = e.target;
+    const caret = textarea.selectionStart ?? textarea.value.length;
+    
+    const isSpace = (typeof nativeEvent.data === "string" && nativeEvent.data.endsWith(" ")) || 
+                    (!nativeEvent.inputType?.startsWith("delete") && textarea.value.charAt(caret - 1) === " ");
+    const isEnter = nativeEvent.inputType === "insertLineBreak" || 
+                    (typeof nativeEvent.data === "string" && nativeEvent.data.endsWith("\n")) ||
+                    (!nativeEvent.inputType?.startsWith("delete") && textarea.value.charAt(caret - 1) === "\n");
+    
+    if ((isSpace || isEnter) && transliterationLanguage) {
+      const charInserted = isSpace ? " " : "\n";
+      
+      let actualCaret = caret;
+      if (textarea.value.charAt(actualCaret - 1) !== charInserted && textarea.value.charAt(actualCaret) === charInserted) {
+          actualCaret += 1;
+      }
+      
+      if (textarea.value.charAt(actualCaret - 1) === charInserted) {
+        const valBefore = textarea.value.slice(0, actualCaret - 1) + textarea.value.slice(actualCaret);
+        const range = getCurrentWordRange(valBefore, actualCaret - 1);
+        const word = range.word.trim();
+        const isStale = !mobileTransliteration.wordRange || word !== mobileTransliteration.wordRange.word.trim();
+
+        if (word && isRomanPhoneticWord(word)) {
+          if (mobileTransliteration.suggestions.length > 0 && !isStale) {
+            textarea.value = valBefore;
+            textarea.setSelectionRange(caret - 1, caret - 1);
+            applyMobileSuggestion(mobileTransliteration.suggestions[0], charInserted, true);
+            return;
+          } else {
+            textarea.value = valBefore;
+            textarea.setSelectionRange(caret - 1, caret - 1);
+            
+            (async () => {
+               try {
+                  const params = new URLSearchParams({ word, language: transliterationLanguage! });
+                  const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" });
+                  const payload = await response.json();
+                  const apiSuggestions: string[] = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+                  if (apiSuggestions.length > 0) {
+                      const suggestion = apiSuggestions[0];
+                      const actualEnd = (range as any).isAfterSingleSpace ? range.end + 1 : range.end;
+                      textarea.value = valBefore.slice(0, range.start) + suggestion + valBefore.slice(actualEnd);
+                      const nextCaret = range.start + suggestion.length;
+                      textarea.value = textarea.value.slice(0, nextCaret) + charInserted + textarea.value.slice(nextCaret);
+                      textarea.setSelectionRange(nextCaret + 1, nextCaret + 1);
+                      const topSuggestions = Array.from(new Set(apiSuggestions.filter((s) => s !== word))).slice(0, 5);
+                      setMobileTransliteration({
+                          suggestions: [...topSuggestions, word],
+                          wordRange: { start: range.start, end: range.start + suggestion.length, word: suggestion, isAfterSingleSpace: false }
+                      });
+                  } else {
+                      textarea.value = valBefore.slice(0, caret - 1) + charInserted + valBefore.slice(caret - 1);
+                      textarea.setSelectionRange(caret, caret);
+                      handleMobileTextareaChange({ target: textarea, nativeEvent: {} } as any);
+                  }
+               } catch {
+                  textarea.value = valBefore.slice(0, caret - 1) + charInserted + valBefore.slice(caret - 1);
+                  textarea.setSelectionRange(caret, caret);
+                  handleMobileTextareaChange({ target: textarea, nativeEvent: {} } as any);
+               }
+            })();
+            return;
+          }
+        }
+      }
+    }
     const rawVal = e.target.value
     const val = enforceWesternNumerals(rawVal)
 
@@ -5109,14 +5226,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       e.target.setSelectionRange(caret, caret)
     }
 
-    const caret = e.target.selectionStart ?? val.length
+    const finalCaret = e.target.selectionStart ?? val.length
 
     if (mobileSuggestionDebounceRef.current) window.clearTimeout(mobileSuggestionDebounceRef.current)
 
     const supportsTransliteration = !!transliterationLanguage
     if (!supportsTransliteration) return
 
-    const range = getCurrentWordRange(val, caret)
+    const range = getCurrentWordRange(val, finalCaret)
     const word = range.word.trim()
 
     if (!word || !isRomanPhoneticWord(word)) {
@@ -5144,22 +5261,31 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }, 300)
   }
 
-  const applyMobileSuggestion = (suggestion: string) => {
+  const applyMobileSuggestion = (suggestion: string, suffix: string = "", keepOpen: boolean = false) => {
     const textarea = document.getElementById("mobile-edit-text-textarea") as HTMLTextAreaElement
     if (!textarea || !mobileTransliteration.wordRange) return
 
     const val = textarea.value
     const { start, end, isAfterSingleSpace } = mobileTransliteration.wordRange
     const actualEnd = isAfterSingleSpace ? end + 1 : end
-    const nextValue = val.slice(0, start) + suggestion + val.slice(actualEnd)
-    const nextCaret = start + suggestion.length
+    
+    const replacement = suggestion + suffix
+    const nextValue = val.slice(0, start) + replacement + val.slice(actualEnd)
+    const nextCaret = start + replacement.length
 
     textarea.value = nextValue
     textarea.setSelectionRange(nextCaret, nextCaret)
     textarea.focus()
 
-    setMobileTransliteration({ suggestions: [], wordRange: null })
-    handleMobileTextareaChange({ target: textarea } as any)
+    if (keepOpen) {
+       setMobileTransliteration({
+         suggestions: mobileTransliteration.suggestions,
+         wordRange: { start, end: start + suggestion.length, word: suggestion, isAfterSingleSpace: false }
+       })
+    } else {
+       setMobileTransliteration({ suggestions: [], wordRange: null })
+       handleMobileTextareaChange({ target: textarea, nativeEvent: {} } as any)
+    }
   }
 
   if (!template.svg) {
@@ -6013,6 +6139,63 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                   defaultValue={textValues[mobileEditTextDialog.tid] || ""}
                   id="mobile-edit-text-textarea"
                   onChange={handleMobileTextareaChange}
+                  onKeyDown={async (e) => {
+                    const textarea = e.target as HTMLTextAreaElement;
+                    const val = textarea.value;
+                    const caret = textarea.selectionStart ?? val.length;
+                    const range = getCurrentWordRange(val, caret);
+                    const word = range.word.trim();
+                    const supportsTransliteration = !!transliterationLanguage;
+                    const isTransliterating = supportsTransliteration && word && isRomanPhoneticWord(word);
+                    const isStale = !mobileTransliteration.wordRange || word !== mobileTransliteration.wordRange.word.trim();
+                    
+                    if (isTransliterating && (mobileTransliteration.suggestions.length === 0 || isStale) && (e.key === "Enter" || e.key === " " || e.key === "Spacebar" || e.keyCode === 32)) {
+                        e.preventDefault();
+                        try {
+                           const params = new URLSearchParams({ word, language: transliterationLanguage! });
+                           const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" });
+                           const payload = await response.json();
+                           const apiSuggestions: string[] = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+                           if (apiSuggestions.length > 0) {
+                               const suggestion = apiSuggestions[0];
+                               const actualEnd = (range as any).isAfterSingleSpace ? range.end + 1 : range.end;
+                               textarea.value = val.slice(0, range.start) + suggestion + val.slice(actualEnd);
+                               const nextCaret = range.start + suggestion.length;
+                               textarea.setSelectionRange(nextCaret, nextCaret);
+                               const topSuggestions = Array.from(new Set(apiSuggestions.filter((s) => s !== word))).slice(0, 5);
+                               setMobileTransliteration({
+                                   suggestions: [...topSuggestions, word],
+                                   wordRange: { start: range.start, end: range.start + suggestion.length, word: suggestion, isAfterSingleSpace: false }
+                               });
+                           } else {
+                               handleMobileTextareaChange({ target: textarea } as any);
+                           }
+                        } catch (err) {
+                           handleMobileTextareaChange({ target: textarea } as any);
+                        }
+                        
+                        if (e.key === "Enter") {
+                            const c = textarea.selectionStart ?? textarea.value.length;
+                            textarea.value = textarea.value.slice(0, c) + "\n" + textarea.value.slice(c);
+                            textarea.setSelectionRange(c + 1, c + 1);
+                        } else if (e.key === " " || e.key === "Spacebar" || e.keyCode === 32) {
+                            const c = textarea.selectionStart ?? textarea.value.length;
+                            textarea.value = textarea.value.slice(0, c) + " " + textarea.value.slice(c);
+                            textarea.setSelectionRange(c + 1, c + 1);
+                        }
+                        return;
+                    }
+
+                    if (mobileTransliteration.suggestions.length > 0) {
+                      if (e.key === " " || e.key === "Spacebar" || e.keyCode === 32) {
+                        e.preventDefault()
+                        applyMobileSuggestion(mobileTransliteration.suggestions[0], " ", true)
+                      } else if (e.key === "Enter") {
+                        e.preventDefault()
+                        applyMobileSuggestion(mobileTransliteration.suggestions[0], "\n", true)
+                      }
+                    }
+                  }}
                 />
                 {mobileTransliteration.suggestions.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -6051,9 +6234,43 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
                 <Button
                   type="button"
                   className="h-10 flex-1 rounded-md bg-[#2587E1] px-8 font-normal text-white hover:bg-[#1A73C9]"
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     if (Date.now() - mobileDialogOpenedAtRef.current < 500) { e.preventDefault(); return }
                     const textarea = document.getElementById("mobile-edit-text-textarea") as HTMLTextAreaElement
+                    
+                    if (textarea) {
+                       const val = textarea.value;
+                       let caret = textarea.selectionStart ?? val.length;
+                       
+                       // If caret is immediately after whitespace, look backwards to find the actual word
+                       let searchCaret = caret;
+                       while (searchCaret > 0 && /\s/.test(val.charAt(searchCaret - 1))) {
+                           searchCaret--;
+                       }
+                       const range = getCurrentWordRange(val, searchCaret);
+                       const word = range.word.trim();
+                       const supportsTransliteration = !!transliterationLanguage;
+                       const isStale = !mobileTransliteration.wordRange || word !== mobileTransliteration.wordRange.word.trim();
+                       
+                       if (supportsTransliteration && word && isRomanPhoneticWord(word) && (mobileTransliteration.suggestions.length === 0 || isStale)) {
+                           try {
+                               const params = new URLSearchParams({ word, language: transliterationLanguage! });
+                               const response = await fetch("/api/transliteration?" + params.toString(), { cache: "no-store" });
+                               const payload = await response.json();
+                               const apiSuggestions: string[] = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
+                               if (apiSuggestions.length > 0) {
+                                   const suggestion = apiSuggestions[0];
+                                   const actualEnd = (range as any).isAfterSingleSpace ? range.end + 1 : range.end;
+                                   textarea.value = val.slice(0, range.start) + suggestion + val.slice(actualEnd);
+                               }
+                           } catch (err) {}
+                       } else if (supportsTransliteration && mobileTransliteration.suggestions.length > 0 && word === mobileTransliteration.wordRange?.word.trim()) {
+                           const suggestion = mobileTransliteration.suggestions[0];
+                           const actualEnd = (mobileTransliteration.wordRange as any).isAfterSingleSpace ? mobileTransliteration.wordRange.end + 1 : mobileTransliteration.wordRange.end;
+                           textarea.value = val.slice(0, mobileTransliteration.wordRange.start) + suggestion + val.slice(actualEnd);
+                       }
+                    }
+
                     const tid = mobileEditTextDialog.tid!
                     const val = enforceWesternNumerals(textarea ? textarea.value : (textValues[tid] || ""))
                     const docEl2 = svgDocRef.current?.querySelector(`[id="${tid}"]`) as SVGElement | null
