@@ -20,4 +20,3 @@ pnpm-debug.log*
 
 # Env files (optional but common)
 .env*.local
-public/assets/cards
