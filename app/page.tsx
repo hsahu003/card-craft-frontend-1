@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { HeroCarousel } from "@/components/home/hero-carousel"
-import { PopularTemplates } from "@/components/home/popular-templates"
+import { AllTemplates } from "@/components/home/all-templates"
 
 export default function HomePage() {
   return (
@@ -9,7 +9,7 @@ export default function HomePage() {
       <Navbar />
       <main className="flex-1">
         <HeroCarousel />
-        <PopularTemplates />
+        <AllTemplates />
       </main>
       <Footer />
     </div>
