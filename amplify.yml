@@ -5,6 +5,7 @@ frontend:
       commands:
         - npm i -g pnpm
         - pnpm install
+        - pnpm approve-builds
     build:
       commands:
         - pnpm run build
