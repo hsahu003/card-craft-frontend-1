@@ -4,8 +4,7 @@ frontend:
     preBuild:
       commands:
         - npm i -g pnpm
-        # Pass the dependencies strictly as an inline array flag during install
-        - pnpm install --only-built-dependencies=canvas,sharp,msw,core-js
+        - pnpm install
     build:
       commands:
         - pnpm run build
