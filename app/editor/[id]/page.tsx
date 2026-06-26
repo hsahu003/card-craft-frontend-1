@@ -5078,6 +5078,8 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       canvas.height = h * scale
       const ctx = canvas.getContext("2d")
       if (!ctx) throw new Error("No canvas context")
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.scale(scale, scale)
       const img = new Image()
       const svgBlob = new Blob([s], { type: "image/svg+xml;charset=utf-8" })
@@ -5101,14 +5103,14 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       } finally {
         URL.revokeObjectURL(svgObjectUrl)
       }
-      const imgData = canvas.toDataURL("image/png")
+      const imgData = canvas.toDataURL("image/jpeg", 0.85)
       const { wMm: pw, hMm: ph } = getSVGSizeMm(doc)
       const pdf = new jsPDF({
         orientation: pw > ph ? "landscape" : "portrait",
         unit: "mm",
         format: [pw, ph],
       })
-      pdf.addImage(imgData, "PNG", 0, 0, pw, ph)
+      pdf.addImage(imgData, "JPEG", 0, 0, pw, ph)
       const filename = (template.name.replace(/[^a-z0-9]/gi, "_") || "export") + ".pdf"
       pdf.save(filename)
       toast.success("PDF exported successfully")

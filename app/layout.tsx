@@ -42,10 +42,10 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <UserProvider>
           <WishlistProvider>
-              <OrdersProvider>
-                {children}
-                <Analytics />
-              </OrdersProvider>
+            <OrdersProvider>
+              {children}
+              <Analytics />
+            </OrdersProvider>
           </WishlistProvider>
         </UserProvider>
       </body>

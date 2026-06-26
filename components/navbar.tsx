@@ -7,13 +7,19 @@ import { Check } from "lucide-react"
 import { Suspense } from "react"
 import { Button } from "./ui/button"
 
-const categories = [
+import { allTemplates } from "@/lib/templates"
+
+const ALL_CATEGORIES = [
   "Wedding",
   "Birthday",
   "Naming ceremony",
   "Baby shower",
   "House warming"
 ]
+
+const categories = ALL_CATEGORIES.filter(category =>
+  allTemplates.some(template => template.category.toLowerCase() === category.toLowerCase())
+)
 
 function NavbarContent() {
   const searchParams = useSearchParams()
