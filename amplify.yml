@@ -4,7 +4,8 @@ frontend:
     preBuild:
       commands:
         - npm i -g pnpm
-        - pnpm install --frozen-lockfile
+        # Pass the dependencies strictly as an inline array flag during install
+        - pnpm install --only-built-dependencies=canvas,sharp,msw,core-js
     build:
       commands:
         - pnpm run build
